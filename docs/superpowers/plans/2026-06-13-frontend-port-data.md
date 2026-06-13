@@ -12,25 +12,41 @@
 
 **Interface dependency (frozen, owned by Track A):**
 ```ts
-// web/src/lib/auth.ts
+// web/src/lib/auth-types.ts  — the frozen contract. Both tracks import this type.
 export interface AuthState {
   address: `0x${string}` | null; isConnected: boolean; isVerified: boolean;
   login(): Promise<void>; logout(): Promise<void>; verify(): Promise<boolean>;
   getWalletClient(): Promise<import("viem").WalletClient | null>;
 }
-export function useAuth(): AuthState;
-export function AuthProvider(props: { children: import("react").ReactNode }): JSX.Element;
 ```
+- Track A implements `AuthProvider` + `useAuth` in `web/src/lib/auth.tsx`.
+- Track B implements `MockAuthProvider` + a mock `useAuth` in `web/src/lib/mockAuth.tsx`.
+- **Pages import `useAuth` from a single re-export** `web/src/lib/useAuth.ts` that points at mock or real — swapping providers is then a **one-line change** in that file + `layout.tsx`, not an edit to every page.
+
+---
+
+## Setup notes & corrections (read before starting — found in plan review)
+
+`web/` currently has **no `viem`** and **cannot resolve `@concordia/shared`** (no workspace link; `tsconfig` only maps `@/*`). So:
+
+1. **Add `viem` to `web/`** in Task B1 (`npm install viem` in `web/`). It's needed for the `AuthState` type and for live mode. The mock adapter does **not** call it.
+2. **Do NOT import `@concordia/shared` in mock mode.** Define the small UI-facing types (`Cycle`, `Pick`, `Alloc`, position, leaderboard row) **locally** in `lib/data.ts`. In mock, `getWalletClient()` returns `null` — the mock UI sends no real transactions.
+3. **Defer the `@concordia/shared` wiring to the live step (B7).** When going live, add a `tsconfig` path alias `"@concordia/shared": ["../../shared/src"]` (verify the relative depth) and have the live adapter import the real helpers. Contracts are already deployed — `shared/src/addresses.ts` is filled in — so live mode is real when you flip it.
+
+This keeps all of B0–B6 buildable with zero workspace setup.
 
 ---
 
 ### Task B0: `MockAuthProvider` so we never block on Track A
 
 **Files:**
+- Create: `web/src/lib/auth-types.ts` (the frozen `AuthState` interface — whoever lands first creates it)
 - Create: `web/src/lib/mockAuth.tsx`
+- Create: `web/src/lib/useAuth.ts` (single re-export the pages import; points at mock for now)
 
-- [ ] Implement `MockAuthProvider` + a `useAuth()` matching the frozen `AuthState`: `address` = a fixed demo address, `isConnected: true`, `isVerified: true`, `login/logout/verify` resolve immediately, `getWalletClient()` returns a viem client via `@concordia/shared`'s `walletClientFromKey(<demo key from env>)`.
-- [ ] Export it behind the same import path Track B uses everywhere, so swapping to Track A's real `AuthProvider` is a one-line change in `layout.tsx`.
+- [ ] Put the frozen `AuthState` interface in `auth-types.ts`.
+- [ ] Implement `MockAuthProvider` + a mock `useAuth()` in `mockAuth.tsx`: `address` = a fixed demo address, `isConnected: true`, `isVerified: true`, `login/logout/verify` resolve immediately, `getWalletClient()` returns `null` (mock sends no real txs). No `@concordia/shared` or `viem` calls.
+- [ ] `useAuth.ts` re-exports the mock `useAuth`. Pages import only from `@/lib/useAuth`, so swapping to Track A's real provider is a one-line change here + in `layout.tsx`.
 - [ ] **Verify:** a component calling `useAuth()` renders with the stub values.
 
 ---
@@ -43,6 +59,7 @@ export function AuthProvider(props: { children: import("react").ReactNode }): JS
 - Modify: `web/src/app/layout.tsx` (import shell.css + global fonts; wrap in `MockAuthProvider`; render `<Nav>`)
 - Create: empty route pages `web/src/app/{vote,leaderboard,account,settings}/page.tsx`
 
+- [ ] `npm install viem` in `web/` (needed for the `AuthState` type and live mode).
 - [ ] Copy `shell.css` into `web/src/styles/` and import it in `layout.tsx`. Add the Google Fonts `<link>` (Inter, Outfit) the mocks use, in `layout.tsx`.
 - [ ] Port `shell.js` into `<Nav>`: it just builds the nav markup (brand, tabs, wallet balance, gear). Replace `location.href` navigation with Next `<Link>`. Keep the `countUp` helper as a small util (used by data-bound numbers).
 - [ ] Wrap children in `MockAuthProvider` in `layout.tsx`.
@@ -118,9 +135,11 @@ export function AuthProvider(props: { children: import("react").ReactNode }): JS
 
 ### Task B7: Live-flip checklist (after contracts deploy — M2)
 
-- [ ] Fill real addresses in `shared/src/addresses.ts`.
+- [ ] `shared/src/addresses.ts` is already filled with deployed Base Sepolia addresses (done — just ensure it's committed).
+- [ ] Add `tsconfig` path alias `"@concordia/shared": ["../../shared/src"]` (verify relative depth) so the live adapter can import the real helpers.
+- [ ] Implement the live adapter in `lib/data.ts` against `@concordia/shared` (`getCycle`, `getPrices`, `castVote`, …); writes use `useAuth().getWalletClient()`.
 - [ ] Set `NEXT_PUBLIC_USE_MOCK=false`.
-- [ ] Swap `MockAuthProvider` → Track A's real `AuthProvider` in `layout.tsx`.
+- [ ] Point `web/src/lib/useAuth.ts` + `layout.tsx` at Track A's real `AuthProvider` (one-line swap).
 - [ ] **Verify:** Overview reads live NAV/cycle; deposit + castVote send real Base Sepolia txs via the sponsored wallet; World ID marks the wallet verified.
 
 ---
