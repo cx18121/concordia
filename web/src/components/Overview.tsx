@@ -15,11 +15,9 @@
 // "Your position" chip reads usePosition(). Keeping these in JSX means the
 // per-second re-render never tears down or rebuilds the imperative animation.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/useAuth";
 import { useCycle, usePosition } from "@/lib/data";
-import JoinFlow from "@/components/JoinFlow";
 import "@/styles/overview.css";
 
 function fmtClock(secs: number): string {
@@ -33,8 +31,6 @@ export default function Overview() {
   const router = useRouter();
   const { secondsLeft } = useCycle();
   const position = usePosition();
-  const auth = useAuth();
-  const [joined, setJoined] = useState(false);
 
   // Keep router reachable from the [] animation effect without re-running it on
   // each router identity change. Sync the ref in its own effect (not during
@@ -43,12 +39,6 @@ export default function Overview() {
   useEffect(() => {
     routerRef.current = router;
   }, [router]);
-
-  async function handleJoin() {
-    await auth.login();
-    const ok = await auth.verify();
-    if (ok) setJoined(true);
-  }
 
   useEffect(() => {
     const RM =
@@ -712,19 +702,13 @@ export default function Overview() {
           </svg>
         </button>
 
-        {/* Public Join CTA — reveals the B4 deposit step on verify. */}
-        {joined ? (
-          <div className="join-slot">
-            <JoinFlow />
-          </div>
-        ) : (
-          <button className="ovl-join" onClick={handleJoin}>
-            <svg viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Join the fund
-          </button>
-        )}
+        {/* Public Join CTA — routes to the /join onboarding page. */}
+        <button className="ovl-join" onClick={() => router.push("/join")}>
+          <svg viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Join the fund
+        </button>
       </section>
 
       <section id="hold">
