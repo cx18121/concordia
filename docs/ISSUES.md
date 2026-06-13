@@ -14,8 +14,8 @@ CRE live deployment is early-access (`cre account access`); Chainlink said at th
 **#9 — Who owns which workstream?** · OPEN
 Fill the `owner: ____` blanks in ROADMAP.md at kickoff. Nothing parallelizes until this is done.
 
-**#10 — World ID for judges (which credential level?)** · OPEN · owner: ____ · ⚠️ confirm at booth
-Research (6/12) resolved the mechanics — see Resolved #3. Remaining *decision*: which credential level we request. **Recommendation: `selfieCheckLegacy`** (a new judge with no World App can verify via a selfie in ~minutes; works in invite-code mode on iOS) with `allow_legacy_proofs: true` and REST verification. Confirm at the World booth that this satisfies their prize (it's real proof-of-personhood, not a bypass). Keep one pre-verified demo account as an absolute fallback if a judge's phone fights the flow on stage.
+**#10 — World ID credential level** · DECIDED · owner: ____
+Use **`selfieCheckLegacy`** + `allow_legacy_proofs: true` + REST verification — a new judge with no World App verifies via a selfie in ~minutes (invite-code mode on iOS). Keep one pre-verified demo account as a stage fallback. Optional booth sanity-check that selfie-level satisfies the prize, but not a blocker — it's real proof-of-personhood and the flow works.
 
 ---
 

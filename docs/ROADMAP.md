@@ -16,8 +16,7 @@ Most research questions are now answered (see `ISSUES.md` Resolved). What's left
 - [ ] **Install Foundry + init contracts from v4-template** (instructions in `contracts/README.md`) — blocks workstreams A *and* B, and B is the critical path
 - [ ] **Freeze the interfaces** (first task after contracts init) — this is what lets all five workstreams run in parallel
 - [ ] **Chainlink booth: request CRE deployment access** (`cre account access`) — has lead time; simulation is the fallback but ask now (ISSUES #5)
-- [ ] **World booth: confirm `selfieCheckLegacy` credential satisfies the prize** (our planned judge-friendly level — ISSUES #10). Mechanics already verified; this is just a sanity check + keep one pre-verified demo account as stage fallback.
-- [ ] *(nice-to-have)* Dynamic booth: ask about enabling native gas sponsorship — but we ship the backend ETH-drip regardless (ISSUES #11), so not a blocker.
+- [ ] *(optional)* World booth: sanity-check `selfieCheckLegacy` satisfies the prize (ISSUES #10 — decided, has a fallback, not a blocker). Dynamic booth: ask about native gas sponsorship (we ship the drip regardless, ISSUES #11).
 
 ---
 
