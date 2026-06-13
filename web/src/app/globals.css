@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* Load shell.css into the `base` layer so Tailwind's `utilities` layer wins.
+   shell.css has an unlayered `*{margin:0;padding:0}` reset; left unlayered it
+   beats Tailwind's layered spacing utilities (pt-*, mx-auto, px-*) and breaks
+   the Tailwind-based leaderboard/account/settings pages. */
+@import "../styles/shell.css" layer(base);
 
 :root {
   --background: #ffffff;
@@ -39,8 +44,6 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* The Next-template `body { background:#fff; font-family:Arial }` rule was
+   removed: shell.css (base layer) owns the dark body theme. An unlayered rule
+   here would override it. */

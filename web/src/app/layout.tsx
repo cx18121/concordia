@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-// globals.css FIRST so shell.css's body/reset rules win the dark theme.
+// globals.css imports shell.css into Tailwind's `base` layer (see globals.css),
+// so the dark theme applies and Tailwind utilities still win on the ported pages.
 import "./globals.css";
-import "../styles/shell.css";
 import { MockAuthProvider } from "@/lib/mockAuth";
 import { MockDataProvider } from "@/lib/data";
 import Nav from "@/components/Nav";
