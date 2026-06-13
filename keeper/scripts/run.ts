@@ -10,8 +10,8 @@
 // would need an on-chain "phase-started-at" timestamp (Governance doesn't expose one).
 //
 // Env: KEEPER_KEY (0x…, the onlyKeeper EOA) · MODE=replay|live (default replay) ·
-//      POOL_ASSETS=AAPL,NVDA,… (pools to re-peg; default demo set) · RPC_URL (see @chf/shared).
-import { addresses, UNIVERSE } from "@chf/shared";
+//      POOL_ASSETS=AAPL,NVDA,… (pools to re-peg; default demo set) · RPC_URL (see @concordia/shared).
+import { addresses, UNIVERSE } from "@concordia/shared";
 import { ViemChainAdapter } from "../src/chain/viemAdapter.ts";
 import { ReplayFixtureSource, LiveAPISource, type PriceSource, type PriceSnapshot } from "../src/core/priceSource.ts";
 import { computeResolve } from "../src/core/resolve.ts";

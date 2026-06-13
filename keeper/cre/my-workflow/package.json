@@ -7,7 +7,7 @@
   "scripts": { "typecheck": "tsc --noEmit", "test": "bun test" },
   "dependencies": {
     "@chainlink/cre-sdk": "^1.6.0",
-    "@chf/shared": "file:../../../shared",
+    "@concordia/shared": "file:../../../shared",
     "viem": "2.34.0",
     "zod": "3.25.76"
   },

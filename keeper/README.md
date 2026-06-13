@@ -13,7 +13,7 @@ Price source is pluggable: **ReplayFixtureSource** (demo — real 2024 weekly cl
 
 ## Two runtimes, one core
 
-The pure compute lives in `src/core/` (price source, resolve scoring over `@chf/shared`, E8/cycle
+The pure compute lives in `src/core/` (price source, resolve scoring over `@concordia/shared`, E8/cycle
 helpers, the DON-report wire format). Two runtimes wrap it:
 
 | | `cre/my-workflow/` (CRE workflow) | `scripts/run.ts` (heartbeat) |
@@ -67,7 +67,7 @@ bun run start
   round-trip, the DON-report wire format). `cd cre/my-workflow && bun test` — **3 pass**, incl. an
   assertion that the registered trigger is genuinely `http-trigger@1.0.0-alpha`.
 - `cre workflow build` — **compiles to a valid WASM binary** with CRE CLI v1.20.0 (the whole graph:
-  core + `@chf/shared` + bundled fixture + viem encoders + CRE SDK).
+  core + `@concordia/shared` + bundled fixture + viem encoders + CRE SDK).
 - `fixtures/replay.json` — real Yahoo data, 13 weeks Q1 2024, 18 tickers + S&P (NVDA +84% vs S&P +12%).
 
 **Not yet runnable here** (honest state): `cre workflow simulate --listen` needs `cre login` (CRE

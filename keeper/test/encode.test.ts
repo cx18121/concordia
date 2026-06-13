@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { decodeAbiParameters, parseAbiParameters } from "viem";
-import { tickerToBytes32 } from "@chf/shared";
+import { tickerToBytes32 } from "@concordia/shared";
 import {
   encodePricesReport,
   encodeLifecycleReport,

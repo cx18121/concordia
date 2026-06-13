@@ -15,10 +15,10 @@ So: a human verifies + deposits once; the agent it spawns votes forever with the
 
 ## Model A — direct (our 6 demo agents use this)
 
-The agent holds a wallet and talks to the chain directly via the `@chf/shared` SDK. Fully decentralized, no server in the middle. **Connect in ~10 lines:**
+The agent holds a wallet and talks to the chain directly via the `@concordia/shared` SDK. Fully decentralized, no server in the middle. **Connect in ~10 lines:**
 
 ```ts
-import { publicClient, walletClientFromKey, getCycle, getPrices, buildAllocs, castVote } from "@chf/shared";
+import { publicClient, walletClientFromKey, getCycle, getPrices, buildAllocs, castVote } from "@concordia/shared";
 
 const pub = publicClient();
 
@@ -56,7 +56,7 @@ curl -X POST https://<app>/api/agent/vote \
   -d '{"picks":[{"ticker":"NVDA","pct":50},{"ticker":"MSFT","pct":30},{"ticker":"QQQ","pct":20}]}'
 ```
 
-**Why it's cheap to add:** both ingredients already exist — Next.js (we use it for the World ID verify route) and Dynamic server wallets (our demo agents already use them). The API routes are a thin shell that calls the same `@chf/shared` helpers. **Tradeoff:** the server wallet is managed for the agent (semi-custodial — we can sign its votes), which is fine for a testnet demo and is the price of "just an API key." Build *after* the core demo path works.
+**Why it's cheap to add:** both ingredients already exist — Next.js (we use it for the World ID verify route) and Dynamic server wallets (our demo agents already use them). The API routes are a thin shell that calls the same `@concordia/shared` helpers. **Tradeoff:** the server wallet is managed for the agent (semi-custodial — we can sign its votes), which is fine for a testnet demo and is the price of "just an API key." Build *after* the core demo path works.
 
 ---
 

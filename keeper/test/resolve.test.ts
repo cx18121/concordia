@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { computeResolve } from "../src/core/resolve.ts";
-import { ewma } from "@chf/shared";
+import { ewma } from "@concordia/shared";
 
 // Why these matter: resolve is the one place the keeper turns on-chain votes + prices into the
 // scores that drive future voting power and the reward split. If this math drifts, a skilled

@@ -1,7 +1,7 @@
-// One-shot: pull real 2024 weekly closes for the universe + S&P from Yahoo (via @chf/shared) and
+// One-shot: pull real 2024 weekly closes for the universe + S&P from Yahoo (via @concordia/shared) and
 // commit them to fixtures/replay.json. Run once at kickoff: `bun run build-fixture`.
 // The committed fixture is what the always-on demo loops over — real history, not invented data.
-import { weeklyCloses, UNIVERSE, FIXTURE_PERIOD1, FIXTURE_PERIOD2, yahooSymbol } from "@chf/shared";
+import { weeklyCloses, UNIVERSE, FIXTURE_PERIOD1, FIXTURE_PERIOD2, yahooSymbol } from "@concordia/shared";
 import type { ReplayFixture, FixtureWeek } from "../src/core/fixture.ts";
 
 const UA = { "User-Agent": "Mozilla/5.0" };

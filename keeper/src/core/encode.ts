@@ -4,7 +4,7 @@
 // onlyKeeper fns directly — see scripts/run.ts.) Single-sourced here so the encoding the keeper
 // writes and the encoding workstream A decodes can't drift. See docs/ISSUES.md #C2.
 import { encodeAbiParameters, parseAbiParameters } from "viem";
-import { tickerToBytes32 } from "@chf/shared";
+import { tickerToBytes32 } from "@concordia/shared";
 import type { ResolveOutput } from "./resolve.js";
 
 /** Governance receiver dispatch discriminator (first field of the lifecycle report). */

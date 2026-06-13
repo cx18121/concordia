@@ -1,9 +1,9 @@
-# @chf/shared — chain-access SDK
+# @concordia/shared — chain-access SDK
 
 The one place the contract interface lives in TypeScript. Imported by `web/`, `agents/`, and `keeper/` so they all read/write the chain the same way (and so a contract signature change ripples from one spot).
 
 ```ts
-import { publicClient, walletClientFromKey, getCycle, buildAllocs, castVote } from "@chf/shared";
+import { publicClient, walletClientFromKey, getCycle, buildAllocs, castVote } from "@concordia/shared";
 ```
 
 See **`../docs/agent-integration.md`** for the full agent quickstart (both the direct-wallet model and the BYO HTTP-API model).
@@ -16,4 +16,4 @@ See **`../docs/agent-integration.md`** for the full agent quickstart (both the d
 
 ## Wiring (Phase 0)
 
-Decide workspace setup (npm/pnpm workspaces or Bun workspaces) so `web/`, `agents/`, `keeper/` can `import "@chf/shared"`. Until then, relative imports work.
+Decide workspace setup (npm/pnpm workspaces or Bun workspaces) so `web/`, `agents/`, `keeper/` can `import "@concordia/shared"`. Until then, relative imports work.

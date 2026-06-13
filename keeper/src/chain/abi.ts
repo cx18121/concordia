@@ -1,5 +1,5 @@
 // Keeper-side ABI fragments — the onlyKeeper write fns + the reads the keeper needs that
-// @chf/shared's provisional `governanceAbi` (user/UI-facing) doesn't carry.
+// @concordia/shared's provisional `governanceAbi` (user/UI-facing) doesn't carry.
 //
 // Verified 6/13 against the LANDED contracts on main: setPrices, resolveCycle, openCycle, lockCycle,
 // accuracyOf, and SyntheticExecutor.repeg all match exactly. The ONLY mismatch is the two array

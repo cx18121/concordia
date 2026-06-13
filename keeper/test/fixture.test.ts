@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { toE8, returnBetween, weekOf, weekToE8, type ReplayFixture } from "../src/core/fixture.ts";
 import { ReplayFixtureSource } from "../src/core/priceSource.ts";
 import { bytes32ToTicker, decodeAllocs } from "../src/core/cycle.ts";
-import { tickerToBytes32 } from "@chf/shared";
+import { tickerToBytes32 } from "@concordia/shared";
 
 const FIX: ReplayFixture = {
   tickers: ["AAPL", "NVDA"],

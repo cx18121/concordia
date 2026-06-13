@@ -1,4 +1,4 @@
-# Community Fund DAO — Design & Parameters
+# Concordia — Design & Parameters
 
 Canonical design doc. The "locked" decisions are settled; the parameters are **named constants** — tunable defaults, not hard truths. Governance can retune them later.
 

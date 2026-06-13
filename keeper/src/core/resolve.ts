@@ -2,8 +2,8 @@
 // PURE: given on-chain votes + posted prices, returns exactly the three parallel arrays
 // Governance.resolveCycle(members, newAccuracyE4, creditWeightBps) expects. The contract still
 // owns all MONEY math (pool size, HWM, custody); we only supply who-gets-what-fraction + scores.
-import { ewma, voteWeightedExcess, creditWeights, type BackedWeight } from "@chf/shared";
-import { CONSTANTS } from "@chf/shared";
+import { ewma, voteWeightedExcess, creditWeights, type BackedWeight } from "@concordia/shared";
+import { CONSTANTS } from "@concordia/shared";
 
 export interface ResolveInput {
   /** Members who voted this cycle, in a stable order (defines the output array order). */

@@ -53,7 +53,7 @@ contract Governance is IGovernance {
     bytes32[] public votedAssets;
     mapping(bytes32 => bool) private _assetSeen;
 
-    // ---- tunable constants (mirror @chf/shared; governance-tunable on-site) ----
+    // ---- tunable constants (mirror @concordia/shared; governance-tunable on-site) ----
     uint16 public CAPITAL_BPS = 5000; // 50% capital weight
     uint16 public ACCURACY_BPS = 5000; // 50% accuracy weight
     uint16 public EWMA_ALPHA_BPS = 2500; // 0.25 (used off-chain by CRE; mirrored for UI)

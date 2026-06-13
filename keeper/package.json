@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@chf/shared": "file:../shared",
+    "@concordia/shared": "file:../shared",
     "viem": "^2.45.3"
   },
   "devDependencies": {

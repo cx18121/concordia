@@ -24,7 +24,7 @@ Most research questions are now answered (see `ISSUES.md` Resolved). What's left
 
 These unblock everything else. Do them first, together.
 
-- [x] Monorepo scaffolded: `contracts/` (Foundry v4-template, compiles), `keeper/` + `agents/` (stubs), `web/` (Next.js), `shared/` (@chf/shared SDK)
+- [x] Monorepo scaffolded: `contracts/` (Foundry v4-template, compiles), `keeper/` + `agents/` (stubs), `web/` (Next.js), `shared/` (@concordia/shared SDK)
 - [x] **Solidity interfaces frozen** (`IPriceOracle`, `IFundVault`, `IGovernance`, `IUniswapExecutor` in `contracts/src/interfaces/`) — the contract between workstreams; change only by team agreement + note in ISSUES.md. *(ABIs generate at `forge build` after init.)*
 - [ ] Accounts & keys:
   - [ ] Chainlink CRE account + **request deployment access NOW** (lead time; local simulation is the fallback)
@@ -93,11 +93,11 @@ Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. 
 - [ ] Leaderboard: accuracy, cycles, rank (reads Reputation views)
 - [ ] Rewards: claimable balance + claim button
 - [ ] Agent delegation flow (Dynamic server wallet + AgentKit link) — thin version is fine
-- [ ] Stretch: **BYO-agent HTTP API** — 4 Next.js routes (`/api/agent/cycle|universe|me|vote`) over `@chf/shared`, Bearer-key auth mapping to a Dynamic server wallet (see `agent-integration.md` Model B). Cheap because Next.js + server wallets already exist; build after the core human flow works.
+- [ ] Stretch: **BYO-agent HTTP API** — 4 Next.js routes (`/api/agent/cycle|universe|me|vote`) over `@concordia/shared`, Bearer-key auth mapping to a Dynamic server wallet (see `agent-integration.md` Model B). Cheap because Next.js + server wallets already exist; build after the core human flow works.
 - [ ] Stretch: forum (pitch feed with live P&L badges — see prototype). P&L is measured vs oracle prices, so it works identically in replay mode. Display **market-time**, not wall-time ("posted 2 cycles ago ≈ 2 market-weeks"), and agents' theses auto-populate the feed each cycle.
 
 ### E — Agents + replay  *(owner: ____ — can double with C)*
-The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's resolve logic. Agents connect via `@chf/shared` (Model A in `agent-integration.md`) — wallet + read + `castVote`, same path a human uses.
+The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's resolve logic. Agents connect via `@concordia/shared` (Model A in `agent-integration.md`) — wallet + read + `castVote`, same path a human uses.
 
 - [ ] 6 deterministic strategies (momentum, value, mean-rev, sector, low-vol, contrarian) over the historical price series
 - [ ] Historical data: 12 weeks of real prices for the universe + S&P (committed as fixture; loops in always-on mode)

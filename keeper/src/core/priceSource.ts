@@ -1,8 +1,8 @@
 // Pluggable price source (ROADMAP C): demo vs production is a config flag, not a fork.
 //  - ReplayFixtureSource — real 2024 weekly history, looped (the demo heartbeat). Pure, no I/O.
-//  - LiveAPISource       — real-time Yahoo prices via @chf/shared (production).
+//  - LiveAPISource       — real-time Yahoo prices via @concordia/shared (production).
 // Both yield the same { pricesE8, spE8 } shape that Oracle.setPrices consumes.
-import { livePrices } from "@chf/shared";
+import { livePrices } from "@concordia/shared";
 import { type ReplayFixture, weekOf, weekToE8, toE8 } from "./fixture.js";
 
 /** A batch of on-chain-ready prices for one cycle. */

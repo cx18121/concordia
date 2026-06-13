@@ -26,7 +26,7 @@ import {IUniswapExecutor} from "../src/interfaces/IUniswapExecutor.sol";
 ///      Run (Base Sepolia):
 ///        forge script script/DeployCore.s.sol --rpc-url $BASE_SEPOLIA_RPC --broadcast
 contract DeployCoreScript is Script {
-    // demo universe — 8 tickers is plenty for the stage (ROADMAP B). Mirrors @chf/shared UNIVERSE head.
+    // demo universe — 8 tickers is plenty for the stage (ROADMAP B). Mirrors @concordia/shared UNIVERSE head.
     string[8] internal TICKERS = ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "JPM"];
 
     function run() public {

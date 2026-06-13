@@ -1,4 +1,6 @@
-# Community Hedge Fund DAO
+# Concordia
+
+*A community hedge fund DAO.*
 
 ETHGlobal New York 2026. A community fund where members pool USDC and vote weekly on stock allocations — voting power is **50% capital deposited + 50% proven accuracy**. Money buys influence; being right earns it. Humans vote directly or delegate to AI agents, which vote through the exact same path.
 
@@ -23,7 +25,7 @@ contracts/   Solidity (Foundry + Uniswap v4-template) — interfaces frozen in s
 keeper/      Chainlink CRE workflow (Bun ≥1.2.21) — prices, re-peg, lifecycle, resolve
 web/         Next.js app — Dynamic login, World ID, vote/portfolio/leaderboard
 agents/      6 demo agents (Node/TS) — strategies + LLM theses, Dynamic server wallets
-shared/      @chf/shared SDK — addresses, ABIs, typed read/vote helpers (web + agents + keeper)
+shared/      @concordia/shared SDK — addresses, ABIs, typed read/vote helpers (web + agents + keeper)
 docs/        Specs + ROADMAP + ISSUES + agent-integration + visual explainers
 ```
 

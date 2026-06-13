@@ -84,7 +84,7 @@ contract FundVault is ERC4626, IFundVault {
     }
 
     constructor(IERC20 usdc_, IPriceOracle oracle_, address admin_)
-        ERC20("Community Hedge Fund Share", "CHF")
+        ERC20("Concordia Share", "CRD")
         ERC4626(usdc_)
     {
         oracle = oracle_;

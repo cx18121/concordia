@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@chf/shared",
+      "name": "@concordia/shared",
       "dependencies": {
         "viem": "^2.45.3",
       },

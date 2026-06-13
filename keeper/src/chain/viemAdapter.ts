@@ -8,7 +8,7 @@ import {
   addresses,
   tickerToBytes32,
   type Alloc,
-} from "@chf/shared";
+} from "@concordia/shared";
 import { oracleKeeperAbi, governanceKeeperAbi, executorKeeperAbi } from "./abi.js";
 import { CYCLE_STATE, decodeAllocs, type CycleState } from "../core/cycle.js";
 import type { PriceSnapshot } from "../core/priceSource.js";
@@ -21,7 +21,7 @@ export interface ResolveReads {
 }
 
 export class ViemChainAdapter {
-  // Inferred from the @chf/shared factories so we stay on one viem copy (avoids dual-install type clash).
+  // Inferred from the @concordia/shared factories so we stay on one viem copy (avoids dual-install type clash).
   private readonly pub: ReturnType<typeof makePublicClient>;
   private readonly wallet: ReturnType<typeof walletClientFromKey>;
   readonly keeper: `0x${string}`;

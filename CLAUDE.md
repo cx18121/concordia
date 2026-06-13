@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-ETHGlobal NY 2026 hackathon project: a **Community Hedge Fund DAO** — members pool USDC and vote weekly on stock allocations; voting power is 50/50 capital + proven accuracy. Human-first (Kalshi-style); agents vote through the same path.
+ETHGlobal NY 2026 hackathon project: **Concordia** — a community hedge fund DAO. Members pool USDC and vote weekly on stock allocations; voting power is 50/50 capital + proven accuracy. Human-first (Kalshi-style); agents vote through the same path.
+
+*Name is "Concordia"; the shared SDK is `@concordia/shared` and the ERC-20 share symbol is `CRD`.*
 
 **Status: design-complete, no code yet.** Don't fabricate build/test commands until the scaffolding exists.
 

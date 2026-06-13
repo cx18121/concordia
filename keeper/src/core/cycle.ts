@@ -1,7 +1,7 @@
 // Cycle lifecycle helpers shared by the always-on script and the CRE workflow.
 // The on-chain state machine is IDLE → OPEN → LOCKED → IDLE (CONTRACTS.md §5); the keeper is
 // the only thing that advances it. These helpers keep the timing + bytes32 mapping in one place.
-import { tickerToBytes32, UNIVERSE } from "@chf/shared";
+import { tickerToBytes32, UNIVERSE } from "@concordia/shared";
 
 export type CycleState = "IDLE" | "OPEN" | "LOCKED";
 export const CYCLE_STATE = ["IDLE", "OPEN", "LOCKED"] as const;

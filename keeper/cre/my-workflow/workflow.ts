@@ -34,7 +34,7 @@ import {
 } from "@chainlink/cre-sdk";
 import { decodeFunctionResult, encodeFunctionData, zeroAddress, type Abi, type Address } from "viem";
 import { z } from "zod";
-import { yahooSymbol } from "@chf/shared";
+import { yahooSymbol } from "@concordia/shared";
 import { governanceKeeperAbi } from "../../src/chain/abi.ts";
 import { computeResolve } from "../../src/core/resolve.ts";
 import { weekOf, weekToE8, returnBetween, toE8, type ReplayFixture } from "../../src/core/fixture.ts";
