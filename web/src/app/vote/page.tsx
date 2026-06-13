@@ -169,7 +169,7 @@ export default function VotePage() {
         </div>
       </div>
 
-      <div className="grid">
+      <div className="vote-grid">
         <div>
           <div className="listhdr">
             <span className="t">Allocate your basket</span>

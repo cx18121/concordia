@@ -8,7 +8,10 @@
 .head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:40px}
 h1{font:700 40px/1 Outfit} .sub{color:var(--muted);font-size:14px;margin-top:10px} .sub b{color:var(--teal);font-weight:600}
 .vp{text-align:right} .vp .k{font:600 11px/1 Inter;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)} .vp .v{font:800 38px/1 Outfit;margin-top:8px}
-.grid{display:grid;grid-template-columns:1.55fr 1fr;gap:48px;align-items:start}
+/* Renamed from .grid: that bare name is a global CSS leak — it collides with
+   Tailwind's `grid` utility and clobbered the leaderboard's grid-cols-12 once
+   vote.css loaded (global stylesheets persist across client-side nav). */
+.vote-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:48px;align-items:start}
 .listhdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--hair)}
 .listhdr .t{font:600 11.5px/1 Inter;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
 .total{font:600 13px/1 Inter;color:var(--muted)} .total b{font-family:Outfit;color:var(--teal)} .total.full b{color:var(--green)}
