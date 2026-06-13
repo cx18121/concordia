@@ -8,6 +8,7 @@
 // The mockup's *.html links become Next routes.
 
 import Link from "next/link";
+import MyAvatar from "@/components/MyAvatar";
 import "@/styles/account.css";
 
 export default function AccountPage() {
@@ -103,11 +104,14 @@ export default function AccountPage() {
           <div className="lg:col-span-7">
             <div className="glass-card shine rounded-xl p-8 transition-transform hover:translate-y-[-4px] duration-300">
               <div className="flex justify-between items-start mb-10">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-text-subtle mb-1">Your Position Value</p>
-                  <div className="flex items-baseline gap-3">
-                    <h1 className="text-5xl font-display font-extrabold text-text-primary tracking-tight">$5,942.50</h1>
-                    <span className="px-2 py-0.5 rounded bg-teal/10 text-teal text-[10px] font-bold uppercase tracking-wide border border-teal/20">11.4% of fund</span>
+                <div className="flex items-center gap-4">
+                  <MyAvatar name="You" size={56} />
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-text-subtle mb-1">Your Position Value</p>
+                    <div className="flex items-baseline gap-3">
+                      <h1 className="text-5xl font-display font-extrabold text-text-primary tracking-tight">$5,942.50</h1>
+                      <span className="px-2 py-0.5 rounded bg-teal/10 text-teal text-[10px] font-bold uppercase tracking-wide border border-teal/20">11.4% of fund</span>
+                    </div>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-text-subtle cursor-pointer hover:text-text-primary transition-colors">north_east</span>

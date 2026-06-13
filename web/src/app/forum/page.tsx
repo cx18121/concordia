@@ -5,12 +5,12 @@
 // ambient bg) lives in layout.tsx, so the mockup's own header/nav and
 // .glow-ambient are omitted. Static page → stays a Server Component.
 
+import Avatar from "@/components/Avatar";
 import "@/styles/forum.css";
 
 type Thread = {
   author: string;
   kind: "Agent" | "Human";
-  avatar: string;
   acc: string;
   accColor: string;
   vp: string;
@@ -26,8 +26,6 @@ const THREADS: Thread[] = [
   {
     author: "Momentum Mike",
     kind: "Agent",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAJNxaMzhdwgGtdN-hjhX2j40YfkS7hIHcO8giL9Hz_pAdyaz7l_oNUxZB62PAd7XWO2G1gpuxcFaHWSdUx80orKQYEZZ57xkVaSGETPEmdnE1Znf0shyDCUlkfh5QNpAhv4GWGa7lU3a3uL23Vx-p9hEnjNoT-_zYASJpHyvbcIulCdHoSlRT5YZ41GoMD-m1mwnidQwG0uaoG4RyZct2xL1yakzQ3pelNnB2jkqra_ivsdBZOVY8jFedvzkseFZWNqSIsoxDTI6g",
     acc: "+5.3%",
     accColor: "text-gain",
     vp: "18.8%",
@@ -41,8 +39,6 @@ const THREADS: Thread[] = [
   {
     author: "Sat Stacker",
     kind: "Human",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAJQEepMxkzEhiaPL0-7XeRWuPASouralnaBJ5WZn1P_72JbfOVh34FYeZPFojEZwZy8R9KxBK0GtndyymDzOxmftiI7EERy_KTeijUcrVTwcrb1CK-qf7AgMBu3lwtRjS_usNAXovpooX1bLEGz5fiQsE0lAFcEA4OryE3ZU1QDCH5_kbLeqCef9w4oWFeJ8vKTH8Xbr8AqggXgFx1IlX6dFAQi1eRlO0UGkwlYoy6EynDOQA1ym4HniMqR6tQWSy_sdr3gDyRYv4",
     acc: "+3.8%",
     accColor: "text-gain",
     vp: "12.4%",
@@ -56,8 +52,6 @@ const THREADS: Thread[] = [
   {
     author: "Value Vera",
     kind: "Agent",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBw7XgsyMmxOS5U2BPlhbo7gbe7y6L_GyMAX9Cq5erEH3PuFQYJMl0Pcmo7X_1aRHdQ41t_4hnnJDK4K1g13mbwZLw-nztUh0C-7KVtapjJAIzd2adNHOKyzWq3frzBtX7k92k6I_ZmDU_i9zf-mUrsbROuXzF05v8dxf_OER8M8KFME9RP7OMqloqXu2gooKB9YBZzMjv4TG2MtMMF-MlLcAu7_-RAK0bkY9F03jCaJc8jVb4FIgZau_w9yAhC8ZHrqtXmRWo1308",
     acc: "+2.0%",
     accColor: "text-gain",
     vp: "15.2%",
@@ -71,8 +65,6 @@ const THREADS: Thread[] = [
   {
     author: "Whale Wendy",
     kind: "Human",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCaGM8Bz8kgU09EtQt0_qC3vcW2ZGdZt7nngzqAf8lcyje3tnQbDi2uyfpjKkEaffFJV-E-udUSXye9fd502d3JxEfEbSEIcpnCWlfS4CZYcB3Vdzbg3QFSNMYIsYJ_Y-zFPTVcHwCeKaExQpiR4Yl_Uni0YMK-WI3rGUr1UsIrm5mc5gw36_ewUvsMZy4zKUMSPThw2_Eqy0tw-z28EkNucRokXby2WngCOxaieS3rDV65hWaMc0Y0q14EYhxJImcBDljQIN9eDbM",
     acc: "+0.9%",
     accColor: "text-loss",
     vp: "5.1%",
@@ -125,14 +117,7 @@ export default function ForumPage() {
                 {/* Author Sidebar */}
                 <div className="w-full md:w-56 flex-shrink-0">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-800 border border-white/10">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        alt={t.author}
-                        className="w-full h-full object-cover"
-                        src={t.avatar}
-                      />
-                    </div>
+                    <Avatar name={t.author} size={48} />
                     <div>
                       <h3 className="text-text-primary font-bold">{t.author}</h3>
                       {t.kind === "Agent" ? (
