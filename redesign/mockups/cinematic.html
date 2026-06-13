@@ -9,7 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="shell.css">
 <style>
-  #stage{position:relative;height:100vh;overflow:hidden;z-index:1;cursor:grab;user-select:none;touch-action:pan-y}
+  html,body{overscroll-behavior-x:none}
+  #stage{position:relative;height:100vh;overflow:hidden;z-index:1;cursor:grab;user-select:none;touch-action:pan-y;overscroll-behavior:contain}
   #stage.grab{cursor:grabbing}
   .chartfield{position:absolute;inset:0;z-index:0;transition:opacity .34s var(--ease);will-change:opacity}
   #stage[data-s="0"] .chartfield{opacity:.20}
