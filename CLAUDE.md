@@ -38,6 +38,7 @@ The goal is a live demo that works on stage. That means **verify narrow, not wid
 - **Lean on what exists.** Start from `v4-template`, `cre-templates`, OZ bases. Don't rebuild what a template gives you.
 - **Be honest about state.** Say what's stubbed, mocked, or untested — don't claim "done" when it only compiles. Teammates build against your pieces and the demo depends on them.
 - **Stuck? Re-scope, don't grind.** After 2–3 failed attempts, question the approach or cut the feature. Time is the scarce resource — but never cut from the demo path itself.
+- **Commits: `type: short summary` + a line on *why*.** Use `feat:` / `fix:` / `chore:` / `docs:` / `refactor:`. Keep the subject brief; if the change involves a decision or tradeoff, add one or two plain-English lines explaining it for a human reading the history (judges read commit logs). Skip the obvious — explain the non-obvious.
 
 ## Tech-stack docs (new tech — read before using)
 
