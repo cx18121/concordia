@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IDKitRequestWidget,
   deviceLegacy,
@@ -16,9 +16,11 @@ interface Props {
   onCancel?: () => void;
   /** Bound into the proof so it commits to the wallet (idkit v4: passed to the preset, surfaces as signal_hash). */
   signal?: string;
+  /** When true, fetch the RP signature and open the modal on mount (verify()-driven use); standalone use leaves this off and waits for a click. */
+  autoStart?: boolean;
 }
 
-export default function WorldIDVerify({ onVerified, onCancel, signal }: Props) {
+export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart }: Props) {
   const [open, setOpen] = useState(false);
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,6 +57,13 @@ export default function WorldIDVerify({ onVerified, onCancel, signal }: Props) {
       setLoading(false);
     }
   }
+
+  // verify()-driven use renders this with autoStart and expects the modal to open
+  // itself; standalone use omits autoStart and waits for the button click.
+  useEffect(() => {
+    if (autoStart) handleClick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleVerify(result: IDKitResult) {
     const res = await fetch("/api/verify", {

@@ -67,12 +67,17 @@ function AuthBridge({ children }: { children: ReactNode }) {
     }
     // Re-entry guard: a flow is already live; don't clobber its resolver.
     if (pendingResolve.current) return false;
+    // No wallet → the proof would carry no signal and wouldn't bind to the wallet.
+    if (!address) {
+      console.warn("[verify] no wallet address — connect a wallet before verifying");
+      return false;
+    }
     // Render <WorldIDVerify/> and resolve once its onVerified / onCancel fires.
     return new Promise<boolean>((resolve) => {
       pendingResolve.current = resolve;
       setVerifying(true);
     });
-  }, []);
+  }, [address]);
 
   const onVerified = useCallback(() => {
     setIsVerified(true);
@@ -114,7 +119,7 @@ function AuthBridge({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={value}>
       {children}
       {verifying && (
-        <WorldIDVerify signal={address ?? ""} onVerified={onVerified} onCancel={onCancel} />
+        <WorldIDVerify autoStart signal={address ?? ""} onVerified={onVerified} onCancel={onCancel} />
       )}
     </AuthContext.Provider>
   );
