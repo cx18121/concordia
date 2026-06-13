@@ -1,0 +1,25 @@
+/* Forum page styles — helper classes copied from
+   redesign/mockups/stitch-forum.html's <style> block. The layout already owns
+   the page background + ambient glow, so the mockup's body{} / .glow-ambient
+   rules are omitted (they duplicate the global shell + .amb). The page markup
+   is Tailwind utilities; the custom color/font tokens live in globals.css
+   @theme. .tabular-nums / .material-symbols-outlined are defined byte-identical
+   to leaderboard.css so the cross-route duplication stays harmless. */
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}

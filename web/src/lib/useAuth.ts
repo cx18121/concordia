@@ -1,2 +1,2 @@
-export { useAuth, AuthProvider } from "./auth";
-export type { AuthState } from "./auth-types";
+// Single seam the pages import. Swap mock -> Track A's real provider here (+ layout.tsx).
+export { useAuth } from "./mockAuth";

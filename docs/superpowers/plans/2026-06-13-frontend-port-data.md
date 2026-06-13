@@ -44,10 +44,10 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Create: `web/src/lib/mockAuth.tsx`
 - Create: `web/src/lib/useAuth.ts` (single re-export the pages import; points at mock for now)
 
-- [ ] Put the frozen `AuthState` interface in `auth-types.ts`.
-- [ ] Implement `MockAuthProvider` + a mock `useAuth()` in `mockAuth.tsx`: `address` = a fixed demo address, `isConnected: true`, `isVerified: true`, `login/logout/verify` resolve immediately, `getWalletClient()` returns `null` (mock sends no real txs). No `@concordia/shared` or `viem` calls.
-- [ ] `useAuth.ts` re-exports the mock `useAuth`. Pages import only from `@/lib/useAuth`, so swapping to Track A's real provider is a one-line change here + in `layout.tsx`.
-- [ ] **Verify:** a component calling `useAuth()` renders with the stub values.
+- [x] Put the frozen `AuthState` interface in `auth-types.ts`.
+- [x] Implement `MockAuthProvider` + a mock `useAuth()` in `mockAuth.tsx`: `address` = a fixed demo address, `isConnected: true`, `isVerified: true`, `login/logout/verify` resolve immediately, `getWalletClient()` returns `null` (mock sends no real txs). No `@concordia/shared` or `viem` calls.
+- [x] `useAuth.ts` re-exports the mock `useAuth`. Pages import only from `@/lib/useAuth`, so swapping to Track A's real provider is a one-line change here + in `layout.tsx`.
+- [x] **Verify:** a component calling `useAuth()` renders with the stub values.
 
 ---
 
@@ -59,12 +59,12 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Modify: `web/src/app/layout.tsx` (import shell.css + global fonts; wrap in `MockAuthProvider`; render `<Nav>`)
 - Create: empty route pages `web/src/app/{vote,leaderboard,account,settings}/page.tsx`
 
-- [ ] `npm install viem` in `web/` (needed for the `AuthState` type and live mode).
-- [ ] Copy `shell.css` into `web/src/styles/` and import it in `layout.tsx`. Add the Google Fonts `<link>` (Inter, Outfit) the mocks use, in `layout.tsx`.
-- [ ] Port `shell.js` into `<Nav>`: it just builds the nav markup (brand, tabs, wallet balance, gear). Replace `location.href` navigation with Next `<Link>`. Keep the `countUp` helper as a small util (used by data-bound numbers).
-- [ ] Wrap children in `MockAuthProvider` in `layout.tsx`.
-- [ ] Create placeholder route pages so the nav tabs resolve.
-- [ ] **Verify:** `npm run dev`; nav renders on every route, tabs navigate, no console errors.
+- [x] `npm install viem` in `web/` (needed for the `AuthState` type and live mode).
+- [x] Copy `shell.css` into `web/src/styles/` and import it in `layout.tsx`. Add the Google Fonts `<link>` (Inter, Outfit) the mocks use, in `layout.tsx`.
+- [x] Port `shell.js` into `<Nav>`: it just builds the nav markup (brand, tabs, wallet balance, gear). Replace `location.href` navigation with Next `<Link>`. Keep the `countUp` helper as a small util (used by data-bound numbers).
+- [x] Wrap children in `MockAuthProvider` in `layout.tsx`.
+- [x] Create placeholder route pages so the nav tabs resolve.
+- [x] **Verify:** `npm run dev`; nav renders on every route, tabs navigate, no console errors.
 
 ---
 
@@ -73,12 +73,12 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 **Files:**
 - Create: `web/src/lib/data.ts`
 
-- [ ] Define the hooks the UI binds to: `useCycle()`, `usePrices()`, `usePosition()`, `useVotingPower()`, `useAccuracy()`, `useLeaderboard()`, and write actions `getDemoUSDC()`, `deposit(amount)`, `castVote(allocs)`, `claim()`. Types mirror `@concordia/shared` (`Cycle`, `Pick`, `Alloc`).
-- [ ] Implement a **mock adapter**: seeded, realistic values (a cycle in `OPEN` with a countdown, ~8 tickers with prices, a sample position + NAV, a leaderboard). Write actions mutate local React state and resolve.
-- [ ] Include a `resolveCycle()` dev trigger in the mock adapter that flips the cycle to resolved, updates NAV from the new prices, and sets a sample `useAccuracy()` score — this drives the demo's "watch the cycle resolve → accuracy appears → claim" beat without real contracts. (A button/keypress wires it in B5.)
-- [ ] Implement a **live adapter**: calls `@concordia/shared` (`getCycle`, `getPrices`, `getVotingPower`, `castVote`, etc.) via `publicClient()`; writes use `useAuth().getWalletClient()`.
-- [ ] Switch on `process.env.NEXT_PUBLIC_USE_MOCK` (default `true`).
-- [ ] **Verify:** a temp page printing the hooks shows mock data; flipping the env (with real addresses) is the only change needed later.
+- [x] Define the hooks the UI binds to: `useCycle()`, `usePrices()`, `usePosition()`, `useVotingPower()`, `useAccuracy()`, `useLeaderboard()`, and write actions `getDemoUSDC()`, `deposit(amount)`, `castVote(allocs)`, `claim()`. Types mirror `@concordia/shared` (`Cycle`, `Pick`, `Alloc`).
+- [x] Implement a **mock adapter**: seeded, realistic values (a cycle in `OPEN` with a countdown, ~8 tickers with prices, a sample position + NAV, a leaderboard). Write actions mutate local React state and resolve.
+- [x] Include a `resolveCycle()` dev trigger in the mock adapter that flips the cycle to resolved, updates NAV from the new prices, and sets a sample `useAccuracy()` score — this drives the demo's "watch the cycle resolve → accuracy appears → claim" beat without real contracts. (A button/keypress wires it in B5.)
+- [x] Implement a **live adapter** (STUB per Setup notes — structured + B7 wiring map, throws until B7 wires `@concordia/shared`): calls `@concordia/shared` (`getCycle`, `getPrices`, `getVotingPower`, `castVote`, etc.) via `publicClient()`; writes use `useAuth().getWalletClient()`.
+- [x] Switch on `process.env.NEXT_PUBLIC_USE_MOCK` (default `true`).
+- [x] **Verify:** a temp page printing the hooks shows mock data; flipping the env (with real addresses) is the only change needed later.
 
 ---
 
@@ -89,11 +89,11 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Create: `web/src/styles/overview.css` (the cinematic page's inline `<style>`, copied)
 - Create: `web/src/components/Overview.tsx` (`"use client"`)
 
-- [ ] Move `cinematic.html`'s `<style>` block into `overview.css`; paste its markup into `Overview.tsx` (`class`→`className`).
-- [ ] Run the cinematic animation JS **imperatively** inside a `useEffect` (drag-scrub, morph, SVG chartfield). Do not rewrite it in React.
-- [ ] Bind the headline numbers (NAV, return, countdown) to `useCycle()`/`usePosition()` via the `countUp` util. Page is **public** — no login required to view.
-- [ ] Add a **Join** button that calls `useAuth().login()` then `.verify()`, then reveals the deposit step (Task B4).
-- [ ] **Verify:** `/` loads without login, animates correctly, shows mock NAV/countdown; Join button advances to verify.
+- [x] Move `cinematic.html`'s `<style>` block into `overview.css`; paste its markup into `Overview.tsx` (`class`→`className`).
+- [x] Run the cinematic animation JS **imperatively** inside a `useEffect` (drag-scrub, morph, SVG chartfield). Do not rewrite it in React.
+- [x] Bind the headline numbers (NAV, return, countdown) to `useCycle()`/`usePosition()` via the `countUp` util. Page is **public** — no login required to view. (Countdown→`useCycle().secondsLeft`; position chip→`usePosition()`; hero NAV/return kept as the fund's seeded series per design.)
+- [x] Add a **Join** button that calls `useAuth().login()` then `.verify()`, then reveals the deposit step (Task B4).
+- [x] **Verify:** `/` loads without login, animates correctly, shows mock NAV/countdown; Join button advances to verify. (Headless: 200 + markup + clean hydration verified; animation needs eyes-on rehearsal.)
 
 ---
 
@@ -102,9 +102,9 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 **Files:**
 - Create: `web/src/components/JoinFlow.tsx`
 
-- [ ] After `useAuth().isVerified` is true, show **Get demo USDC** (`getDemoUSDC()`) and **Deposit** (`deposit(amount)`).
-- [ ] On deposit, update `usePosition()` (mock) so the Overview reflects new shares/NAV.
-- [ ] **Verify:** click Join → (mock) verify → get USDC → deposit; confirm position/NAV update on Overview.
+- [x] After `useAuth().isVerified` is true, show **Get demo USDC** (`getDemoUSDC()`) and **Deposit** (`deposit(amount)`).
+- [x] On deposit, update `usePosition()` (mock) so the Overview reflects new shares/NAV.
+- [x] **Verify:** click Join → (mock) verify → get USDC → deposit; confirm position/NAV update on Overview. (Wired + type-checked; click-through to be confirmed in end-to-end browser rehearsal.)
 
 ---
 
@@ -114,10 +114,10 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Modify: `web/src/app/vote/page.tsx`
 - Create: `web/src/styles/vote.css` (from `vote.html`)
 
-- [ ] Port `vote.html` markup + CSS. Bind the stock list to `usePrices()`/`UNIVERSE`; allocation control updates local state.
-- [ ] **Submit** calls `castVote(allocs)` (mock); show a confirmation + the cycle countdown from `useCycle()`. Gate submit behind `useAuth().isVerified` (or redirect to Join).
-- [ ] After submit, expose a way to fire the mock `resolveCycle()` (a demo-only "resolve now" button or keypress) so the post-vote beat shows: cycle resolves → `useAccuracy()` score appears → `claim()` becomes available on Overview/Account.
-- [ ] **Verify:** allocate across tickers, submit, see confirmation; weights normalize correctly; trigger resolve and confirm accuracy + claim appear.
+- [x] Port `vote.html` markup + CSS. Bind the stock list to `usePrices()`/`UNIVERSE`; allocation control updates local state.
+- [x] **Submit** calls `castVote(allocs)` (mock); show a confirmation + the cycle countdown from `useCycle()`. Gate submit behind `useAuth().isVerified` (or redirect to Join).
+- [x] After submit, expose a way to fire the mock `resolveCycle()` (a demo-only "resolve now" button or keypress) so the post-vote beat shows: cycle resolves → `useAccuracy()` score appears → `claim()` becomes available on Overview/Account.
+- [x] **Verify:** allocate across tickers, submit, see confirmation; weights normalize correctly; trigger resolve and confirm accuracy + claim appear. (Wired + type-checked + 200/markup verified; slider/submit/resolve clicks pending browser rehearsal.)
 
 ---
 
@@ -128,8 +128,37 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Modify: `web/src/app/account/page.tsx` (+ `account.css` from `account.html`)
 - Modify: `web/src/app/settings/page.tsx` (+ `settings.css` from `stitch-settings.html`)
 
-- [ ] Mechanical paste of each page's markup + CSS into its route. Bind only trivially (leaderboard → `useLeaderboard()` mock); account/settings can render static mock content.
-- [ ] **Verify:** each page renders inside the shared shell with correct styling; nav highlights the active tab.
+- [x] Mechanical paste of each page's markup + CSS into its route. Bind only trivially (leaderboard → `useLeaderboard()` mock); account/settings can render static mock content. (Note: the `stitch-*` mockups are Tailwind-CDN based — their per-page config tokens were added to globals.css `@theme` + Material Symbols font link in layout, so the utility classes port verbatim.)
+- [x] **Verify:** each page renders inside the shared shell with correct styling; nav highlights the active tab. (Verified in a headless Chrome: all 3 render centered + clear the fixed nav, leaderboard binds to `useLeaderboard()`, no console errors.)
+  - **Cascade-layer fix (post-B6):** shell.css's unlayered `*{margin:0;padding:0}` reset was beating Tailwind's layered spacing utilities, so the Tailwind-based `stitch-*` pages ignored `pt-32`/`mx-auto`/`px-*` and collided with the fixed nav. Fixed by importing shell.css into Tailwind's `base` layer (`globals.css`) and dropping the leftover template `body{}` rule.
+
+---
+
+### Task B6b: Sign-in flow → mock `/join` page (added from redesign-v2)
+
+A new `sign-in.html` mockup (Connect → World ID → demo USDC) landed on `design/redesign-v2` — same design system (byte-identical shell.css, "Community Fund" nav). Ported it as a dedicated mock onboarding page, superseding the cramped inline Join from B3/B4.
+
+**Files:** Create `web/src/app/join/page.tsx` + `web/src/styles/join.css`; edit `Overview.tsx`; delete `web/src/components/JoinFlow.tsx`.
+
+- [x] Port the 3-step card to `/join`; wire steps to mock `useAuth().login()/verify()` + `getDemoUSDC()`→`deposit(1000)` (claim also funds the position). "FundDAO" label corrected to "Community Fund".
+- [x] Overview's "Join the fund" CTA now routes to `/join`; inline `JoinFlow` + `.join-slot` retired (`JoinFlow.tsx` deleted).
+- [x] **Verify:** headless Chrome click-through Connect→Verify→Fund→Done; funding populates Overview's position chip across client-side nav.
+
+---
+
+### Task B6c: Forum page → `/forum` (un-cut on request)
+
+Forum was cut from v1 (stretch goal) but later requested, so it was ported. Tailwind-CDN mockup (`stitch-forum.html`), same pattern as the other `stitch-*` pages; static mock content (not in the data layer). Forum nav tab restored (Overview · Vote · **Forum** · Leaderboard · Account).
+
+**Files:** Create `web/src/app/forum/page.tsx` + `web/src/styles/forum.css`; edit `Nav.tsx`.
+
+- [x] Port markup as Tailwind utilities verbatim; reuse the existing `@theme` tokens + global Material Symbols; helper classes reuse `leaderboard.css` definitions byte-identically (no new global-CSS collisions).
+- [x] **Verify:** `/forum` 200 + renders in shell; nav tab active; prod `next build` + full demo-path + 7-route regression green.
+
+> **Post-port hardening (cross-cutting fixes found during review):**
+> - **Cascade layers:** shell.css imported into Tailwind's `base` layer so utilities win (fixes the Tailwind pages clearing the fixed nav).
+> - **Global-CSS class collisions:** the cinematic donut's `.ring` (vs Tailwind `ring`) and vote's `.grid` (vs Tailwind `grid`, which leaked across routes and broke the leaderboard) were neutralized/renamed.
+> - **Icon-font FOUT:** Material Symbols set to `display=block` (no raw-ligature-text flash on hard refresh).
 
 ---
 
@@ -145,4 +174,6 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 ---
 
 ## Done when
-All 6 pages render in one consistent shell; the demo path (land → Join → verify → get USDC → deposit → vote) runs end-to-end on mock data; flipping to live is the env + provider swap in B7, with no component rewrites.
+All pages render in one consistent shell — Overview, Join, Vote, Forum, Leaderboard, Account, Settings (7 routes); the demo path (land → Join → verify → get USDC → deposit → vote → resolve) runs end-to-end on mock data; flipping to live is the env + provider swap in B7, with no component rewrites.
+
+**Status (mock milestone): COMPLETE.** Verified via prod `next build` + a headless-Chrome regression (demo path + 7-route smoke + cross-route CSS-collision checks): 19/19 pass, 0 console errors. Only B7 (live-flip, M2) remains.

@@ -1,0 +1,110 @@
+/* Cinematic Overview page styles.
+   The first block below is copied verbatim from redesign/mockups/cinematic.html's
+   <style> block. The .ovl-* additions at the bottom are the Track B bindings
+   (live countdown pill, "Your position" readout, Join CTA, B4 deposit slot),
+   styled with the same CSS vars from shell.css. */
+
+html,body{overscroll-behavior-x:none}
+#stage{position:relative;height:100vh;overflow:hidden;z-index:1;cursor:grab;user-select:none;touch-action:pan-y}
+#stage.grab{cursor:grabbing}
+.chartfield{position:absolute;inset:0;z-index:0;transition:opacity .34s var(--ease);will-change:opacity}
+#stage[data-s="0"] .chartfield{opacity:.20}
+#stage[data-s="1"] .chartfield{opacity:1}
+#stage[data-s="2"] .chartfield{opacity:0}
+.chartfield svg{width:100%;height:100%;display:block;overflow:visible}
+
+.sdot{position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 14px rgba(255,255,255,.7),0 0 0 4px rgba(45,212,191,.18);transform:translate(-50%,-50%);z-index:3;opacity:0;pointer-events:none;transition:opacity .18s}
+.stip{position:absolute;transform:translate(-50%,-100%);z-index:3;font:600 13px/1 Inter;color:var(--ink);background:rgba(12,16,22,.82);border:1px solid var(--glassbd);padding:7px 11px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .18s;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#stage.scrubbing .sdot,#stage.scrubbing .stip{opacity:1}
+
+.value{position:absolute;top:0;left:0;z-index:2;transform-origin:top left;will-change:transform,opacity;transition:transform .62s var(--ease),opacity .4s var(--ease)}
+.value .num{font:800 clamp(60px,9.4vw,132px)/1 Outfit,sans-serif;letter-spacing:-.02em;background:linear-gradient(180deg,#fff,#bfeee6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.value .chg{margin-top:14px;font:600 24px/1 Inter;color:var(--green)} .value .chg.dn{color:var(--grey)}
+#stage[data-s="0"] .value{transform:translate(calc(50vw - 50%),calc(50vh - 58%)) scale(1)}
+#stage[data-s="1"] .value{transform:translate(var(--gutter),96px) scale(.52)}
+#stage[data-s="2"] .value{transform:translate(var(--gutter),96px) scale(.52);opacity:0}
+
+.strip{position:absolute;left:50%;top:calc(50vh + 96px);transform:translateX(-50%);z-index:2;display:flex;padding:6px;border-radius:16px;width:min(720px,86vw);background:var(--glass);border:1px solid var(--glassbd);overflow:hidden;-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);box-shadow:inset 0 1px 0 rgba(255,255,255,.1);transition:opacity .4s var(--ease),transform .5s var(--ease)}
+.strip a{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;padding:13px 12px;border-radius:11px;font:600 13.5px/1 Inter;cursor:pointer;position:relative;overflow:hidden;transition:background .2s} .strip a:hover{background:rgba(45,212,191,.08)} .strip a svg{width:17px;height:17px;color:var(--teal)}
+.strip a::before{content:"";position:absolute;top:-50%;left:-60%;width:45%;height:200%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:skewX(-18deg);opacity:0;pointer-events:none}
+.strip a:hover::before{animation:sweep2 .8s var(--ease)}
+@keyframes sweep2{0%{left:-60%;opacity:1}100%{left:150%;opacity:1}}
+#stage[data-s="1"] .strip,#stage[data-s="2"] .strip{opacity:0;transform:translateX(-50%) translateY(14px);pointer-events:none}
+
+.perfx{position:absolute;left:var(--gutter);right:var(--gutter);bottom:104px;z-index:2;opacity:0;transition:opacity .4s var(--ease) .12s;pointer-events:none}
+#stage[data-s="1"] .perfx{opacity:1;pointer-events:auto}
+.axis{display:flex;justify-content:space-between;color:var(--subtle);font:500 11px/1 Inter}
+.tfs{display:flex;gap:6px;margin-top:16px;justify-content:center}
+.tf{font:600 12.5px/1 Inter;color:var(--muted);background:none;border:1px solid transparent;padding:8px 15px;border-radius:10px;cursor:pointer} .tf:hover{color:var(--ink)} .tf.on{color:var(--teal);background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.28)}
+
+.alloc{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:56px;opacity:0;transform:scale(.95);pointer-events:none;transition:opacity .45s var(--ease),transform .55s var(--ease)}
+#stage[data-s="2"] .alloc{opacity:1;transform:none;pointer-events:auto}
+/* box-shadow:none cancels Tailwind's `.ring` utility (a 1px ring box-shadow):
+   "ring" collides with this donut's class name. Unlayered here, so it wins. */
+.ring{position:relative;width:300px;height:300px;flex:none;cursor:pointer;transition:transform .5s var(--ease);box-shadow:none}
+.ring.pop{transform:scale(1.06)} .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .arc{fill:none;stroke-width:30;transition:stroke-dasharray .55s var(--ease),stroke-dashoffset .55s var(--ease),stroke .45s var(--ease)}
+.leg{transition:opacity .28s var(--ease)}
+.ring .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.ring .ctr b{font:700 40px/1 Outfit}
+.ring .ctr span{font:600 11px/1 Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--subtle);margin-top:5px;text-decoration:none}
+.leg{display:flex;flex-direction:column;gap:14px;min-width:250px}
+.leg .row{display:flex;align-items:center;gap:12px;cursor:pointer} .leg .row:hover{opacity:.82}
+.leg .sw{width:13px;height:13px;border-radius:4px;flex:none;box-shadow:0 0 11px -1px currentColor}
+.leg .nm{font:500 15px/1.1 Inter;flex:1} .leg .nm s{display:block;font:400 12px/1 Inter;color:var(--subtle);text-decoration:none;margin-top:2px} .leg .pc{font:600 15px/1 Outfit}
+
+.arw{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--hair);cursor:pointer;z-index:5;transition:.2s} .arw:hover{color:var(--ink);background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.3)}
+.arw.l{left:max(20px,calc((100vw - 1320px)/2))} .arw.r{right:max(20px,calc((100vw - 1320px)/2))}
+.dots{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);display:flex;gap:10px;z-index:5}
+.dots button{width:8px;height:8px;border-radius:50%;border:none;background:rgba(255,255,255,.22);cursor:pointer;padding:0;transition:.25s} .dots button.on{background:var(--teal);width:24px;border-radius:5px;box-shadow:0 0 12px rgba(45,212,191,.6)}
+.scrolldn{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:5;color:var(--subtle);background:none;border:none;cursor:pointer;transition:color .2s} .scrolldn:hover{color:var(--ink)} .scrolldn svg{width:22px;height:22px;animation:bob 1.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+#hold{position:relative;z-index:1;max-width:none;margin:0;padding:70px max(32px,4vw) 110px}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease)} .reveal.in{opacity:1;transform:none}
+.holdrow{display:flex;align-items:center;gap:22px;padding:18px 12px;margin:0 -12px;border-radius:12px;border-top:1px solid var(--hair);cursor:pointer;transition:background .2s} .holdrow:first-of-type{border-top:none} .holdrow:hover{background:rgba(255,255,255,.03)}
+.tk{width:50px;height:42px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid var(--hair);display:grid;place-items:center;font:600 11px/1 Inter;color:var(--muted);flex:none}
+.hn{flex:none;min-width:170px} .hn b{font:600 16px/1.2 Inter} .hn s{display:block;font:400 12.5px/1 Inter;color:var(--subtle);text-decoration:none;margin-top:3px}
+.hspark{flex:1;height:46px}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.reveal{opacity:1;transform:none}}
+
+/* ===== Track B additions (live data bindings + Join), on-theme ===== */
+
+/* Live countdown pill — sits below the strip; glass styling like .vfy. */
+.ovl-live{position:absolute;left:50%;top:calc(50vh + 168px);transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:14px;transition:opacity .4s var(--ease),transform .5s var(--ease)}
+#stage[data-s="1"] .ovl-live,#stage[data-s="2"] .ovl-live{opacity:0;transform:translateX(-50%) translateY(14px);pointer-events:none}
+.ovl-pill{display:inline-flex;align-items:center;gap:8px;font:600 12.5px/1 Inter;color:var(--teal);border:1px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);padding:8px 14px;border-radius:999px;white-space:nowrap;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.ovl-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);flex:none}
+.ovl-pill .lbl{color:var(--subtle);font-weight:500}
+.ovl-pill .clk{font-family:Outfit,sans-serif;font-weight:700;letter-spacing:.02em}
+
+/* "Your position" readout — subtle glass chip beside the countdown. */
+.ovl-pos{display:inline-flex;align-items:center;gap:8px;font:500 12.5px/1 Inter;color:var(--muted);border:1px solid var(--hair);background:var(--glass);padding:8px 14px;border-radius:999px;white-space:nowrap}
+.ovl-pos b{color:var(--ink);font:700 13px/1 Outfit}
+.ovl-pos .muted{color:var(--subtle)}
+
+/* Join CTA — prominent teal pill button, on-theme. */
+.ovl-join{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);z-index:5;display:inline-flex;align-items:center;gap:10px;font:700 14px/1 Inter;color:#04201C;padding:14px 26px;border-radius:999px;border:none;cursor:pointer;background:linear-gradient(150deg,#3FE9D2,#0FA896);box-shadow:0 14px 34px -14px rgba(45,212,191,.7),inset 0 1px 0 rgba(255,255,255,.5);transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.ovl-join:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 18px 40px -14px rgba(45,212,191,.85),inset 0 1px 0 rgba(255,255,255,.5)}
+.ovl-join:disabled{opacity:.7;cursor:default}
+.ovl-join svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#stage[data-s="1"] .ovl-join,#stage[data-s="2"] .ovl-join{opacity:0;pointer-events:none}
+
+/* B4 deposit slot — appears after verify; glass card. */
+.join-slot{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);z-index:6;width:min(420px,86vw);padding:18px 22px;border-radius:16px;background:var(--glass);border:1px solid var(--glassbd);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);box-shadow:inset 0 1px 0 rgba(255,255,255,.1);text-align:center}
+.join-slot p{font:600 13.5px/1.4 Inter;color:var(--teal)}
+#stage[data-s="1"] .join-slot,#stage[data-s="2"] .join-slot{opacity:0;pointer-events:none}
+
+/* B4 JoinFlow — two-step deposit form inside .join-slot. */
+.join-flow{display:flex;flex-direction:column;gap:12px;text-align:left}
+.join-hint{font:600 13px/1.4 Inter;color:var(--subtle);text-align:center}
+.join-step{display:flex;align-items:center;gap:10px}
+.join-num{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:700 11px/1 Outfit,sans-serif;color:var(--teal);border:1px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08)}
+.join-btn{position:static;left:auto;bottom:auto;transform:none;padding:9px 16px;font-size:12.5px}
+.join-btn:hover{transform:translateY(-1px)}
+.join-deposit{display:flex;align-items:center;gap:8px;flex:1}
+.join-curr{font:600 13px/1 Outfit,sans-serif;color:var(--subtle)}
+.join-input{flex:1;min-width:0;font:600 13px/1 Outfit,sans-serif;color:var(--ink);background:rgba(255,255,255,.04);border:1px solid var(--hair);border-radius:10px;padding:9px 12px;outline:none}
+.join-input:focus{border-color:rgba(45,212,191,.4)}
+.join-done{font:600 13px/1.4 Inter;color:var(--teal);text-align:center}
