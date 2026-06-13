@@ -12,11 +12,8 @@ How to use this file: check things off as they land. If you hit a blocker or an 
 
 Most research questions are now answered (see `ISSUES.md` Resolved). What's left is people-dependent. In priority order:
 
-- [ ] **Assign workstream owners** (fill the `owner: ____` blanks below) — nothing parallelizes until this is done
 - [x] **Freeze the interfaces** — `contracts/src/interfaces/` has `IPriceOracle`, `IFundVault`, `IGovernance`, `IUniswapExecutor` (from CONTRACTS.md). Every workstream imports these NOW; change only by team agreement.
 - [x] **Foundry installed + contracts initialized** from v4-template — compiles green (interfaces + template). Deps are gitignored; restore with `contracts/setup.sh`.
-- [ ] **Chainlink booth: request CRE deployment access** (`cre account access`) — has lead time; simulation is the fallback but ask now (ISSUES #5)
-- [ ] *(optional)* World booth: sanity-check `selfieCheckLegacy` satisfies the prize (ISSUES #10 — decided, has a fallback, not a blocker). Dynamic booth: ask about native gas sponsorship (we ship the drip regardless, ISSUES #11).
 
 ---
 
@@ -72,7 +69,7 @@ The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A
 - [x] **Price source behind an interface** — `ReplayFixtureSource` (real 2024 weeks, loops) + `LiveAPISource` (Yahoo), selected by config. Demo vs production is a config flag.
 - [x] Job 1: fetch stock + S&P prices from price source → `Oracle.setPrices`
 - [x] Job 2: pool re-peg toward the posted oracle price (heartbeat: direct `executor.repeg`; workflow: report). Needs B's executor deployed to exercise on testnet.
-- [x] Job 3: resolve compute — read votes + prices on-chain, compute per-member EWMA accuracy + creditWeightBps → `Governance.resolveCycle` (needs Governance vote-readback views, ISSUES #C1)
+- [x] Job 3: resolve compute — read votes + prices on-chain, compute per-member EWMA accuracy + creditWeightBps → `Governance.resolveCycle` (uses Governance vote-readback views `getVoters()`/`allocOf(address)`, ISSUES #C1 — DONE)
 - [x] Lifecycle triggers: open → lock → resolve on the cycle schedule
 - [x] **Always-on mode:** `scripts/run.ts` loops cycles continuously, stepping the historical series on repeat — the live app's heartbeat. On-chain `state()` is the source of truth, so it resumes at the right *phase* after a restart (a mid-phase restart advances immediately rather than waiting out the remaining window — fine for the supervised demo).
 - [x] Same logic exposed as a plain script too — the heartbeat *is* that script (shared `src/core/`); Railway hosting fallback (ISSUES #13)
@@ -109,7 +106,7 @@ The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's 
 
 ## Phase 2 — Integration milestones (in order)
 
-- [ ] **M1 — Full cycle on local fork**, scripted: deposit → open → vote → lock (real swaps) → price move → resolve → claim. No UI.
+- [x] **M1 — Full cycle on local fork**, scripted: deposit → open → vote → lock (real swaps) → price move → resolve → claim. No UI. — `test/Integration.t.sol` runs it through the real `UniswapExecutor`+KYCHook+v4 pools; `script/DeployIntegrated.s.sol` is the unified A↔B deploy (shared USDC + tokens).
 - [ ] **M2 — Same on Base Sepolia** with the CRE workflow (simulated or deployed) driving it.
 - [ ] **M3 — Frontend drives the human flow** end-to-end on testnet: login → verify → deposit → vote → see resolution.
 - [ ] **M4 — Always-on:** web app deployed (Vercel), keeper hosted + looping cycles continuously, agents voting every cycle, leaderboard differentiated and moving on its own.
