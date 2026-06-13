@@ -44,10 +44,10 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Create: `web/src/lib/mockAuth.tsx`
 - Create: `web/src/lib/useAuth.ts` (single re-export the pages import; points at mock for now)
 
-- [ ] Put the frozen `AuthState` interface in `auth-types.ts`.
-- [ ] Implement `MockAuthProvider` + a mock `useAuth()` in `mockAuth.tsx`: `address` = a fixed demo address, `isConnected: true`, `isVerified: true`, `login/logout/verify` resolve immediately, `getWalletClient()` returns `null` (mock sends no real txs). No `@concordia/shared` or `viem` calls.
-- [ ] `useAuth.ts` re-exports the mock `useAuth`. Pages import only from `@/lib/useAuth`, so swapping to Track A's real provider is a one-line change here + in `layout.tsx`.
-- [ ] **Verify:** a component calling `useAuth()` renders with the stub values.
+- [x] Put the frozen `AuthState` interface in `auth-types.ts`.
+- [x] Implement `MockAuthProvider` + a mock `useAuth()` in `mockAuth.tsx`: `address` = a fixed demo address, `isConnected: true`, `isVerified: true`, `login/logout/verify` resolve immediately, `getWalletClient()` returns `null` (mock sends no real txs). No `@concordia/shared` or `viem` calls.
+- [x] `useAuth.ts` re-exports the mock `useAuth`. Pages import only from `@/lib/useAuth`, so swapping to Track A's real provider is a one-line change here + in `layout.tsx`.
+- [x] **Verify:** a component calling `useAuth()` renders with the stub values.
 
 ---
 
