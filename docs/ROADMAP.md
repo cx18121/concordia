@@ -32,6 +32,7 @@ These unblock everything else. Do them first, together.
   - [ ] Dynamic environment ID created, test login works
   - [ ] Install **Bun ≥1.2.21** (the CRE TS SDK runs on Bun, not Node) + the CRE CLI
   - [ ] Price API needs **no key** — Yahoo Finance v8 (ISSUES #1). Pull the 12-week historical fixture once and commit it (one URL/ticker, S&P = `%5EGSPC`).
+  - [ ] **Contract deploy creds** (unblocks deploying B's execution stack + all contracts, ISSUES #15): `BASE_SEPOLIA_RPC_URL` (Alchemy/Coinbase), a funded deployer private key, `ETHERSCAN_API_KEY` (Basescan, for `--verify`). `foundry.toml` already reads these; then `forge script script/04_DeployExecution.s.sol --tc DeployExecutionScript --rpc-url base_sepolia --private-key $PK --broadcast --verify` and paste the logged addresses into `shared/src/addresses.ts`.
 - [ ] Base Sepolia ETH in every dev wallet (Coinbase/Alchemy faucets) + a funded backend "drip" wallet for judge onboarding (ISSUES #11)
 - [ ] Deploy **mock USDC** with a public `mint()` (decided, ISSUES #2) — doubles as the "get demo USDC" button
 - [ ] Everyone reads `DESIGN.md` + `CONTRACTS.md` (30 min, seriously)
