@@ -18,6 +18,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import { useFundActions } from "@/lib/data";
 import "@/styles/join.css";
@@ -37,6 +38,7 @@ function shortAddr(addr: string | null): string {
 }
 
 export default function JoinPage() {
+  const router = useRouter();
   const auth = useAuth();
   const { getDemoUSDC, deposit } = useFundActions();
 
@@ -50,6 +52,13 @@ export default function JoinPage() {
 
   // "Signed in as" — email if used, else the short address.
   const signedAs = email || shortAddr(auth.address);
+
+  // Back: step 1 leaves to Overview; later steps walk back through the flow.
+  function handleBack() {
+    if (step === 1) router.push("/");
+    else if (step === 2) setStep(1);
+    else if (step === 3) setStep(2);
+  }
 
   // ── Step 1: Connect (email or wallet) ──────────────────────────────
   async function connect() {
@@ -127,6 +136,17 @@ export default function JoinPage() {
   return (
     <div className="page">
       <div className="card">
+        {/* Back: to Overview from step 1, else one step back. Hidden when done. */}
+        {step !== "done" && (
+          <button className="join-back" onClick={handleBack}>
+            <svg viewBox="0 0 16 16">
+              <line x1="13" y1="8" x2="3" y2="8" />
+              <polyline points="7,4 3,8 7,12" />
+            </svg>
+            {step === 1 ? "Back to Overview" : "Back"}
+          </button>
+        )}
+
         {/* Logo */}
         <div className="logo-row">
           <div className="logo-mark">
