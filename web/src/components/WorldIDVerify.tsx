@@ -93,6 +93,7 @@ export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart 
     setVerified(true);
     setOpen(false);
     onVerified?.();
+    window.location.href = "/mockups/stitch-overview.html";
   }
 
   // Dismissed (or closed after a failed proof) without a success → notify parent once.
@@ -124,7 +125,7 @@ export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart 
     return (
       <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700">
         <span>✓</span>
-        <span>Verified with World ID</span>
+        <span>Verified — redirecting…</span>
       </div>
     );
   }

@@ -5,6 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Portfolio | Community Fund DAO</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="stylesheet" href="shell.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
@@ -73,13 +74,12 @@
         }
     </style>
 </head>
-<body class="min-h-screen">
-<!-- Ambient Background Elements -->
-<div class="ambient-glow top-[-200px] left-[-200px]"></div>
-<div class="ambient-glow bottom-[-200px] right-[-200px]" style="animation-delay: -5s; background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, rgba(45, 212, 191, 0.03) 50%, rgba(6, 8, 12, 0) 100%);"></div>
-<!-- TopNavBar -->
-<header class="fixed top-0 left-0 right-0 z-50 px-6 py-4">
-<nav class="max-w-[1140px] mx-auto flex items-center justify-between px-6 py-2 bg-white/5 backdrop-blur-xl rounded-full border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300">
+<body data-page="account" class="min-h-screen">
+<!-- Ambient background (shared shell) -->
+<div class="amb"><i class="a"></i><i class="b"></i></div>
+<!-- Shared navigation shell -->
+<div id="nav-root"></div>
+<template><nav>
 <div class="flex items-center gap-2">
 <div class="w-8 h-8 bg-gradient-to-br from-teal to-teal-deep rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(45,212,191,0.4)]">
 <span class="material-symbols-outlined text-obsidian text-sm font-bold" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
@@ -87,11 +87,11 @@
 <span class="font-display text-xl font-bold text-[#F4F7FA] tracking-tight">Community Fund</span>
 </div>
 <div class="hidden md:flex items-center gap-8 font-body text-sm font-medium tracking-wide">
-<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="stitch-overview.html">Overview</a>
-<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="stitch-vote.html">Vote</a>
+<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="#">Overview</a>
+<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="#">Vote</a>
 <a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="#">Forum</a>
-<a class="text-[#F4F7FA] border-b-2 border-[#2DD4BF] shadow-[0_4px_12px_-2px_rgba(45,212,191,0.3)] cursor-pointer" href="stitch-portfolio.html">Portfolio</a>
-<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="stitch-leaderboard.html">Leaderboard</a>
+<a class="text-[#F4F7FA] border-b-2 border-[#2DD4BF] shadow-[0_4px_12px_-2px_rgba(45,212,191,0.3)] cursor-pointer" href="#">Portfolio</a>
+<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="#">Leaderboard</a>
 </div>
 <div class="flex items-center gap-4">
 <div class="hidden sm:flex items-center px-3 py-1 bg-white/10 rounded-full text-xs font-semibold text-teal gap-2 border border-teal/20">
@@ -103,9 +103,8 @@
 <img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLNLSSgg6wRHbj5KifMibDbvp-x8zcBFWxhdqCuGFITpAddv-1bNPianpRQvv9IRx7R3M5K-Fm8INcreF6hsGJagbAWxZEYdnxmsLNBy7KiaOeWXOqsCgxQGab63lYggQtivCqOiIODUa-7qvXkyLqgnUg89yLPvbLWqVlHcoNyGdE_MgVWeSRkWZ2Lgg1QFS4qr5uRPNAfPSwoWO-cB8hjs0QhLPKt9xjRk0SGdGztMtsgmY76r5xAu-jadbhhibr6X8VmIPhApM"/>
 </div>
 </div>
-</nav>
-</header>
-<main class="max-w-[1140px] mx-auto pt-32 pb-20 px-6">
+</nav></template>
+<main class="max-w-[1140px] mx-auto pt-32 pb-20 px-6 relative z-10">
 <!-- Global Stats Row (Free Layout) -->
 <section class="grid grid-cols-1 md:grid-cols-4 gap-0 mb-16 items-center">
 <div class="px-6 border-r border-white/10 last:border-0 py-2">
@@ -193,7 +192,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 <!-- Left Column: Your Stake (The Focus Card) -->
 <div class="lg:col-span-7">
-<div class="glass-card rounded-xl p-8 transition-transform hover:translate-y-[-4px] duration-300">
+<div class="glass-card shine rounded-xl p-8 transition-transform hover:translate-y-[-4px] duration-300">
 <div class="flex justify-between items-start mb-10">
 <div>
 <p class="text-xs font-medium uppercase tracking-[0.08em] text-text-subtle mb-1">Your Position Value</p>
@@ -245,7 +244,7 @@
 <!-- Right Column: Quick Stats / Next Epoch -->
 <div class="lg:col-span-5 space-y-6">
 <!-- Epoch Card -->
-<div class="glass-card rounded-xl p-6 border-l-4 border-l-teal">
+<div class="glass-card shine rounded-xl p-6 border-l-4 border-l-teal">
 <div class="flex items-center justify-between mb-4">
 <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Next Epoch</span>
 <div class="flex items-center gap-2">
@@ -270,7 +269,7 @@
 <button class="w-full py-2.5 rounded-lg border border-white/10 text-xs font-bold text-text-muted hover:bg-white/5 hover:text-text-primary transition-all">View Governance Timeline</button>
 </div>
 <!-- Navigational Group Cards -->
-<div class="glass-card rounded-xl p-6 group cursor-pointer hover:translate-y-[-2px] transition-all duration-300 relative overflow-hidden">
+<div class="glass-card shine rounded-xl p-6 group cursor-pointer hover:translate-y-[-2px] transition-all duration-300 relative overflow-hidden">
 <div class="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
 <span class="material-symbols-outlined text-lg">arrow_outward</span>
 </div>
@@ -285,7 +284,7 @@
 </div>
 <p class="text-xs text-text-muted">Influence the fund's direction by voting on new asset allocations and strategy shifts.</p>
 </div>
-<div class="glass-card rounded-xl p-6 group cursor-pointer hover:translate-y-[-2px] transition-all duration-300 relative overflow-hidden">
+<div class="glass-card shine rounded-xl p-6 group cursor-pointer hover:translate-y-[-2px] transition-all duration-300 relative overflow-hidden">
 <div class="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
 <span class="material-symbols-outlined text-lg">leaderboard</span>
 </div>
@@ -319,18 +318,18 @@
 <!-- Asset Rows -->
 <div class="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
 <div class="col-span-5 flex items-center gap-4">
-<div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center font-bold text-indigo-400">SOL</div>
+<div class="w-10 h-10 rounded-full bg-teal/20 flex items-center justify-center font-bold text-[11px] text-teal">NVDA</div>
 <div>
-<p class="text-sm font-bold text-text-primary">Solana</p>
-<p class="text-xs text-text-subtle">SOL</p>
+<p class="text-sm font-bold text-text-primary">Nvidia</p>
+<p class="text-xs text-text-subtle">mNVDA</p>
 </div>
 </div>
 <div class="col-span-2 text-right">
-<p class="text-sm font-semibold text-text-primary">42.5%</p>
+<p class="text-sm font-semibold text-text-primary">24.1%</p>
 </div>
 <div class="col-span-3 text-right">
 <div class="flex items-center justify-end gap-2">
-<span class="text-sm font-bold text-gain">+24.8%</span>
+<span class="text-sm font-bold text-gain">+18.4%</span>
 <span class="material-symbols-outlined text-gain text-sm">trending_up</span>
 </div>
 </div>
@@ -340,18 +339,18 @@
 </div>
 <div class="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
 <div class="col-span-5 flex items-center gap-4">
-<div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center font-bold text-blue-400">ETH</div>
+<div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center font-bold text-[11px] text-cyan-400">MSFT</div>
 <div>
-<p class="text-sm font-bold text-text-primary">Ethereum</p>
-<p class="text-xs text-text-subtle">ETH</p>
+<p class="text-sm font-bold text-text-primary">Microsoft</p>
+<p class="text-xs text-text-subtle">mMSFT</p>
 </div>
 </div>
 <div class="col-span-2 text-right">
-<p class="text-sm font-semibold text-text-primary">28.0%</p>
+<p class="text-sm font-semibold text-text-primary">18.4%</p>
 </div>
 <div class="col-span-3 text-right">
 <div class="flex items-center justify-end gap-2">
-<span class="text-sm font-bold text-gain">+8.2%</span>
+<span class="text-sm font-bold text-gain">+7.2%</span>
 <span class="material-symbols-outlined text-gain text-sm">trending_up</span>
 </div>
 </div>
@@ -361,18 +360,18 @@
 </div>
 <div class="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
 <div class="col-span-5 flex items-center gap-4">
-<div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center font-bold text-yellow-400">BTC</div>
+<div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center font-bold text-[11px] text-blue-400">AAPL</div>
 <div>
-<p class="text-sm font-bold text-text-primary">Bitcoin</p>
-<p class="text-xs text-text-subtle">BTC</p>
+<p class="text-sm font-bold text-text-primary">Apple</p>
+<p class="text-xs text-text-subtle">mAAPL</p>
 </div>
 </div>
 <div class="col-span-2 text-right">
-<p class="text-sm font-semibold text-text-primary">15.5%</p>
+<p class="text-sm font-semibold text-text-primary">15.0%</p>
 </div>
 <div class="col-span-3 text-right">
 <div class="flex items-center justify-end gap-2">
-<span class="text-sm font-bold text-loss">-2.4%</span>
+<span class="text-sm font-bold text-loss">-2.6%</span>
 <span class="material-symbols-outlined text-loss text-sm">trending_down</span>
 </div>
 </div>
@@ -384,7 +383,7 @@
 </section>
 </main>
 <!-- Simple Atmospheric Footer -->
-<footer class="max-w-[1140px] mx-auto py-12 px-6 border-t border-white/5">
+<footer class="max-w-[1140px] mx-auto py-12 px-6 border-t border-white/5 relative z-10">
 <div class="flex flex-col md:flex-row justify-between items-center gap-6">
 <div class="flex items-center gap-2 grayscale opacity-40">
 <div class="w-6 h-6 bg-text-subtle rounded flex items-center justify-center">
@@ -422,14 +421,5 @@
             }, 3000);
         }
     </script>
-<script>
-(function(){
-  var map={'Overview':'cinematic.html','Vote':'vote.html','Forum':'stitch-forum.html','Portfolio':'stitch-portfolio.html','Leaderboard':'stitch-leaderboard.html'};
-  [].forEach.call(document.querySelectorAll('a,button,span,div,li,p'),function(n){
-    if(/^H[1-6]$/.test(n.tagName))return;
-    var t=(n.textContent||'').trim();
-    if(t.length<=14 && map[t]){ n.style.cursor='pointer'; n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();location.href=map[t];}); }
-  });
-})();
-</script>
+<script src="shell.js"></script>
 </body></html>
