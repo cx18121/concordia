@@ -89,11 +89,11 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Create: `web/src/styles/overview.css` (the cinematic page's inline `<style>`, copied)
 - Create: `web/src/components/Overview.tsx` (`"use client"`)
 
-- [ ] Move `cinematic.html`'s `<style>` block into `overview.css`; paste its markup into `Overview.tsx` (`class`→`className`).
-- [ ] Run the cinematic animation JS **imperatively** inside a `useEffect` (drag-scrub, morph, SVG chartfield). Do not rewrite it in React.
-- [ ] Bind the headline numbers (NAV, return, countdown) to `useCycle()`/`usePosition()` via the `countUp` util. Page is **public** — no login required to view.
-- [ ] Add a **Join** button that calls `useAuth().login()` then `.verify()`, then reveals the deposit step (Task B4).
-- [ ] **Verify:** `/` loads without login, animates correctly, shows mock NAV/countdown; Join button advances to verify.
+- [x] Move `cinematic.html`'s `<style>` block into `overview.css`; paste its markup into `Overview.tsx` (`class`→`className`).
+- [x] Run the cinematic animation JS **imperatively** inside a `useEffect` (drag-scrub, morph, SVG chartfield). Do not rewrite it in React.
+- [x] Bind the headline numbers (NAV, return, countdown) to `useCycle()`/`usePosition()` via the `countUp` util. Page is **public** — no login required to view. (Countdown→`useCycle().secondsLeft`; position chip→`usePosition()`; hero NAV/return kept as the fund's seeded series per design.)
+- [x] Add a **Join** button that calls `useAuth().login()` then `.verify()`, then reveals the deposit step (Task B4).
+- [x] **Verify:** `/` loads without login, animates correctly, shows mock NAV/countdown; Join button advances to verify. (Headless: 200 + markup + clean hydration verified; animation needs eyes-on rehearsal.)
 
 ---
 
