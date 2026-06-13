@@ -10,14 +10,14 @@ How to use this file: check things off as they land. If you hit a blocker or an 
 
 ## 🚨 Urgent — time-sensitive, do before anything else
 
-Booths are only staffed during the event, and two of these have lead time. In priority order:
+Most research questions are now answered (see `ISSUES.md` Resolved). What's left is people-dependent. In priority order:
 
 - [ ] **Assign workstream owners** (fill the `owner: ____` blanks below) — nothing parallelizes until this is done
-- [ ] **Dynamic booth: ask them to enable gas sponsorship** on our environment (Base Sepolia, V3 MPC embedded wallets — manual enablement on their side, ISSUES #11). Without it, judge onboarding needs a gas-drip fallback.
-- [ ] **Chainlink: request CRE deployment access** (`cre account access`) — lead time; simulation is the fallback but ask now (ISSUES #5)
-- [ ] **World booth, three questions in one visit:** is there an on-chain verifier on Base Sepolia or do we verify in backend (#3)? Can a Dynamic server wallet register with AgentKit (#4)? What do they expect for judges without World App (#10)?
 - [ ] **Install Foundry + init contracts from v4-template** (instructions in `contracts/README.md`) — blocks workstreams A *and* B, and B is the critical path
 - [ ] **Freeze the interfaces** (first task after contracts init) — this is what lets all five workstreams run in parallel
+- [ ] **Chainlink booth: request CRE deployment access** (`cre account access`) — has lead time; simulation is the fallback but ask now (ISSUES #5)
+- [ ] **World booth: confirm `selfieCheckLegacy` credential satisfies the prize** (our planned judge-friendly level — ISSUES #10). Mechanics already verified; this is just a sanity check + keep one pre-verified demo account as stage fallback.
+- [ ] *(nice-to-have)* Dynamic booth: ask about enabling native gas sponsorship — but we ship the backend ETH-drip regardless (ISSUES #11), so not a blocker.
 
 ---
 
@@ -31,11 +31,10 @@ These unblock everything else. Do them first, together.
   - [ ] Chainlink CRE account + **request deployment access NOW** (lead time; local simulation is the fallback)
   - [ ] World developer portal: `app_id` + action created (one for verify, one for agent linking)
   - [ ] Dynamic environment ID created, test login works
-  - [ ] **Ask Dynamic to enable gas sponsorship** (Base Sepolia, V3 MPC embedded wallets — requires manual enablement on their side; see ISSUES #11)
-  - [ ] Pick the stock price API + get a key (see ISSUES #1)
   - [ ] Install **Bun ≥1.2.21** (the CRE TS SDK runs on Bun, not Node) + the CRE CLI
-- [ ] Base Sepolia ETH in every dev wallet (Coinbase/Alchemy faucets)
-- [ ] Decide mock-USDC vs Circle USDC (see ISSUES #2) and deploy whichever
+  - [ ] Price API needs **no key** — Yahoo Finance v8 (ISSUES #1). Pull the 12-week historical fixture once and commit it (one URL/ticker, S&P = `%5EGSPC`).
+- [ ] Base Sepolia ETH in every dev wallet (Coinbase/Alchemy faucets) + a funded backend "drip" wallet for judge onboarding (ISSUES #11)
+- [ ] Deploy **mock USDC** with a public `mint()` (decided, ISSUES #2) — doubles as the "get demo USDC" button
 - [ ] Everyone reads `DESIGN.md` + `CONTRACTS.md` (30 min, seriously)
 
 ---
@@ -87,7 +86,7 @@ Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. 
 - [ ] **Public read-only landing:** live leaderboard, portfolio, current cycle state, agent theses — visible without login
 - [ ] **Cycle countdown UI:** "voting closes in 1:32 / next cycle opens in 3:10" — a judge always knows what's happening and what to do next
 - [ ] **Demo-mode badge:** "🕐 DEMO — replaying week of Feb 12, 2024 at ~2000× speed" — honesty as a feature; the simulation is displayed, never hidden
-- [ ] World ID: IDKit widget → backend/contract proof verification → `Vault.verify` (see ISSUES #3) + judge fallback (ISSUES #10)
+- [ ] World ID: IDKit widget (request `selfieCheckLegacy`, `allow_legacy_proofs: true` — NOT the default `orb` level) → **REST verify** at `POST developer.world.org/api/v4/verify/{rp_id}` in a Next.js API route → backend marks wallet verified in Vault (ISSUES #3, #10)
 - [ ] Deposit / withdraw flow (incl. "queued until next cycle" state)
 - [ ] Vote screen: allocation sliders across the universe, power display, submit
 - [ ] Portfolio page: current basket, NAV, performance vs S&P
