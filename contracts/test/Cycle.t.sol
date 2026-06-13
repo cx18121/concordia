@@ -267,6 +267,44 @@ contract CycleTest is Test {
         assertEq(vault.balanceOf(alice), 0, "shares burned");
     }
 
+    /// The keeper's resolve enumerates voters + their allocations off-chain via these array views
+    /// (ISSUES #C1). Index-based auto-getters can't be read safely (no length → silent truncation
+    /// on a mid-loop RPC error), so the whole-array views must return exactly what was cast.
+    function test_voteReadbackArrayViews() public {
+        _postPrices4(200e8, 100e8, 400e8, 150e8, 5000e8);
+        vm.prank(keeper);
+        gov.openCycle();
+
+        vm.prank(alice);
+        gov.castVote(_alloc(AAPL, 10000));
+        IGovernance.Alloc[] memory split = new IGovernance.Alloc[](2);
+        split[0] = IGovernance.Alloc(MSFT, 5000);
+        split[1] = IGovernance.Alloc(GOOGL, 5000);
+        vm.prank(carol);
+        gov.castVote(split);
+
+        // getVoters() returns the set, in cast order, with a real length
+        address[] memory vs = gov.getVoters();
+        assertEq(vs.length, 2, "two voters enumerable");
+        assertEq(vs[0], alice);
+        assertEq(vs[1], carol);
+
+        // allocOf(addr) returns the whole allocation array per member
+        IGovernance.Alloc[] memory aAlloc = gov.allocOf(alice);
+        assertEq(aAlloc.length, 1);
+        assertEq(aAlloc[0].asset, AAPL);
+        assertEq(aAlloc[0].weightBps, 10000);
+
+        IGovernance.Alloc[] memory cAlloc = gov.allocOf(carol);
+        assertEq(cAlloc.length, 2);
+        assertEq(cAlloc[0].asset, MSFT);
+        assertEq(cAlloc[1].asset, GOOGL);
+        assertEq(cAlloc[1].weightBps, 5000);
+
+        // a non-voter reads back empty (not a revert) so the keeper can skip cleanly
+        assertEq(gov.allocOf(bob).length, 0, "non-voter has no allocations");
+    }
+
     function test_onlyKeeperLifecycle() public {
         vm.expectRevert(Governance.NotKeeper.selector);
         gov.openCycle();

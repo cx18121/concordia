@@ -6,6 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IGovernance} from "./interfaces/IGovernance.sol";
 import {IFundVault} from "./interfaces/IFundVault.sol";
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
+import {IReceiver} from "./interfaces/IReceiver.sol";
 
 /// @dev Extra Vault getters used here that IFundVault doesn't declare: the lock snapshot,
 ///      and the asset registry (to reject votes for unregistered symbols).
@@ -22,7 +23,7 @@ interface IVaultSnapshot {
 ///         excess on-chain and drives Vault.settle(). See docs/CONTRACTS.md §4.
 /// @dev Scales: accuracy signed E4, power/weights bps. Lifecycle fns are keeper-triggered (CRE).
 ///      The selection count EMERGES from votes — no fixed top-N. Money math lives in the Vault.
-contract Governance is IGovernance {
+contract Governance is IGovernance, IReceiver {
     uint256 private constant BPS = 1e4;
 
     // ---- immutable wiring ----
@@ -48,7 +49,10 @@ contract Governance is IGovernance {
 
     // ---- votes (current cycle) ----
     address[] public voters;
-    mapping(address => Alloc[]) public allocOf;
+    // Stored as internal: the array-returning view `allocOf(address)` below replaces the index-based
+    // auto-getter so the keeper can enumerate a member's allocations in one call (ISSUES #C1). A
+    // function and a state variable can't share a name in Solidity, hence the `_` on the storage.
+    mapping(address => Alloc[]) internal _allocOf;
     mapping(bytes32 => uint256) public assetWeightE4;
     bytes32[] public votedAssets;
     mapping(bytes32 => bool) private _assetSeen;
@@ -62,7 +66,11 @@ contract Governance is IGovernance {
     uint16 public REWARD_POOL_PCT = 2500; // 25% of alpha → reward pool (read by Vault.settle)
     uint256 public DUST_FLOOR_USDC = 0; // min position size; 0 = off for demo
 
+    /// @notice Trusted KeystoneForwarder for the CRE report path (0 = CRE path disabled). ISSUES #C2.
+    address public forwarder;
+
     error NotKeeper();
+    error NotForwarder();
     error NotVault();
     error WrongState();
     error NotEligible();
@@ -70,6 +78,7 @@ contract Governance is IGovernance {
     error AlreadyVoted();
     error UnknownAsset();
     error LengthMismatch();
+    error UnknownAction();
 
     modifier onlyKeeper() {
         if (msg.sender != keeper) revert NotKeeper();
@@ -105,9 +114,39 @@ contract Governance is IGovernance {
 
     // -------------------------------------------------------------- lifecycle (keeper)
 
+    /// @notice Point the CRE report path at the KeystoneForwarder. Keeper-only.
+    function setForwarder(address forwarder_) external onlyKeeper {
+        forwarder = forwarder_;
+    }
+
+    /// @inheritdoc IReceiver
+    /// @dev CRE lifecycle path. `report` = (uint8 action, bytes data): OPEN=0, LOCK=1, RESOLVE=2.
+    ///      RESOLVE's `data` = (address[] members, int256[] newAccuracyE4, uint256[] creditWeightBps),
+    ///      matching keeper/src/core/encode.ts. Same internal logic as the onlyKeeper EOA functions.
+    function onReport(bytes calldata, bytes calldata report) external {
+        if (msg.sender != forwarder) revert NotForwarder();
+        (uint8 action, bytes memory data) = abi.decode(report, (uint8, bytes));
+        if (action == 0) {
+            _openCycle();
+        } else if (action == 1) {
+            _lockCycle();
+        } else if (action == 2) {
+            (address[] memory members_, int256[] memory acc, uint256[] memory credit) =
+                abi.decode(data, (address[], int256[], uint256[]));
+            _resolveCycle(members_, acc, credit);
+        } else {
+            revert UnknownAction();
+        }
+    }
+
     /// @inheritdoc IGovernance
+    function openCycle() external onlyKeeper {
+        _openCycle();
+    }
+
     /// @dev Snapshots VP(i) = (CAPITAL·capShare + ACCURACY·accShare·confidence) and resets votes.
-    function openCycle() external onlyKeeper inState(State.IDLE) {
+    function _openCycle() internal {
+        if (state != State.IDLE) revert WrongState();
         _resetVotes();
 
         uint256 totalShares = IERC20(address(vault)).totalSupply();
@@ -137,7 +176,12 @@ contract Governance is IGovernance {
     }
 
     /// @inheritdoc IGovernance
-    function lockCycle() external onlyKeeper inState(State.OPEN) {
+    function lockCycle() external onlyKeeper {
+        _lockCycle();
+    }
+
+    function _lockCycle() internal {
+        if (state != State.OPEN) revert WrongState();
         (bytes32[] memory assets, uint256[] memory weights) = selectBasket();
         vault.executeBasket(assets, weights);
         vault.recordLock(vault.totalAssets(), oracle.benchmark());
@@ -152,7 +196,16 @@ contract Governance is IGovernance {
         address[] calldata members_,
         int256[] calldata newAccuracyE4,
         uint256[] calldata creditWeightBps
-    ) external onlyKeeper inState(State.LOCKED) {
+    ) external onlyKeeper {
+        _resolveCycle(members_, newAccuracyE4, creditWeightBps);
+    }
+
+    function _resolveCycle(
+        address[] memory members_,
+        int256[] memory newAccuracyE4,
+        uint256[] memory creditWeightBps
+    ) internal {
+        if (state != State.LOCKED) revert WrongState();
         if (members_.length != newAccuracyE4.length || members_.length != creditWeightBps.length) {
             revert LengthMismatch();
         }
@@ -175,7 +228,7 @@ contract Governance is IGovernance {
     /// @inheritdoc IGovernance
     function castVote(Alloc[] calldata allocations) external inState(State.OPEN) {
         if (!vault.verified(msg.sender) || !isMember[msg.sender]) revert NotEligible();
-        if (allocOf[msg.sender].length != 0) revert AlreadyVoted();
+        if (_allocOf[msg.sender].length != 0) revert AlreadyVoted();
 
         uint256 sum;
         for (uint256 i = 0; i < allocations.length; i++) {
@@ -189,7 +242,7 @@ contract Governance is IGovernance {
             bytes32 a = allocations[i].asset;
             // only registered assets — an unknown symbol would brick lockCycle (executor reverts)
             if (IVaultSnapshot(address(vault)).tokenOf(a) == address(0)) revert UnknownAsset();
-            allocOf[msg.sender].push(allocations[i]);
+            _allocOf[msg.sender].push(allocations[i]);
             if (!_assetSeen[a]) {
                 _assetSeen[a] = true;
                 votedAssets.push(a);
@@ -288,6 +341,18 @@ contract Governance is IGovernance {
         return accuracyE4[member];
     }
 
+    /// @notice The full voter set for the current cycle. The keeper enumerates this at resolve to
+    ///         score everyone; the index-based auto-getter (`voters(i)`) can't be read safely
+    ///         off-chain (no length, a mid-loop RPC error silently truncates the set). ISSUES #C1.
+    function getVoters() external view returns (address[] memory) {
+        return voters;
+    }
+
+    /// @notice A member's backed allocations for the current cycle, as a whole array (ISSUES #C1).
+    function allocOf(address member) external view returns (Alloc[] memory) {
+        return _allocOf[member];
+    }
+
     /// @inheritdoc IGovernance
     function confidenceOf(address member) external view returns (uint256) {
         return _confidenceE4(member);
@@ -324,7 +389,7 @@ contract Governance is IGovernance {
             _assetSeen[a] = false;
         }
         for (uint256 i = 0; i < voters.length; i++) {
-            delete allocOf[voters[i]];
+            delete _allocOf[voters[i]];
         }
         delete votedAssets;
         delete voters;

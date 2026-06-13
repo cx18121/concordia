@@ -207,6 +207,32 @@ contract UniswapExecutorTest is BaseTest {
         assertApproxEqRel(uint256(sqrtAfter), uint256(targetSqrt), 0.001e18, "repeg missed target");
     }
 
+    /// The CRE report path re-pegs identically to the keeper EOA path: a forwarder-delivered
+    /// (bytes32 asset, uint256 targetPriceE8) report nudges the pool back to the oracle price. ISSUES #C2.
+    function test_repeg_viaOnReport() public {
+        // push off-peg with a big buy
+        uint256 bigBuy = 20_000e6;
+        usdc.mint(address(this), bigBuy);
+        usdc.approve(address(exec), bigBuy);
+        exec.swapUsdcForToken(AAPL, bigBuy);
+
+        uint160 targetSqrt = exec.targetSqrtPriceX96(AAPL, AAPL_PRICE_E8);
+        usdc.mint(address(exec), 1_000_000e6);
+        aapl.mint(address(exec), 100_000e18);
+
+        // a non-forwarder cannot inject a repeg report
+        vm.prank(address(0xBEEF));
+        vm.expectRevert(UniswapExecutor.NotForwarder.selector);
+        exec.onReport("", abi.encode(AAPL, AAPL_PRICE_E8));
+
+        // wire + deliver the report as the forwarder (owner == this sets it)
+        exec.setForwarder(address(this));
+        exec.onReport("", abi.encode(AAPL, AAPL_PRICE_E8)); // == encodeRepegReport
+
+        (uint160 sqrtAfter,,,) = poolManager.getSlot0(poolId);
+        assertApproxEqRel(uint256(sqrtAfter), uint256(targetSqrt), 0.001e18, "repeg via report missed target");
+    }
+
     function _absDiff(uint160 a, uint160 b) internal pure returns (uint256) {
         return a > b ? uint256(a - b) : uint256(b - a);
     }

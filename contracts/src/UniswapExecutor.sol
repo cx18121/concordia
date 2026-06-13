@@ -16,6 +16,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {IUniswapExecutor} from "./interfaces/IUniswapExecutor.sol";
+import {IReceiver} from "./interfaces/IReceiver.sol";
 
 /// @title UniswapExecutor — the fund's swap arm on Uniswap v4 (workstream B).
 /// @notice Buys the winning basket (USDC -> stock) and unwinds it (stock -> USDC) for the Vault,
@@ -26,7 +27,7 @@ import {IUniswapExecutor} from "./interfaces/IUniswapExecutor.sol";
 ///      external router would show the router as `sender` instead. Settlement uses the PoolManager's
 ///      flash-accounting (sync/settle/take) from this contract's own token balance; no Permit2 needed.
 ///      Pools value at POOL price here; the Vault values NAV at ORACLE price; `repeg` keeps them close.
-contract UniswapExecutor is IUniswapExecutor, IUnlockCallback {
+contract UniswapExecutor is IUniswapExecutor, IUnlockCallback, IReceiver {
     using PoolIdLibrary for PoolKey;
     using StateLibrary for IPoolManager;
 
@@ -36,7 +37,8 @@ contract UniswapExecutor is IUniswapExecutor, IUnlockCallback {
 
     address public owner; //  registers pools, sets roles
     address public vault; //  authorized to run basket swaps (the FundVault; a stub in tests)
-    address public keeper; // authorized to call repeg (the CRE keeper)
+    address public keeper; // authorized to call repeg (the CRE keeper EOA / heartbeat)
+    address public forwarder; // trusted KeystoneForwarder for the CRE report path (0 = disabled)
 
     struct Pool {
         address token; //      the mock stock ERC-20
@@ -51,6 +53,7 @@ contract UniswapExecutor is IUniswapExecutor, IUnlockCallback {
     error NotOwner();
     error NotVault();
     error NotKeeper();
+    error NotForwarder();
     error UnknownAsset(bytes32 asset);
     error BadPool();
     error OnlyPoolManager();
@@ -58,6 +61,7 @@ contract UniswapExecutor is IUniswapExecutor, IUnlockCallback {
     event PoolRegistered(bytes32 indexed asset, address token, PoolId poolId);
     event VaultSet(address vault);
     event KeeperSet(address keeper);
+    event ForwarderSet(address forwarder);
 
     constructor(IPoolManager _poolManager, address _usdc, address _owner) {
         poolManager = _poolManager;
@@ -78,6 +82,13 @@ contract UniswapExecutor is IUniswapExecutor, IUnlockCallback {
         if (msg.sender != owner) revert NotOwner();
         keeper = _keeper;
         emit KeeperSet(_keeper);
+    }
+
+    /// @notice Point the CRE report path at the KeystoneForwarder (0 disables it). Owner-only.
+    function setForwarder(address _forwarder) external {
+        if (msg.sender != owner) revert NotOwner();
+        forwarder = _forwarder;
+        emit ForwarderSet(_forwarder);
     }
 
     /// @notice Wire an asset symbol to its mock token + v4 pool. The pool must pair the token with
@@ -151,6 +162,18 @@ contract UniswapExecutor is IUniswapExecutor, IUnlockCallback {
     ///      is too small — that's fine, the keeper calls it every cycle. CRE plays the arbitrageur.
     function repeg(bytes32 asset, uint256 targetPriceE8) external {
         if (msg.sender != keeper) revert NotKeeper();
+        _repeg(asset, targetPriceE8);
+    }
+
+    /// @inheritdoc IReceiver
+    /// @dev CRE re-peg path. `report` = encodeRepegReport: (bytes32 asset, uint256 targetPriceE8).
+    function onReport(bytes calldata, bytes calldata report) external {
+        if (msg.sender != forwarder) revert NotForwarder();
+        (bytes32 asset, uint256 targetPriceE8) = abi.decode(report, (bytes32, uint256));
+        _repeg(asset, targetPriceE8);
+    }
+
+    function _repeg(bytes32 asset, uint256 targetPriceE8) internal {
         Pool memory p = pools[asset];
         if (!p.set) revert UnknownAsset(asset);
 
