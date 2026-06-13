@@ -32,7 +32,6 @@ These unblock everything else. Do them first, together.
   - [ ] **Contract deploy creds** (unblocks deploying B's execution stack + all contracts, ISSUES #17): `BASE_SEPOLIA_RPC_URL` (Alchemy/Coinbase), a funded deployer private key, `ETHERSCAN_API_KEY` (Basescan, for `--verify`). `foundry.toml` already reads these; then `forge script script/04_DeployExecution.s.sol --tc DeployExecutionScript --rpc-url base_sepolia --private-key $PK --broadcast --verify` and paste the logged addresses into `shared/src/addresses.ts`.
 - [ ] Base Sepolia ETH in every dev wallet (Coinbase/Alchemy faucets) + a funded backend "drip" wallet for judge onboarding (ISSUES #11)
 - [x] Deploy **mock USDC** with a public `mint()` (decided, ISSUES #2) — doubles as the "get demo USDC" button (`src/mocks/MockERC20.sol`, configurable decimals)
-- [ ] Everyone reads `DESIGN.md` + `CONTRACTS.md` (30 min, seriously)
 
 ---
 
