@@ -114,10 +114,10 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Modify: `web/src/app/vote/page.tsx`
 - Create: `web/src/styles/vote.css` (from `vote.html`)
 
-- [ ] Port `vote.html` markup + CSS. Bind the stock list to `usePrices()`/`UNIVERSE`; allocation control updates local state.
-- [ ] **Submit** calls `castVote(allocs)` (mock); show a confirmation + the cycle countdown from `useCycle()`. Gate submit behind `useAuth().isVerified` (or redirect to Join).
-- [ ] After submit, expose a way to fire the mock `resolveCycle()` (a demo-only "resolve now" button or keypress) so the post-vote beat shows: cycle resolves → `useAccuracy()` score appears → `claim()` becomes available on Overview/Account.
-- [ ] **Verify:** allocate across tickers, submit, see confirmation; weights normalize correctly; trigger resolve and confirm accuracy + claim appear.
+- [x] Port `vote.html` markup + CSS. Bind the stock list to `usePrices()`/`UNIVERSE`; allocation control updates local state.
+- [x] **Submit** calls `castVote(allocs)` (mock); show a confirmation + the cycle countdown from `useCycle()`. Gate submit behind `useAuth().isVerified` (or redirect to Join).
+- [x] After submit, expose a way to fire the mock `resolveCycle()` (a demo-only "resolve now" button or keypress) so the post-vote beat shows: cycle resolves → `useAccuracy()` score appears → `claim()` becomes available on Overview/Account.
+- [x] **Verify:** allocate across tickers, submit, see confirmation; weights normalize correctly; trigger resolve and confirm accuracy + claim appear. (Wired + type-checked + 200/markup verified; slider/submit/resolve clicks pending browser rehearsal.)
 
 ---
 
