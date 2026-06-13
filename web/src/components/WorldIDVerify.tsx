@@ -53,6 +53,8 @@ export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart 
       setOpen(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
+      // Modal never opened, so no close event will fire: resolve the bridge promise here.
+      onCancel?.();
     } finally {
       setLoading(false);
     }
@@ -93,6 +95,25 @@ export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart 
     if (!next && !succeededRef.current) onCancel?.();
   }
 
+  const widget = rpContext && (
+    <IDKitRequestWidget
+      open={open}
+      onOpenChange={handleOpenChange}
+      app_id={appId}
+      action={action}
+      rp_context={rpContext}
+      allow_legacy_proofs={true}
+      preset={deviceLegacy(signal ? { signal } : undefined)}
+      handleVerify={handleVerify}
+      onSuccess={onSuccess}
+    />
+  );
+
+  // Bridge mode: invisible glue — only the IDKit modal (a portal) should show.
+  if (autoStart) {
+    return <>{widget}</>;
+  }
+
   if (verified) {
     return (
       <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700">
@@ -104,19 +125,7 @@ export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart 
 
   return (
     <div className="flex flex-col items-start gap-2">
-      {rpContext && (
-        <IDKitRequestWidget
-          open={open}
-          onOpenChange={handleOpenChange}
-          app_id={appId}
-          action={action}
-          rp_context={rpContext}
-          allow_legacy_proofs={true}
-          preset={deviceLegacy(signal ? { signal } : undefined)}
-          handleVerify={handleVerify}
-          onSuccess={onSuccess}
-        />
-      )}
+      {widget}
       <button
         onClick={handleClick}
         disabled={loading}
