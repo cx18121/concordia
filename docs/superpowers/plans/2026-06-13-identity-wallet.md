@@ -47,10 +47,10 @@ Do not change names or signatures without telling Track B — this is frozen lik
 - Create: `web/.env.local` (gitignored) with `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID=...`
 - Modify: `web/package.json` (deps)
 
-- [ ] Create a Dynamic project in the Dynamic dashboard; enable **email login** and **embedded wallets** on **Base Sepolia**. Copy the environment ID.
-- [ ] Install the Dynamic React SDK + connectors (check docs for current package set; as of the docs it's `@dynamic-labs/sdk-react-core` plus an EVM connector). Use `npm install` in `web/` (this app is npm, not bun).
-- [ ] Wrap the app in Dynamic's provider inside `layout.tsx` (a client boundary). Configure: Base Sepolia, embedded-wallet-on-login.
-- [ ] **Verify:** `npm run dev`, load `/`, trigger Dynamic's login modal — confirm email login creates a wallet. Quote the resulting address.
+- [ ] Create a Dynamic project in the Dynamic dashboard; enable **email login** and **embedded wallets** on **Base Sepolia**. Copy the environment ID. _(human step — needs dashboard access; `.env.local` has a `REPLACE_ME` placeholder. Embedded-wallet-on-login = dashboard "Create on Sign up" toggle; Base Sepolia enabled dashboard-side, not as a provider prop.)_
+- [x] Install the Dynamic React SDK + connectors. `@dynamic-labs/sdk-react-core` + `@dynamic-labs/ethereum` (`EthereumWalletConnectors`) `@4.88.6`, `viem@2.52.2`, via `npm install`. No peer-dep workaround needed (React 19 / Next 16 OK).
+- [x] Wrap the app in Dynamic's provider inside `layout.tsx` (client boundary `AuthProvider` in `web/src/lib/auth.tsx`). Plain EOA — no AA.
+- [ ] **Verify:** `npm run dev`, load `/`, trigger Dynamic's login modal — confirm email login creates a wallet. _(needs a real env ID; not done. Verified instead: install + typecheck + build + `/` renders HTTP 200 on the placeholder ID without the provider crashing.)_
 
 ---
 
@@ -59,21 +59,23 @@ Do not change names or signatures without telling Track B — this is frozen lik
 **Files:**
 - Create: `web/src/lib/auth.ts` (the contract + implementation, or split impl into `auth.tsx` if JSX needed)
 
-- [ ] Implement `AuthProvider` wrapping Dynamic's context, and `useAuth()` returning the frozen `AuthState`.
-- [ ] Map Dynamic → interface: `address`/`isConnected` from Dynamic's user/wallet; `login`/`logout` call Dynamic's methods; `getWalletClient()` returns a viem `WalletClient` from Dynamic's embedded wallet (Dynamic exposes a viem wallet client — confirm the exact accessor in docs).
-- [ ] Leave `isVerified`/`verify` as stubs for now (`isVerified: false`, `verify` returns false) — filled in A4.
-- [ ] **Verify:** add a temporary `/debug` page that prints `useAuth()` state; log in; confirm `address` + `isConnected` populate and `getWalletClient()` returns a client. Delete `/debug` after.
+- [x] Implement `AuthProvider` wrapping Dynamic's context, and `useAuth()` returning the frozen `AuthState`. (Frozen type in `web/src/lib/auth-types.ts`; impl in `web/src/lib/auth.tsx`; stable re-export `web/src/lib/useAuth.ts`.)
+- [x] Map Dynamic → interface: `address`/`isConnected` from `primaryWallet` (guarded by `isEthereumWallet`); `login` = `setShowAuthFlow(true)`; `logout` = `handleLogOut()`; `getWalletClient()` = `primaryWallet.getWalletClient()` (viem `WalletClient`, confirmed in Dynamic docs).
+- [x] Leave `isVerified`/`verify` as stubs for now (`isVerified: false`, `verify` returns false) — filled in A4. State lives in context so A4 only flips it; `// A4:` markers left in code.
+- [ ] **Verify:** add a temporary `/debug` page that prints `useAuth()` state; log in; confirm `address` + `isConnected` populate and `getWalletClient()` returns a client. _(needs a real env ID to log in; not done. Typecheck confirms `useAuth`/`AuthProvider` satisfy the frozen interface.)_
 
 ---
 
 ### Task A3: Sponsored gas (no ETH for the judge)
 
+> **DEFERRED** (spike decision): gas sponsorship is out of scope for now — `getWalletClient()` returns a plain embedded **EOA** on Base Sepolia, no ZeroDev / AA / smart-wallet connectors. Sponsorship is additive later and does not change the frozen `AuthState` interface. Boxes left unchecked on purpose.
+
 **Files:**
 - Modify: Dynamic dashboard config + `web/src/lib/auth.ts` if a paymaster/AA flag is needed
 
-- [ ] In Dynamic, enable gas sponsorship / account abstraction for Base Sepolia so embedded-wallet txs need no ETH (follow Dynamic's gas-sponsorship guide).
-- [ ] Confirm `getWalletClient()` returns the smart/sponsored account, not a bare EOA.
-- [ ] **Verify (best-effort in mock phase):** once any real tx path exists (Track B live mode, or a throwaway test tx to mock USDC), send one from a fresh email account with zero ETH and confirm it lands. If contracts aren't deployed yet, document that this is verified at live-flip and note the dashboard settings used.
+- [ ] ~~In Dynamic, enable gas sponsorship / account abstraction for Base Sepolia~~ — deferred.
+- [ ] ~~Confirm `getWalletClient()` returns the smart/sponsored account~~ — deferred; returns a bare EOA by design for now.
+- [ ] ~~Verify a zero-ETH tx lands~~ — deferred.
 
 ---
 

@@ -9,10 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@dynamic-labs/ethereum": "^4.88.6",
+    "@dynamic-labs/sdk-react-core": "^4.88.6",
     "@worldcoin/idkit": "^4.1.8",
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "viem": "^2.52.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
