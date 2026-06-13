@@ -11,6 +11,9 @@ export const governanceAbi = parseAbi([
   "function votingPower(address member) view returns (uint256)",
   "function accuracyOf(address member) view returns (int256)",
   "function confidenceOf(address member) view returns (uint256)",
+  "function cyclesParticipated(address member) view returns (uint256)",
+  "function memberCount() view returns (uint256)",
+  "function members(uint256 index) view returns (address)",
   "function castVote(Alloc[] allocations)",
 ]);
 
@@ -23,8 +26,18 @@ export const vaultAbi = parseAbi([
   "function totalAssets() view returns (uint256)",
   "function verified(address user) view returns (bool)",
   "function rewardCredit(address user) view returns (uint256)",
+  "function balanceOf(address user) view returns (uint256)", // ERC-4626 shares
+  "function convertToAssets(uint256 shares) view returns (uint256)", // shares -> USDC at current NAV
   "function deposit(uint256 assets) returns (uint256)",
   "function claimRewards() returns (uint256)",
+]);
+
+// Mock USDC / ERC-20. `mint` is the public "get demo USDC" faucet (MockStock).
+export const erc20Abi = parseAbi([
+  "function balanceOf(address account) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function mint(address to, uint256 amount)",
 ]);
 
 // UniswapExecutor (workstream B). The keeper calls repeg() each cycle; UI/keeper read tokenOf().

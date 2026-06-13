@@ -1,6 +1,7 @@
 import { type PublicClient, type WalletClient, stringToHex } from "viem";
 import { addresses } from "./addresses.js";
-import { governanceAbi, oracleAbi } from "./abi.js";
+import { governanceAbi, oracleAbi, vaultAbi, erc20Abi } from "./abi.js";
+import { publicClient } from "./client.js";
 import { CYCLE_STATE, type Cycle, type Pick, type Alloc } from "./types.js";
 
 /** The votable asset universe (demo set). S&P (`^GSPC`) is the benchmark, not votable. */
@@ -59,4 +60,109 @@ export const castVote = (wallet: WalletClient, allocs: Alloc[]) =>
     args: [allocs],
     account: wallet.account!,
     chain: wallet.chain,
+  });
+
+// --------------------------------------------------------------------------
+// Position + leaderboard reads
+// --------------------------------------------------------------------------
+
+/** A member's ERC-4626 position: shares held + their current USDC value (both raw, USDC 6dp). */
+export async function getPosition(
+  pub: PublicClient,
+  user: `0x${string}`,
+): Promise<{ shares: bigint; navUsd: bigint }> {
+  const shares = (await pub.readContract({
+    address: addresses.vault, abi: vaultAbi, functionName: "balanceOf", args: [user],
+  })) as bigint;
+  const navUsd =
+    shares === 0n
+      ? 0n
+      : ((await pub.readContract({
+          address: addresses.vault, abi: vaultAbi, functionName: "convertToAssets", args: [shares],
+        })) as bigint);
+  return { shares, navUsd };
+}
+
+/** Claimable reward balance (raw USDC, 6dp). */
+export const getRewardCredit = (pub: PublicClient, user: `0x${string}`) =>
+  pub.readContract({ address: addresses.vault, abi: vaultAbi, functionName: "rewardCredit", args: [user] }) as Promise<bigint>;
+
+/** Resolved-cycle count. 0 = never scored, so accuracy should display as "unscored" (null). */
+export const getCyclesParticipated = (pub: PublicClient, member: `0x${string}`) =>
+  pub.readContract({ address: addresses.governance, abi: governanceAbi, functionName: "cyclesParticipated", args: [member] }) as Promise<bigint>;
+
+/** Whether a wallet is verified (gates deposit). */
+export const isVerified = (pub: PublicClient, user: `0x${string}`) =>
+  pub.readContract({ address: addresses.vault, abi: vaultAbi, functionName: "verified", args: [user] }) as Promise<boolean>;
+
+export interface LeaderboardEntry {
+  member: `0x${string}`;
+  votingPowerBps: bigint; // /100 -> percent
+  accuracyE4: bigint; //     /100 -> percent (signed)
+  cyclesParticipated: bigint; // 0 -> unscored
+}
+
+/** Every member ranked by accuracy, then capital. Raw values — the UI formats them. */
+export async function getLeaderboard(pub: PublicClient): Promise<LeaderboardEntry[]> {
+  const count = Number(
+    (await pub.readContract({ address: addresses.governance, abi: governanceAbi, functionName: "memberCount" })) as bigint,
+  );
+  const members = (await Promise.all(
+    [...Array(count).keys()].map((i) =>
+      pub.readContract({ address: addresses.governance, abi: governanceAbi, functionName: "members", args: [BigInt(i)] }),
+    ),
+  )) as `0x${string}`[];
+
+  const rows = await Promise.all(
+    members.map(async (member) => {
+      const [votingPowerBps, accuracyE4, cyclesParticipated] = await Promise.all([
+        getVotingPower(pub, member),
+        getAccuracy(pub, member),
+        getCyclesParticipated(pub, member),
+      ]);
+      return { member, votingPowerBps, accuracyE4, cyclesParticipated };
+    }),
+  );
+
+  rows.sort((a, b) => {
+    if (a.accuracyE4 !== b.accuracyE4) return a.accuracyE4 > b.accuracyE4 ? -1 : 1;
+    return a.votingPowerBps > b.votingPowerBps ? -1 : a.votingPowerBps < b.votingPowerBps ? 1 : 0;
+  });
+  return rows;
+}
+
+// --------------------------------------------------------------------------
+// Writes (member wallet) — getWalletClient() in the web app, or a key in scripts
+// --------------------------------------------------------------------------
+
+/** "Get demo USDC": mint `amount` (raw, 6dp) of mock USDC to the wallet. Public faucet. */
+export const getDemoUSDC = (wallet: WalletClient, amount: bigint) =>
+  wallet.writeContract({
+    address: addresses.usdc, abi: erc20Abi, functionName: "mint",
+    args: [wallet.account!.address, amount], account: wallet.account!, chain: wallet.chain,
+  });
+
+/** Approve + deposit `amount` (raw USDC, 6dp) into the vault. Waits for approve before depositing
+ *  (deposit pulls the USDC). Only valid while the cycle is IDLE/OPEN — reverts when LOCKED. */
+export async function deposit(
+  wallet: WalletClient,
+  amount: bigint,
+  pub: ReturnType<typeof publicClient> = publicClient(),
+) {
+  const approveHash = await wallet.writeContract({
+    address: addresses.usdc, abi: erc20Abi, functionName: "approve",
+    args: [addresses.vault, amount], account: wallet.account!, chain: wallet.chain,
+  });
+  await pub.waitForTransactionReceipt({ hash: approveHash });
+  return wallet.writeContract({
+    address: addresses.vault, abi: vaultAbi, functionName: "deposit",
+    args: [amount], account: wallet.account!, chain: wallet.chain,
+  });
+}
+
+/** Claim accrued rewards to the member wallet. */
+export const claim = (wallet: WalletClient) =>
+  wallet.writeContract({
+    address: addresses.vault, abi: vaultAbi, functionName: "claimRewards",
+    args: [], account: wallet.account!, chain: wallet.chain,
   });
