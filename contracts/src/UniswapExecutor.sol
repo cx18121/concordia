@@ -116,8 +116,12 @@ contract UniswapExecutor is IUniswapExecutor, IUnlockCallback {
 
         bool zeroForOne = p.usdcIsZero; // USDC is the input
         uint160 limit = zeroForOne ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1;
-        (, tokenOut) = _swap(p.key, zeroForOne, -int256(usdcAmount), limit, msg.sender);
-        emit SwappedIn(asset, usdcAmount, tokenOut);
+        uint256 spent;
+        (spent, tokenOut) = _swap(p.key, zeroForOne, -int256(usdcAmount), limit, msg.sender);
+        // Exact-input normally consumes the whole amount, but a partial fill (price limit hit on a
+        // thin/oversized trade) can leave some unspent here — refund it so vault funds never strand.
+        if (spent < usdcAmount) IERC20Metadata(usdc).transfer(msg.sender, usdcAmount - spent);
+        emit SwappedIn(asset, spent, tokenOut);
     }
 
     /// @inheritdoc IUniswapExecutor
@@ -132,8 +136,11 @@ contract UniswapExecutor is IUniswapExecutor, IUnlockCallback {
 
         bool zeroForOne = !p.usdcIsZero; // token is the input
         uint160 limit = zeroForOne ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1;
-        (, usdcOut) = _swap(p.key, zeroForOne, -int256(tokenAmount), limit, msg.sender);
-        emit SwappedOut(asset, tokenAmount, usdcOut);
+        uint256 spent;
+        (spent, usdcOut) = _swap(p.key, zeroForOne, -int256(tokenAmount), limit, msg.sender);
+        // Refund any unspent token on a partial fill (see swapUsdcForToken).
+        if (spent < tokenAmount) IERC20Metadata(p.token).transfer(msg.sender, tokenAmount - spent);
+        emit SwappedOut(asset, spent, usdcOut);
     }
 
     // ----- repeg (keeper) -----

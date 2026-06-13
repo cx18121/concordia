@@ -163,6 +163,24 @@ contract UniswapExecutorTest is BaseTest {
         exec.swapUsdcForToken(AAPL, 1e6);
     }
 
+    function test_partialFill_refundsUnspentInput() public {
+        // A trade far larger than the pool can absorb hits the sqrt-price limit and partial-fills:
+        // the swap consumes only part of the input. The unspent remainder must come back to the
+        // vault, not strand in the executor.
+        uint256 huge = 100_000_000e6; // 100M USDC vs a ~100k pool
+        usdc.mint(address(this), huge);
+        usdc.approve(address(exec), huge);
+
+        uint256 execBefore = usdc.balanceOf(address(exec));
+        uint256 myBefore = usdc.balanceOf(address(this));
+        uint256 tokenOut = exec.swapUsdcForToken(AAPL, huge);
+        uint256 spent = myBefore - usdc.balanceOf(address(this));
+
+        assertGt(tokenOut, 0, "should still receive some token");
+        assertLt(spent, huge, "partial fill: not all input consumed");
+        assertEq(usdc.balanceOf(address(exec)), execBefore, "no USDC stranded in executor");
+    }
+
     function test_repeg_movesPoolTowardOracle() public {
         // Push the pool off-peg with a large buy, then repeg to the (unchanged) oracle price.
         uint256 bigBuy = 20_000e6;
