@@ -129,7 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <DynamicContextProvider
       settings={{
-        environmentId: environmentId ?? "",
+        // Non-empty fallback so the app still builds without a .env.local (a fresh
+        // clone). Dynamic throws on an empty environmentId; login just won't work
+        // until a real id is set (see the warning above).
+        environmentId: environmentId || "MISSING_DYNAMIC_ENV_ID",
         walletConnectors: [EthereumWalletConnectors],
       }}
     >
