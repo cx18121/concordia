@@ -62,8 +62,13 @@ export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart 
 
   // verify()-driven use renders this with autoStart and expects the modal to open
   // itself; standalone use omits autoStart and waits for the button click.
+  // Deferred a tick so handleClick's synchronous setState doesn't run in the effect body.
   useEffect(() => {
-    if (autoStart) handleClick();
+    if (!autoStart) return;
+    const id = setTimeout(() => {
+      void handleClick();
+    }, 0);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
