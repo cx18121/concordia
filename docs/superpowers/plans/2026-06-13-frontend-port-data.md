@@ -129,7 +129,20 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Modify: `web/src/app/settings/page.tsx` (+ `settings.css` from `stitch-settings.html`)
 
 - [x] Mechanical paste of each page's markup + CSS into its route. Bind only trivially (leaderboard → `useLeaderboard()` mock); account/settings can render static mock content. (Note: the `stitch-*` mockups are Tailwind-CDN based — their per-page config tokens were added to globals.css `@theme` + Material Symbols font link in layout, so the utility classes port verbatim.)
-- [x] **Verify:** each page renders inside the shared shell with correct styling; nav highlights the active tab. (Headless: /leaderboard /account /settings all 200, leaderboard shows useLeaderboard() names, no hydration errors; visual styling pending browser rehearsal.)
+- [x] **Verify:** each page renders inside the shared shell with correct styling; nav highlights the active tab. (Verified in a headless Chrome: all 3 render centered + clear the fixed nav, leaderboard binds to `useLeaderboard()`, no console errors.)
+  - **Cascade-layer fix (post-B6):** shell.css's unlayered `*{margin:0;padding:0}` reset was beating Tailwind's layered spacing utilities, so the Tailwind-based `stitch-*` pages ignored `pt-32`/`mx-auto`/`px-*` and collided with the fixed nav. Fixed by importing shell.css into Tailwind's `base` layer (`globals.css`) and dropping the leftover template `body{}` rule.
+
+---
+
+### Task B6b: Sign-in flow → mock `/join` page (added from redesign-v2)
+
+A new `sign-in.html` mockup (Connect → World ID → demo USDC) landed on `design/redesign-v2` — same design system (byte-identical shell.css, "Community Fund" nav). Ported it as a dedicated mock onboarding page, superseding the cramped inline Join from B3/B4.
+
+**Files:** Create `web/src/app/join/page.tsx` + `web/src/styles/join.css`; edit `Overview.tsx`; delete `web/src/components/JoinFlow.tsx`.
+
+- [x] Port the 3-step card to `/join`; wire steps to mock `useAuth().login()/verify()` + `getDemoUSDC()`→`deposit(1000)` (claim also funds the position). "FundDAO" label corrected to "Community Fund".
+- [x] Overview's "Join the fund" CTA now routes to `/join`; inline `JoinFlow` + `.join-slot` retired (`JoinFlow.tsx` deleted).
+- [x] **Verify:** headless Chrome click-through Connect→Verify→Fund→Done; funding populates Overview's position chip across client-side nav.
 
 ---
 
