@@ -174,11 +174,14 @@ resolveCycle(address[] members_, int256[] newAccuracyE4, uint256[] creditWeightB
 // ---- internal ----
 selectBasket() returns (bytes32[], uint256[]):
     total = Σ assetWeightE4;
-    for a in votedAssets:
-        w = assetWeightE4[a] * 1e4 / total;       // proportional to votes
-        if (value(w) < DUST_FLOOR_USDC) drop;     // anti-dust
-        if (w > POSITION_CAP_BPS) w = POSITION_CAP_BPS;  // cap
-    renormalize remaining to sum 1e4;             // count EMERGES from votes
+    drop any asset whose proportional value < DUST_FLOOR_USDC;   // anti-dust
+    water-fill the POSITION_CAP_BPS cap:                          // count EMERGES from votes
+        pin any asset over the cap AT the cap, redistribute the freed budget
+        proportionally across the rest, iterate until none exceed the cap.
+    // HARD cap: every weight ≤ cap. If too few assets were voted to reach 1e4 under the cap
+    // (e.g. 2 names at a 30% cap → max 60%), weights sum to < 1e4 and the REMAINDER STAYS IN
+    // CASH — consumers must not assume the basket sums to 1e4. (Naive cap-then-renormalize was
+    // rejected: renormalizing capped weights pushes them back over the cap — see ISSUES.)
 
 // ---- views (forum + UI read these) ----
 votingPower(address) · accuracyOf(address) · confidenceOf(address)
@@ -230,7 +233,7 @@ Everything money-related (pool size, HWM, custody, the actual USDC split) is don
 - **Mock tokens:** one OZ ERC-20 per stock; we hold mint rights so we can seed pools generously.
 - **Pools:** one `mockX / USDC` v4 pool per asset, created via PoolManager, seeded via PositionManager. Hook attached = `KYCHook`.
 - **KYCHook (`beforeSwap`):** allowlist gate. Since *only the fund swaps* (members vote, the fund trades collectively), the hook allowlists the **`UniswapExecutor`** (the fund's swap arm). Story: "tokenized-stock pools enforce on-chain compliance — only a verified, KYC'd fund can trade them," and the fund is verified because every depositor passed World ID. Deploy needs CREATE2 address-mining (`HookMiner` from v4-periphery) so the hook address encodes the `beforeSwap` flag. Only `beforeSwap` is set, so pool seeding (add-liquidity) is ungated.
-- **Swaps:** `executeBasket` / `closePositions` call `UniswapExecutor.swap{Usdc↔Token}`, which calls `PoolManager.unlock`→`swap` **directly** and settles from its own balance — the executor is its own minimal router, no external router / Permit2. *(Why not Universal Router: `beforeSwap.sender` is the caller of `PoolManager.swap`; routing through a shared router makes the hook gate the router, not the fund — so the executor must be the direct caller for the allowlist to mean anything. See ISSUES #14.)* `repeg` uses the same direct path with a sqrtPrice limit to nudge a pool exactly to the oracle price.
+- **Swaps:** `executeBasket` / `closePositions` call `UniswapExecutor.swap{Usdc↔Token}`, which calls `PoolManager.unlock`→`swap` **directly** and settles from its own balance — the executor is its own minimal router, no external router / Permit2. *(Why not Universal Router: `beforeSwap.sender` is the caller of `PoolManager.swap`; routing through a shared router makes the hook gate the router, not the fund — so the executor must be the direct caller for the allowlist to mean anything. See ISSUES #16.)* `repeg` uses the same direct path with a sqrtPrice limit to nudge a pool exactly to the oracle price.
 - **Valuation:** swaps *execute* at pool price; NAV + accuracy *value* at oracle price. The CRE re-peg (step 2 above) keeps the two aligned so the swap isn't a source of phantom P&L.
 
 ---
