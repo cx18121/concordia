@@ -121,3 +121,16 @@ Do not change names or signatures without telling Track B — this is frozen lik
 
 ## Done when
 Email login creates an embedded (plain EOA) wallet on Base Sepolia; World ID verification flips `isVerified`; `useAuth()` matches the frozen contract; Track B drops in the real provider with zero code changes. _(Gas sponsorship deferred per A3 — judge gets a small test-ETH drip at live-flip; true gasless/AA is polish.)_
+
+---
+
+## Remaining human steps (do these AFTER merge — code is done, these are config)
+
+The code is complete, reviewed, and green (lint + `tsc` + `build`). What's left is credentials + one live run — none of it is a code change.
+
+1. **Create `web/.env.local`** — it's gitignored, so it does NOT come with the merge. In the merged checkout: `cp web/.env.local.example web/.env.local`, then fill the `REPLACE_ME`s below.
+2. **Dynamic project** (https://dynamic.xyz) — create a project; enable **Email login** + **Embedded wallets**; turn on **"Create on Sign up"**; enable **Base Sepolia**. Copy the environment ID → `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID`.
+3. **World ID app** (https://developer.world.org → Developer Portal) — create an app + an Incognito **Action**, level **`selfieCheckLegacy`** with **`allow_legacy_proofs: true`** (NOT `orb`). Fill `WORLD_RP_ID`, `RP_SIGNING_KEY`, `NEXT_PUBLIC_WORLD_APP_ID`, `NEXT_PUBLIC_WORLD_ACTION`.
+4. **Run the real flow once** (`cd web && npm run dev`): email login creates a wallet (note the address) → click verify → `useAuth().isVerified` flips true → a second proof with the same nullifier is rejected **409** by `/api/verify`. (Set `NEXT_PUBLIC_DEV_BYPASS=false` to exercise a real proof; `true` clicks through without one.)
+5. **Judge gas (testnet):** the embedded wallet is a plain EOA, so a fresh wallet has 0 test-ETH and can't send txs. Add a small **test-ETH drip** to the new wallet at live-flip (a ~10-line backend step), or pre-fund. This is the deferred-sponsorship fallback; it needs no interface change. (True gasless = the ZeroDev/AA route — polish.)
+6. **Track B integration:** they swap their `MockAuthProvider` for `import { AuthProvider } from "@/lib/useAuth"`. `layout.tsx` already uses the real provider on this branch. No call-site changes — `useAuth()` is the same `AuthState` shape.
