@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community Fund DAO — System Design Flowchart</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#ffffff; --ink:#16181d; --muted:#6b7280; --faint:#9ca3af;
+    --line:#e6e8ec; --radius:14px; --maxw:1280px;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+    --who:#64748b; --access:#0ea5e9; --identity:#14b8a6; --rules:#6366f1; --market:#ec4899; --truth:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  header{padding:44px 0 14px}
+  .kicker{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  h1{font-size:30px;line-height:1.15;margin:8px 0 8px;font-weight:700;letter-spacing:-.02em}
+  .lede{font-size:16px;color:var(--muted);max-width:760px;margin:0}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:22px 0 0;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend .d{width:11px;height:11px;border-radius:3px;border:1px solid rgba(0,0,0,.12)}
+
+  section{padding:26px 0}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin:0 0 6px}
+  h2{font-size:21px;font-weight:700;letter-spacing:-.02em;margin:0}
+  .sec-sub{font-size:13px;color:var(--faint)}
+  .note{font-size:13px;color:var(--muted);margin:4px 0 16px;max-width:820px}
+  .note b{color:var(--ink)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:18px;overflow:auto}
+  .card pre.mermaid{margin:0;min-width:680px}
+  .reading{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+  .reading b{font-size:12px;font-weight:600;background:var(--bg);border:1px solid var(--line);
+    border-radius:7px;padding:5px 10px;color:var(--muted)}
+  .reading b span{color:var(--ink)}
+
+  .fallback{font-size:12.5px;color:var(--faint);margin-top:10px}
+  footer{padding:26px 0 60px;color:var(--faint);font-size:12.5px;border-top:1px solid var(--line);margin-top:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">Community Hedge Fund DAO · System Design</div>
+    <h1>Architecture flowchart — every component &amp; data flow</h1>
+    <p class="lede">Two views: the full system graph (who connects to what, and what flows along each arrow), and the weekly cycle as a step‑by‑step sequence. Solid arrows = something moves (money, a vote, a write); dotted arrows = a check or a read.</p>
+    <div class="legend">
+      <span><i class="d" style="background:#eef1f5;border-color:#64748b"></i>Actors</span>
+      <span><i class="d" style="background:#e0f2fe;border-color:#0ea5e9"></i>Frontend</span>
+      <span><i class="d" style="background:#ccfbf1;border-color:#14b8a6"></i>Identity &amp; wallets</span>
+      <span><i class="d" style="background:#e8e9fd;border-color:#6366f1"></i>On‑chain contracts</span>
+      <span><i class="d" style="background:#fce7f3;border-color:#ec4899"></i>Execution</span>
+      <span><i class="d" style="background:#fef3c7;border-color:#f59e0b"></i>Off‑chain compute</span>
+      <span><i class="d" style="background:#fff;border:1.5px dashed #9ca3af"></i>Stretch (forum)</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="sec-head"><h2>1 · Full system graph</h2><span class="sec-sub">how every piece connects</span></div>
+    <p class="note">Read it as flows: a <b>human</b> logs in and verifies once, gets a <b>wallet</b>, deposits into the <b>Vault</b>, and votes through <b>Voting</b> — which reads capital from the Vault and accuracy from <b>Reputation</b>. Winners go to the <b>Portfolio</b>, which buys them on <b>Uniswap</b>. <b>Chainlink CRE</b> feeds real prices and scores back in. Rewards flow back to the best voters.</p>
+    <div class="card">
+<pre class="mermaid">
+flowchart TD
+  %% ===== ACTORS =====
+  subgraph USERS["&#9312; Who acts"]
+    direction LR
+    HUMAN["&#128100; Human user"]
+    AGENT["&#129302; AI agent"]
+  end
+
+  %% ===== ACCESS / IDENTITY =====
+  subgraph ACCESS["&#9313; Access · identity · wallets &nbsp;(off-chain / client)"]
+    direction LR
+    APP["&#128421;&#65039; Web App<br/><small>Next.js + viem</small>"]
+    DYN["&#128273; Dynamic<br/><small>embedded + server wallets</small>"]
+    WORLD["&#128710; World ID + AgentKit<br/><small>proof of unique human</small>"]
+    RUNTIME["&#129504; Agent Runtime<br/><small>strategy + LLM thesis</small>"]
+    FORUM["&#128172; Forum service<br/><small>pitches + reputation ranking</small>"]
+  end
+
+  %% ===== ON-CHAIN =====
+  subgraph CHAIN["&#9314; On-chain · Base Sepolia"]
+    direction TB
+    VAULT["&#127974; Vault<br/><small>ERC-4626 · USDC + shares</small>"]
+    VOTE["&#128499;&#65039; Voting<br/><small>50/50 power snapshot</small>"]
+    REP["&#11088; Reputation<br/><small>accuracy scores · EWMA</small>"]
+    PORT["&#128202; Portfolio<br/><small>top-5 basket · NAV</small>"]
+    FEES["&#128184; Fees &amp; Rewards<br/><small>20% over HWM · payout</small>"]
+    subgraph EXEC["&#9315; Execution"]
+      direction LR
+      UNI["&#129418; Uniswap v4<br/><small>PoolManager</small>"]
+      HOOK["&#128679; KYC Hook<br/><small>beforeSwap allowlist</small>"]
+      TOKENS["&#127915; Mock stock tokens<br/><small>ERC-20</small>"]
+    end
+  end
+
+  %% ===== OFF-CHAIN TRUTH =====
+  subgraph TRUTH["&#9316; Source of truth &nbsp;(off-chain &#8594; on-chain)"]
+    direction LR
+    CRE["&#9939; Chainlink CRE<br/><small>price / accuracy keeper</small>"]
+    PRICEAPI[("&#127760; Stock price API")]
+  end
+
+  %% ===== EDGES: onboarding =====
+  HUMAN -->|log in| APP
+  HUMAN -.->|verify once| WORLD
+  AGENT -->|runs on| RUNTIME
+  AGENT -.->|backed by| WORLD
+  APP -->|auth| DYN
+  RUNTIME -->|signs via| DYN
+
+  %% ===== EDGES: money + voting =====
+  DYN -->|deposit USDC| VAULT
+  VAULT -->|mint shares| HUMAN
+  DYN -->|cast vote| VOTE
+  RUNTIME -->|cast vote| VOTE
+  WORLD -.->|one-human gate| VOTE
+
+  VOTE -.->|read capital| VAULT
+  VOTE -.->|read accuracy| REP
+  VOTE -->|write winners| PORT
+
+  %% ===== EDGES: forum (stretch) =====
+  HUMAN -->|post / browse pitches| FORUM
+  FORUM -.->|read author reputation| REP
+  FORUM -.->|persuades, doesn't gate| VOTE
+
+  %% ===== EDGES: execution =====
+  PORT -->|swap USDC&#8594;stock| UNI
+  UNI -.->|check member| HOOK
+  WORLD -.->|allowlist| HOOK
+  UNI -->|hold| TOKENS
+  PORT -.->|owns basket| TOKENS
+
+  %% ===== EDGES: oracle + settlement =====
+  CRE -->|fetch prices| PRICEAPI
+  CRE -->|post prices / NAV| PORT
+  CRE -->|post scores| REP
+  PORT -->|perf vs S&amp;P| FEES
+  VAULT -->|fee pool| FEES
+  FEES -->|rewards| HUMAN
+  REP -.->|feeds next snapshot| VOTE
+
+  %% ===== STYLES =====
+  classDef actor fill:#eef1f5,stroke:#64748b,stroke-width:1px,color:#1f2937;
+  classDef access fill:#e0f2fe,stroke:#0ea5e9,color:#0c4a6e;
+  classDef identity fill:#ccfbf1,stroke:#14b8a6,color:#115e59;
+  classDef onchain fill:#e8e9fd,stroke:#6366f1,color:#3730a3;
+  classDef market fill:#fce7f3,stroke:#ec4899,color:#9d174f;
+  classDef truth fill:#fef3c7,stroke:#f59e0b,color:#92400e;
+  class HUMAN,AGENT actor;
+  class APP access;
+  class DYN,WORLD identity;
+  class RUNTIME truth;
+  class VAULT,VOTE,REP,PORT,FEES onchain;
+  class UNI,HOOK,TOKENS market;
+  class CRE,PRICEAPI truth;
+
+  classDef stretch fill:#ffffff,stroke:#9ca3af,stroke-width:1.5px,stroke-dasharray:5 4,color:#6b7280;
+  class FORUM stretch;
+
+  style USERS fill:#ffffff,stroke:#e6e8ec,color:#64748b;
+  style ACCESS fill:#ffffff,stroke:#e6e8ec,color:#0369a1;
+  style CHAIN fill:#fbfbfe,stroke:#e6e8ec,color:#4338ca;
+  style EXEC fill:#fff5fa,stroke:#f6d3e4,color:#9d174f;
+  style TRUTH fill:#ffffff,stroke:#e6e8ec,color:#92400e;
+</pre>
+    </div>
+    <div class="reading">
+      <b>Solid arrow → <span>something moves</span> (money, a vote, a write)</b>
+      <b>Dotted arrow → <span>a read or a check</span></b>
+      <b>↻ <span>Reputation feeds next week’s snapshot</span></b>
+      <b>Dashed box → <span>Forum = stretch goal</span> (reads on‑chain reputation, never gates votes)</b>
+    </div>
+    <p class="fallback">If the diagram doesn’t render, you’re offline — it pulls Mermaid from a CDN on first load.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>2 · The weekly cycle, step by step</h2><span class="sec-sub">the same picture, but over time</span></div>
+    <p class="note">This is the temporal view — which contract talks to which, in order, across one full week. The numbers match the six cycle stages: <b>Subscribe → Snapshot → Allocate → Select → Execute → Resolve.</b></p>
+    <div class="card">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor U as User / Agent
+  participant W as Wallet (Dynamic)
+  participant V as Vault
+  participant G as Voting
+  participant R as Reputation
+  participant P as Portfolio
+  participant X as Uniswap v4
+  participant K as Chainlink CRE
+  participant F as Fees &amp; Rewards
+
+  Note over U,F: &#9312; Subscribe — money in, shares out
+  U->>W: approve deposit
+  W->>V: deposit USDC (at cycle boundary)
+  V-->>U: mint shares
+
+  Note over U,F: &#9313; Snapshot — freeze voting power
+  G->>V: read capital share
+  G->>R: read accuracy share
+  G->>G: power = 50% capital + 50% accuracy
+
+  Note over U,F: &#9314; Allocate — cast votes
+  U->>G: weighted allocation across stocks
+
+  Note over U,F: &#9315; Select — tally winners
+  G->>P: top-5 by weight, 40% cap, renormalized
+
+  Note over U,F: &#9316; Execute — buy the basket
+  P->>X: swap USDC &#8594; stock tokens
+  X-->>P: stock tokens (NAV now live)
+
+  Note over U,F: &#9317; Resolve — score, smooth, pay
+  K->>P: post fresh prices / NAV
+  K->>R: update accuracy (EWMA &#945;&#8776;0.25)
+  P->>F: performance vs S&amp;P
+  F-->>U: rewards to winning voters
+  R-->>G: feeds next week’s snapshot
+</pre>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    System‑design flowchart · proof‑of‑concept on Base Sepolia testnet (mock stock tokens, simulated exposure, no real securities). Solid = value/write, dotted = read/check.
+  </div>
+</footer>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad:true,
+    theme:'base',
+    flowchart:{ htmlLabels:true, curve:'basis', nodeSpacing:55, rankSpacing:60, padding:8 },
+    sequence:{ mirrorActors:false, actorMargin:46, boxMargin:8, noteMargin:10 },
+    themeVariables:{
+      fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,Inter,sans-serif',
+      fontSize:'14px',
+      primaryColor:'#eef1f5', primaryBorderColor:'#cbd5e1', primaryTextColor:'#1f2937',
+      lineColor:'#94a3b8', secondaryColor:'#f1f5f9', tertiaryColor:'#f8fafc',
+      noteBkgColor:'#fff7ed', noteBorderColor:'#fdba74', noteTextColor:'#9a3412',
+      actorBkg:'#eef1f5', actorBorder:'#64748b', actorTextColor:'#1f2937',
+      signalColor:'#64748b', signalTextColor:'#475569'
+    }
+  });
+</script>
+</body>
+</html>

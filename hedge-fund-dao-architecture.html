@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community Fund DAO — System Architecture</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#ffffff; --ink:#16181d; --muted:#6b7280; --faint:#9ca3af;
+    --line:#e6e8ec; --line2:#eef0f3;
+    --who:#64748b; --access:#0ea5e9; --identity:#14b8a6; --rules:#6366f1;
+    --market:#ec4899; --truth:#f59e0b;
+    --radius:14px; --maxw:1220px;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  header{padding:44px 0 22px}
+  .kicker{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  h1{font-size:30px;line-height:1.15;margin:8px 0 8px;font-weight:700;letter-spacing:-.02em}
+  .lede{font-size:16px;color:var(--muted);max-width:720px;margin:0 0 18px}
+  .stackbar{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);
+    border-radius:999px;padding:6px 12px;font-size:12.5px;color:var(--ink);box-shadow:var(--shadow)}
+  .chip .d{width:8px;height:8px;border-radius:50%}
+
+  .tabs{display:flex;gap:4px;margin:26px 0 4px;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:5px;box-shadow:var(--shadow);width:fit-content;max-width:100%;overflow-x:auto}
+  .tab{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:550;
+    font-size:14px;padding:9px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:.15s}
+  .tab:hover{color:var(--ink)}
+  .tab.active{background:var(--ink);color:#fff}
+
+  .view{display:none;padding:22px 0 60px}
+  .view.active{display:block}
+
+  /* ---------- ARCHITECTURE ---------- */
+  .arch-grid{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:start}
+  @media(max-width:980px){.arch-grid{grid-template-columns:1fr}}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 16px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend .d{width:9px;height:9px;border-radius:3px}
+
+  .layer{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 16px 18px;margin-bottom:14px;box-shadow:var(--shadow);position:relative}
+  .layer-head{display:flex;align-items:baseline;gap:10px;margin-bottom:13px}
+  .layer-tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:6px}
+  .layer-sub{font-size:12.5px;color:var(--faint)}
+  .nodes{display:flex;flex-wrap:wrap;gap:10px}
+  .node{flex:1 1 150px;min-width:140px;background:var(--surface);border:1px solid var(--line);
+    border-left:3px solid var(--c);border-radius:10px;padding:11px 13px;cursor:pointer;transition:.14s;text-align:left}
+  .node:hover{border-color:var(--c);box-shadow:0 4px 14px rgba(16,24,40,.08);transform:translateY(-1px)}
+  .node.active{border-color:var(--c);box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 28%,transparent)}
+  .node h4{margin:0 0 3px;font-size:14px;font-weight:600;letter-spacing:-.01em}
+  .node p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
+  .node .by{display:inline-block;margin-top:7px;font-size:10.5px;font-weight:600;color:var(--c);
+    background:color-mix(in srgb,var(--c) 10%,transparent);padding:2px 7px;border-radius:5px}
+
+  .flowtag{display:flex;justify-content:center;margin:-4px 0 10px}
+  .flowtag span{font-size:11px;color:var(--faint);background:var(--bg);padding:2px 10px;border-radius:6px;
+    border:1px solid var(--line2)}
+
+  /* detail panel */
+  .panel{position:sticky;top:18px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .panel-empty{padding:34px 22px;color:var(--faint);font-size:13.5px;text-align:center}
+  .panel-empty b{display:block;color:var(--muted);font-size:14px;margin-bottom:4px}
+  .panel-head{padding:18px 20px 14px;border-bottom:1px solid var(--line2);position:relative}
+  .panel-head .pill{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:9px}
+  .panel-head h3{margin:0;font-size:18px;font-weight:700;letter-spacing:-.02em}
+  .panel-head .who{margin:5px 0 0;font-size:12.5px;color:var(--faint)}
+  .panel-body{padding:16px 20px 20px}
+  .field{margin-bottom:15px}
+  .field:last-child{margin-bottom:0}
+  .field .k{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .field .v{font-size:13.5px;color:var(--ink);line-height:1.55}
+  .field .v.muted{color:var(--muted)}
+  .talks{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px}
+  .talks b{font-size:11.5px;font-weight:600;background:var(--bg);border:1px solid var(--line);
+    border-radius:6px;padding:3px 8px;color:var(--muted)}
+  .plain{background:color-mix(in srgb,var(--truth) 7%,transparent);border:1px solid color-mix(in srgb,var(--truth) 25%,transparent);
+    border-radius:9px;padding:11px 13px;font-size:13px;color:#7c5300;line-height:1.5}
+  .plain b{color:#5c3d00}
+
+  /* ---------- CYCLE ---------- */
+  .cycle-top{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+  .cstep{flex:1 1 0;min-width:120px;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:12px 12px 13px;cursor:pointer;transition:.14s;box-shadow:var(--shadow);position:relative}
+  .cstep:hover{transform:translateY(-1px);border-color:var(--rules)}
+  .cstep.active{background:var(--ink);border-color:var(--ink)}
+  .cstep.active *{color:#fff!important}
+  .cstep .num{width:24px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--rules) 14%,transparent);
+    color:var(--rules);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+  .cstep.active .num{background:rgba(255,255,255,.2)}
+  .cstep h4{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.01em}
+  .cstep p{margin:3px 0 0;font-size:11.5px;color:var(--muted);line-height:1.35}
+
+  .cdetail{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px 26px;min-height:240px}
+  .cdetail-head{display:flex;align-items:center;gap:13px;margin-bottom:6px}
+  .cdetail-head .bignum{width:42px;height:42px;border-radius:11px;background:var(--ink);color:#fff;
+    font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;flex:0 0 42px}
+  .cdetail-head h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .cdetail-head .sub{font-size:13px;color:var(--muted);margin-top:2px}
+  .cdetail-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;margin-top:18px}
+  @media(max-width:760px){.cdetail-grid{grid-template-columns:1fr}}
+  .cdetail h5{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin:0 0 9px}
+  .cdetail ul{margin:0;padding:0;list-style:none}
+  .cdetail ul li{position:relative;padding:0 0 9px 18px;font-size:13.5px;color:var(--ink);line-height:1.5}
+  .cdetail ul li:before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:50%;background:var(--rules)}
+  .comp-chips{display:flex;flex-wrap:wrap;gap:7px}
+  .comp-chips b{font-size:12px;font-weight:600;border:1px solid var(--c);color:var(--c);
+    background:color-mix(in srgb,var(--c) 8%,transparent);border-radius:7px;padding:4px 9px}
+  .why{margin-top:16px;background:color-mix(in srgb,var(--rules) 6%,transparent);
+    border:1px solid color-mix(in srgb,var(--rules) 22%,transparent);border-radius:10px;padding:12px 14px;
+    font-size:13px;color:#3730a3;line-height:1.5}
+  .why b{color:#312e81}
+  .cnav{display:flex;justify-content:space-between;margin-top:18px;gap:10px}
+  .cnav button{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    font:inherit;font-weight:550;font-size:13.5px;padding:9px 18px;border-radius:9px;cursor:pointer;transition:.14s;box-shadow:var(--shadow)}
+  .cnav button:hover:not(:disabled){border-color:var(--ink)}
+  .cnav button:disabled{opacity:.4;cursor:default}
+  .loopnote{text-align:center;font-size:12.5px;color:var(--faint);margin-top:14px}
+
+  /* ---------- ACTORS ---------- */
+  .actor-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.actor-grid{grid-template-columns:1fr}}
+  .actor-col{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden}
+  .actor-col .ahead{padding:18px 20px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:12px}
+  .actor-col .ahead .ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:19px;flex:0 0 38px}
+  .actor-col .ahead h3{margin:0;font-size:17px;font-weight:700}
+  .actor-col .ahead p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+  .astep{display:flex;gap:13px;padding:14px 20px;border-bottom:1px solid var(--line2)}
+  .astep:last-child{border-bottom:0}
+  .astep .an{width:23px;height:23px;border-radius:50%;background:var(--bg);border:1px solid var(--line);
+    font-size:11.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:center;flex:0 0 23px;margin-top:1px}
+  .astep .at{font-size:13.5px}
+  .astep .at b{font-weight:600}
+  .astep .at span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+  .astep .tagn{display:inline-block;font-size:10.5px;font-weight:600;border-radius:5px;padding:1px 7px;margin-top:5px}
+
+  footer{padding:26px 0 60px;color:var(--faint);font-size:12.5px;border-top:1px solid var(--line);margin-top:10px}
+  .hint{font-size:12.5px;color:var(--faint);margin:0 0 14px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">Community Hedge Fund DAO · System Architecture</div>
+    <h1>How the whole system fits together</h1>
+    <p class="lede">A community fund where people pool USDC and vote on stock picks — voting power split 50/50 between money deposited and proven accuracy. This walks through every moving part: who acts, what runs on-chain, what runs off-chain, and how a week flows end to end.</p>
+    <div class="stackbar">
+      <div class="chip"><span class="d" style="background:var(--access)"></span>Chain: <b>Base Sepolia</b></div>
+      <div class="chip"><span class="d" style="background:var(--identity)"></span>Wallets: <b>Dynamic</b></div>
+      <div class="chip"><span class="d" style="background:var(--identity)"></span>Identity: <b>World ID</b></div>
+      <div class="chip"><span class="d" style="background:var(--truth)"></span>Oracle: <b>Chainlink CRE</b></div>
+      <div class="chip"><span class="d" style="background:var(--market)"></span>Execution: <b>Uniswap v4</b></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-view="arch">System Architecture</button>
+      <button class="tab" data-view="cycle">The Weekly Cycle</button>
+      <button class="tab" data-view="actors">Human vs Agent</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ ARCHITECTURE ============ -->
+  <section class="view active" id="view-arch">
+    <p class="hint">Click any box to see what it is, what it holds, and what it guarantees. Layers read top‑to‑bottom: <b>who acts → how they connect → the rules → the market → the source of truth.</b></p>
+    <div class="legend">
+      <span><i class="d" style="background:var(--who)"></i>Actors</span>
+      <span><i class="d" style="background:var(--access)"></i>Frontend</span>
+      <span><i class="d" style="background:var(--identity)"></i>Identity &amp; wallets</span>
+      <span><i class="d" style="background:var(--rules)"></i>On‑chain contracts</span>
+      <span><i class="d" style="background:var(--market)"></i>Execution</span>
+      <span><i class="d" style="background:var(--truth)"></i>Off‑chain compute</span>
+    </div>
+
+    <div class="arch-grid">
+      <div>
+        <!-- WHO -->
+        <div class="layer">
+          <div class="layer-head">
+            <span class="layer-tag" style="background:color-mix(in srgb,var(--who) 13%,transparent);color:var(--who)">1 · Who acts</span>
+            <span class="layer-sub">the participants</span>
+          </div>
+          <div class="nodes" id="layer-who"></div>
+        </div>
+        <div class="flowtag"><span>↓ log in & sign through ↓</span></div>
+
+        <!-- ACCESS -->
+        <div class="layer">
+          <div class="layer-head">
+            <span class="layer-tag" style="background:color-mix(in srgb,var(--access) 13%,transparent);color:var(--access)">2 · How they connect</span>
+            <span class="layer-sub">app + identity + wallets</span>
+          </div>
+          <div class="nodes" id="layer-access"></div>
+        </div>
+        <div class="flowtag"><span>↓ signed transactions ↓</span></div>
+
+        <!-- RULES -->
+        <div class="layer">
+          <div class="layer-head">
+            <span class="layer-tag" style="background:color-mix(in srgb,var(--rules) 13%,transparent);color:var(--rules)">3 · The rules (on‑chain)</span>
+            <span class="layer-sub">smart contracts on Base Sepolia</span>
+          </div>
+          <div class="nodes" id="layer-rules"></div>
+        </div>
+        <div class="flowtag"><span>↓ executes trades through ↓</span></div>
+
+        <!-- MARKET -->
+        <div class="layer">
+          <div class="layer-head">
+            <span class="layer-tag" style="background:color-mix(in srgb,var(--market) 13%,transparent);color:var(--market)">4 · The market</span>
+            <span class="layer-sub">where buying actually happens</span>
+          </div>
+          <div class="nodes" id="layer-market"></div>
+        </div>
+        <div class="flowtag"><span>↑ feeds prices & scores back up ↑</span></div>
+
+        <!-- TRUTH -->
+        <div class="layer">
+          <div class="layer-head">
+            <span class="layer-tag" style="background:color-mix(in srgb,var(--truth) 13%,transparent);color:var(--truth)">5 · The source of truth</span>
+            <span class="layer-sub">off‑chain compute, posted on‑chain</span>
+          </div>
+          <div class="nodes" id="layer-truth"></div>
+        </div>
+      </div>
+
+      <!-- PANEL -->
+      <aside>
+        <div class="panel" id="panel">
+          <div class="panel-empty">
+            <b>Nothing selected</b>
+            Click a box on the left to inspect it.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE ============ -->
+  <section class="view" id="view-cycle">
+    <p class="hint">The fund runs in repeating weekly cycles. Click a step, or use the arrows to walk through it.</p>
+    <div class="cycle-top" id="cycle-top"></div>
+    <div class="cdetail" id="cdetail"></div>
+    <div class="cnav">
+      <button id="cprev">← Previous</button>
+      <button id="cnext">Next →</button>
+    </div>
+    <div class="loopnote">↻ When step 6 finishes, accuracy scores and capital feed straight into step 2 of the next week.</div>
+  </section>
+
+  <!-- ============ ACTORS ============ -->
+  <section class="view" id="view-actors">
+    <p class="hint">Humans and agents flow through the <b>exact same contracts</b> — the only difference is who clicks the button. This is the Kalshi‑style symmetry: an agent is just an automated human.</p>
+    <div class="actor-grid" id="actor-grid"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Interactive architecture explainer · proof‑of‑concept on testnet (mock stock tokens, simulated exposure, no real securities). Built to understand the system design before writing contracts.
+  </div>
+</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const C = {who:'var(--who)',access:'var(--access)',identity:'var(--identity)',rules:'var(--rules)',market:'var(--market)',truth:'var(--truth)'};
+
+const NODES = {
+  who:[
+    {id:'human',c:C.who,name:'Human user',blurb:'A real person who deposits and votes.',by:null,
+      pill:'Actor',pillc:C.who,who:'The primary user — your Kalshi‑style trader',
+      is:'A regular person. They sign up, put in USDC, and vote on which stocks the fund should hold. They can vote by hand every week, or hand the job to an agent.',
+      guarantees:null,
+      talks:['Web App','World ID','Dynamic wallet'],
+      plain:'This is who the product is for. Everything else exists to let this person pool money with others and be rewarded when their picks are right.'},
+    {id:'agent',c:C.who,name:'AI agent',blurb:'Automated strategy that votes for you.',by:null,
+      pill:'Actor',pillc:C.who,who:'Optional automation — and the 6 demo agents',
+      is:'A bot running a strategy (momentum, value, contrarian…). It decides allocations and writes a short rationale. In the live product a user delegates to one; in the demo, 6 of them run the fund for 12 weeks to build up real track records.',
+      guarantees:null,
+      talks:['Agent Runtime','AgentKit','Dynamic wallet'],
+      plain:'An agent is just an automated human. It votes through the very same contracts — it does not get a special path.'},
+  ],
+  access:[
+    {id:'app',c:C.access,name:'Web App',blurb:'Next.js dashboard: deposit, vote, leaderboard.',by:'Next.js + viem',
+      pill:'Frontend',pillc:C.access,who:'What the user sees in the browser',
+      is:'The website. Shows the deposit screen, the voting/allocation screen, the live portfolio, and the leaderboard of top analysts. It builds transactions and asks the wallet to sign them.',
+      guarantees:null,
+      talks:['Human user','Dynamic','On‑chain contracts'],
+      plain:'A normal web app. It cannot move money on its own — it only prepares actions that the user’s wallet must sign.'},
+    {id:'dynamic',c:C.identity,name:'Dynamic',blurb:'Easy login + each user’s own wallet + agent wallets.',by:'Dynamic',
+      pill:'Identity · Wallets',pillc:C.identity,who:'The front door and the signing layer',
+      is:'Handles sign‑in (email/Google) and quietly gives each user an embedded wallet they own — no seed phrase. Also issues server wallets for autonomous agents and lets a user delegate limited signing to their agent.',
+      guarantees:'Each user owns their own wallet (non‑custodial — you never hold their keys). Agents only get the narrow permissions a user grants, and delegation is revocable.',
+      talks:['Human user','AI agent','Web App'],
+      plain:'Turns “scary crypto wallet” into “normal app login,” while keeping it non‑custodial. It’s the pen each user signs with.'},
+    {id:'world',c:C.identity,name:'World ID + AgentKit',blurb:'One real human = one account. Agents tied to humans.',by:'World',
+      pill:'Identity · Sybil',pillc:C.identity,who:'Proof that participants are real & unique',
+      is:'World ID proves someone is a unique human (without revealing who) via a zero‑knowledge proof. AgentKit links an agent to a verified human, so bot armies can’t flood the vote.',
+      guarantees:'One person can only hold one membership — they can’t spin up 100 wallets to multiply their voting power. Every agent is provably backed by a real person.',
+      talks:['Human user','AI agent','Voting contract'],
+      plain:'This is the closest thing to privacy‑preserving KYC. It’s what makes the 50/50 voting fair — no fake‑account farming.'},
+  ],
+  rules:[
+    {id:'vault',c:C.rules,name:'Vault',blurb:'Holds USDC, issues ownership shares.',by:'ERC‑4626',
+      pill:'On‑chain · Custody',pillc:C.rules,who:'The pooled money + ownership ledger',
+      is:'The piggy bank. Members deposit USDC and receive shares representing their slice of the fund. Withdrawals burn shares for a fair cut of the current value.',
+      guarantees:'Deposit X USDC → you get shares proportional to your stake. Shares are always redeemable for your fair share of the fund. Nobody — not even the builders — can seize your shares.',
+      talks:['Human user','AI agent','Voting','Fees & Rewards'],
+      plain:'Replaces “trust the fund manager to hold your money.” The money sits in code anyone can audit, and only the rules can move it.'},
+    {id:'voting',c:C.rules,name:'Voting',blurb:'Records votes + the 50/50 power snapshot.',by:'Custom',
+      pill:'On‑chain · Governance',pillc:C.rules,who:'Where allocation decisions are made',
+      is:'Takes each member’s allocation across stocks and weights it by their voting power. Voting power is frozen at the moment voting opens.',
+      guarantees:'Voting power = 50% capital share + 50% accuracy share, computed transparently. Power is snapshotted so it can’t be gamed mid‑cycle. You can’t vote with more power than you have.',
+      talks:['Voters','reads Vault','reads Reputation','writes Portfolio'],
+      plain:'The headline mechanic. This is the contract that makes a small, skilled voter able to out‑vote a big, mediocre one.'},
+    {id:'rep',c:C.rules,name:'Reputation',blurb:'Stores each member’s accuracy score.',by:'Custom / ERC‑8004',
+      pill:'On‑chain · Skill',pillc:C.rules,who:'The track‑record store',
+      is:'Keeps one number per member: their smoothed accuracy (how much alpha their picks have earned vs the S&P). The Voting contract reads it to compute the merit half of voting power.',
+      guarantees:'Scores change only by the agreed EWMA formula. Only the authorized keeper can post new scores. The full history is public and auditable.',
+      talks:['Chainlink CRE writes','Voting reads'],
+      plain:'This is the “being right earns influence” memory. Without it, the fund would just be money‑weighted like every other DAO.'},
+    {id:'portfolio',c:C.rules,name:'Portfolio',blurb:'The winning basket + live NAV.',by:'Custom',
+      pill:'On‑chain · Positions',pillc:C.rules,who:'What the fund currently holds',
+      is:'Records the cycle’s winners — top 5 stocks by vote weight, capped at 40% each — and the fund’s value (NAV) as prices move.',
+      guarantees:'Only the top 5 by weight get in; the 40%‑per‑position cap is enforced and re‑normalized. NAV is computed from oracle‑posted prices, never made up.',
+      talks:['reads Voting','reads Chainlink prices','calls Uniswap'],
+      plain:'The fund’s current “shopping basket” and its scoreboard, both living in code.'},
+    {id:'fees',c:C.rules,name:'Fees & Rewards',blurb:'2 & 20 logic + reward payout.',by:'Custom',
+      pill:'On‑chain · Economics',pillc:C.rules,who:'Who gets paid, and when',
+      is:'Calculates the success fee and distributes it. For the demo the 2% management fee is dropped — only the 20% success fee runs, and it flows back to the members who backed the winners.',
+      guarantees:'The 20% is charged only when the fund sets a NEW high vs the S&P (never on beta, never double‑charged). Rewards go to winning voters in proportion to the power they placed.',
+      talks:['reads Portfolio','reads Vault'],
+      plain:'Turns “being right” into actual payout. Skilled voters earn more — it is not a flat split to everyone.'},
+  ],
+  market:[
+    {id:'uniswap',c:C.market,name:'Uniswap v4',blurb:'Real on‑chain swaps + a members‑only hook.',by:'Uniswap',
+      pill:'Execution · DEX',pillc:C.market,who:'The actual stock market',
+      is:'When a vote resolves, the vault swaps USDC for the winning stock tokens here — real transactions you can see on the explorer. A custom “hook” checks membership before every swap.',
+      guarantees:'Swaps execute on‑chain for real. The beforeSwap hook gates trading to verified members only — your tokenized‑securities compliance story.',
+      talks:['Portfolio','Mock stock tokens','World ID (via hook)'],
+      plain:'This is what makes “the fund bought NVDA” a real on‑chain event instead of a spreadsheet entry.'},
+    {id:'tokens',c:C.market,name:'Mock stock tokens',blurb:'ERC‑20s standing in for AAPL, NVDA, SPY…',by:'You deploy',
+      pill:'Execution · Assets',pillc:C.market,who:'The tradeable stand‑ins',
+      is:'Simple tokens you deploy to represent each stock. They have no real shares behind them — their price is kept accurate by the Chainlink oracle, not by arbitrage.',
+      guarantees:'Standard ERC‑20s you fully control for the demo. On mainnet, these slots are swapped for real tokenized stocks (Dinari/xStocks) — the contracts stay identical.',
+      talks:['Uniswap','priced by Chainlink'],
+      plain:'Because testnets have no real stock tokens, you mint your own and let the oracle tell them what they’re worth.'},
+  ],
+  truth:[
+    {id:'cre',c:C.truth,name:'Chainlink CRE',blurb:'Fetches real prices → posts them on‑chain.',by:'Chainlink',
+      pill:'Off‑chain → on‑chain',pillc:C.truth,who:'The price & accuracy keeper',
+      is:'A scheduled workflow that each cycle pulls real stock prices from an API, computes PnL and accuracy, then writes the results on‑chain through its forwarder. Verified live on Base Sepolia.',
+      guarantees:'Prices arrive on‑chain in a tamper‑resistant, decentralized way. Runs on a schedule with no manual trigger. Writes to Reputation (scores) and Portfolio (prices/NAV).',
+      talks:['external price API','writes Reputation','writes Portfolio'],
+      plain:'The blockchain can’t check the internet itself — CRE is the trusted robot that brings real stock prices in. It’s the one piece the fund can’t live without.'},
+    {id:'runtime',c:C.truth,name:'Agent Runtime',blurb:'Strategies + LLM rationale generation.',by:'Off‑chain service',
+      pill:'Off‑chain · Compute',pillc:C.truth,who:'The brains behind the agents',
+      is:'Runs each agent’s deterministic strategy (fast, reproducible) and an LLM layer that writes the human‑readable thesis (“30% NVDA because momentum is strong…”). It then submits the agent’s vote on‑chain.',
+      guarantees:'Decision logic is deterministic (reliable on stage); the AI does the narrative. Votes are submitted through the same Voting contract a human uses.',
+      talks:['AI agent','Voting contract'],
+      plain:'Keeps the agents’ decisions predictable for a live demo while still showing real AI reasoning.'},
+  ],
+};
+
+const CYCLE = [
+  {n:1,title:'Subscribe',sub:'Money in, shares out',
+    what:['Members deposit USDC; deposits/withdrawals are queued to take effect at the cycle boundary.','The Vault mints shares at the current NAV, representing each member’s ownership slice.'],
+    comps:[['Vault',C.rules],['Dynamic wallet',C.identity]],
+    why:'<b>Capital is epoch‑locked.</b> You can’t flash‑deposit to buy a vote and pull out right after — money only counts at cycle boundaries.'},
+  {n:2,title:'Snapshot',sub:'Freeze the voting power',
+    what:['The moment voting opens, every member’s voting power is frozen.','Power = 50% capital share (read from the Vault) + 50% accuracy share (read from Reputation).','World ID guarantees one human = one snapshot — no split‑wallet farming.'],
+    comps:[['Voting',C.rules],['Vault',C.rules],['Reputation',C.rules],['World ID',C.identity]],
+    why:'<b>No mid‑cycle gaming.</b> Power is fixed at the start, so you can’t shuffle things around once you see how others vote.'},
+  {n:3,title:'Allocate',sub:'Cast the votes',
+    what:['Members (or their agents) spread their voting power across any stocks in the universe.','Humans vote in the Web App; agents vote via the Agent Runtime — both call the same Voting contract.','Agents also generate a short thesis explaining their picks.'],
+    comps:[['Voting',C.rules],['Web App',C.access],['Agent Runtime',C.truth]],
+    why:'<b>Human/agent symmetry.</b> There’s one voting function. An agent is just an authorized caller — the path is identical.'},
+  {n:4,title:'Select',sub:'Tally the winners',
+    what:['All weighted votes are summed per stock.','The top 5 stocks by total weight win the cycle.','Each position is capped at 40% and the basket is re‑normalized, then written to the Portfolio.'],
+    comps:[['Voting',C.rules],['Portfolio',C.rules]],
+    why:'<b>Concentration control.</b> The 40% cap stops any single pick from dominating the whole fund.'},
+  {n:5,title:'Execute',sub:'Actually buy the basket',
+    what:['The Vault swaps USDC for the winning stock tokens through Uniswap v4 — real on‑chain transactions.','The members‑only hook checks each swapper is verified before allowing the trade.','The Portfolio now holds the basket; NAV starts tracking price moves.'],
+    comps:[['Portfolio',C.rules],['Uniswap v4',C.market],['Mock tokens',C.market]],
+    why:'<b>Real execution.</b> This is the demo’s on‑chain moment — point at the explorer: “the fund just bought NVDA.”'},
+  {n:6,title:'Resolve',sub:'Score, smooth, pay out',
+    what:['A week passes. Chainlink CRE posts fresh prices on‑chain.','NAV updates; each member’s accuracy is recomputed (vote‑weighted excess return vs S&P), then EWMA‑smoothed.','The 20% success fee crystallizes only if a new benchmark high was set; rewards flow to the members who backed the winners.'],
+    comps:[['Chainlink CRE',C.truth],['Reputation',C.rules],['Portfolio',C.rules],['Fees & Rewards',C.rules]],
+    why:'<b>Skill compounds.</b> Updated accuracy feeds straight into next week’s snapshot — consistently right voters climb in influence over time.'},
+];
+
+const ACTORS = [
+  {key:'human',ic:'👤',bg:'color-mix(in srgb,var(--who) 16%,transparent)',title:'Human user',sub:'votes by hand',
+    steps:[
+      ['1','Sign in','Logs in with email/Google.','Dynamic',C.identity],
+      ['2','Get a wallet','An embedded wallet they own appears — no seed phrase.','Dynamic',C.identity],
+      ['3','Prove they’re real','Verifies once with World ID — one human, one account.','World ID',C.identity],
+      ['4','Fund + deposit','Adds USDC (from any wallet/exchange), deposits into the Vault, gets shares.','Vault',C.rules],
+      ['5','Vote','Allocates voting power across stocks in the app.','Voting',C.rules],
+      ['6','Earn','If their picks beat the S&P, accuracy rises and rewards flow in.','Fees & Rewards',C.rules],
+    ]},
+  {key:'agent',ic:'🤖',bg:'color-mix(in srgb,var(--truth) 18%,transparent)',title:'AI agent',sub:'votes automatically',
+    steps:[
+      ['1','Get a wallet','Backend spins up a Dynamic server wallet (or user delegates to it).','Dynamic',C.identity],
+      ['2','Prove human‑backed','AgentKit links the agent to a verified human — no bot armies.','AgentKit',C.identity],
+      ['3','Think','Agent Runtime runs its strategy and writes a thesis.','Agent Runtime',C.truth],
+      ['4','Deposit','Its backing capital sits in the Vault, same as a human’s.','Vault',C.rules],
+      ['5','Vote','Calls the exact same Voting contract a human does.','Voting',C.rules],
+      ['6','Earn','Builds a real, on‑chain accuracy track record over cycles.','Reputation',C.rules],
+    ]},
+];
+
+/* ---------------- RENDER: ARCHITECTURE ---------------- */
+function nodeEl(n){
+  const el=document.createElement('button');
+  el.className='node';el.style.setProperty('--c',n.c);el.dataset.id=n.id;
+  el.innerHTML=`<h4>${n.name}</h4><p>${n.blurb}</p>${n.by?`<span class="by">${n.by}</span>`:''}`;
+  el.addEventListener('click',()=>selectNode(n,el));
+  return el;
+}
+['who','access','rules','market','truth'].forEach(layer=>{
+  const host=document.getElementById('layer-'+layer);
+  NODES[layer].forEach(n=>host.appendChild(nodeEl(n)));
+});
+
+function selectNode(n,el){
+  document.querySelectorAll('.node').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  const guarantees = n.guarantees ? `<div class="field"><div class="k">What it guarantees</div><div class="v">${n.guarantees}</div></div>` : '';
+  document.getElementById('panel').innerHTML=`
+    <div class="panel-head">
+      <span class="pill" style="background:color-mix(in srgb,${n.pillc} 13%,transparent);color:${n.pillc}">${n.pill}</span>
+      <h3>${n.name}</h3>
+      <p class="who">${n.who}</p>
+    </div>
+    <div class="panel-body">
+      <div class="field"><div class="k">What it is</div><div class="v muted">${n.is}</div></div>
+      ${guarantees}
+      <div class="field"><div class="k">Talks to</div><div class="talks">${n.talks.map(t=>`<b>${t}</b>`).join('')}</div></div>
+      <div class="field"><div class="plain">${n.plain}</div></div>
+    </div>`;
+}
+
+/* ---------------- RENDER: CYCLE ---------------- */
+let cur=0;
+const ctop=document.getElementById('cycle-top');
+CYCLE.forEach((s,i)=>{
+  const el=document.createElement('button');
+  el.className='cstep'+(i===0?' active':'');el.dataset.i=i;
+  el.innerHTML=`<div class="num">${s.n}</div><h4>${s.title}</h4><p>${s.sub}</p>`;
+  el.addEventListener('click',()=>{cur=i;renderCycle();});
+  ctop.appendChild(el);
+});
+function renderCycle(){
+  document.querySelectorAll('.cstep').forEach((x,i)=>x.classList.toggle('active',i===cur));
+  const s=CYCLE[cur];
+  document.getElementById('cdetail').innerHTML=`
+    <div class="cdetail-head">
+      <div class="bignum">${s.n}</div>
+      <div><h2>${s.title}</h2><div class="sub">${s.sub}</div></div>
+    </div>
+    <div class="cdetail-grid">
+      <div>
+        <h5>What happens</h5>
+        <ul>${s.what.map(w=>`<li>${w}</li>`).join('')}</ul>
+      </div>
+      <div>
+        <h5>Components involved</h5>
+        <div class="comp-chips">${s.comps.map(c=>`<b style="--c:${c[1]}">${c[0]}</b>`).join('')}</div>
+        <div class="why">${s.why}</div>
+      </div>
+    </div>`;
+  document.getElementById('cprev').disabled=cur===0;
+  document.getElementById('cnext').disabled=cur===CYCLE.length-1;
+}
+document.getElementById('cprev').addEventListener('click',()=>{if(cur>0){cur--;renderCycle();}});
+document.getElementById('cnext').addEventListener('click',()=>{if(cur<CYCLE.length-1){cur++;renderCycle();}});
+renderCycle();
+
+/* ---------------- RENDER: ACTORS ---------------- */
+const ag=document.getElementById('actor-grid');
+ACTORS.forEach(a=>{
+  const col=document.createElement('div');col.className='actor-col';
+  col.innerHTML=`
+    <div class="ahead">
+      <div class="ic" style="background:${a.bg}">${a.ic}</div>
+      <div><h3>${a.title}</h3><p>${a.sub}</p></div>
+    </div>
+    ${a.steps.map(st=>`
+      <div class="astep">
+        <div class="an">${st[0]}</div>
+        <div class="at"><b>${st[1]}</b><span>${st[2]}</span>
+          <span class="tagn" style="background:color-mix(in srgb,${st[4]} 13%,transparent);color:${st[4]}">${st[3]}</span>
+        </div>
+      </div>`).join('')}`;
+  ag.appendChild(col);
+});
+
+/* ---------------- TABS ---------------- */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('view-'+t.dataset.view).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
