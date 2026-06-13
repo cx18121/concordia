@@ -1,0 +1,101 @@
+// ALWAYS-ON KEEPER — the live app's heartbeat (ROADMAP C, ISSUES #8/#12). Loops 5-min cycles
+// forever: post prices → open → [voting window] → lock + re-peg → post next week → re-peg →
+// resolve, stepping through real 2024 history on repeat. This is the hosting-fallback entrypoint
+// (Railway, ISSUES #13) and runs the SAME core logic the CRE workflow does (cre/my-workflow).
+//
+// Drive: the ON-CHAIN state machine is the source of truth. Each pass reads Governance.state()
+// and does the next action, so a restart resumes cleanly from wherever the cycle is.
+//
+// Env: KEEPER_KEY (0x…, the onlyKeeper EOA) · MODE=replay|live (default replay) ·
+//      POOL_ASSETS=AAPL,NVDA,… (pools to re-peg; default demo set) · RPC_URL (see @chf/shared).
+import { addresses, UNIVERSE } from "@chf/shared";
+import { ViemChainAdapter } from "../src/chain/viemAdapter.ts";
+import { ReplayFixtureSource, LiveAPISource, type PriceSource, type PriceSnapshot } from "../src/core/priceSource.ts";
+import { computeResolve } from "../src/core/resolve.ts";
+import { returnBetween, type ReplayFixture } from "../src/core/fixture.ts";
+import { DEMO_TIMING } from "../src/core/cycle.ts";
+
+const sleep = (sec: number) => new Promise((r) => setTimeout(r, sec * 1000));
+const log = (m: string) => console.log(`[${new Date().toISOString()}] ${m}`);
+
+const DEFAULT_POOLS = ["AAPL", "NVDA", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "JPM"];
+
+async function loadFixture(): Promise<ReplayFixture> {
+  const f = Bun.file(new URL("../fixtures/replay.json", import.meta.url));
+  if (!(await f.exists())) throw new Error("fixtures/replay.json missing — run `bun run build-fixture` first");
+  return (await f.json()) as ReplayFixture;
+}
+
+/** Per-ticker + S&P fractional return between the lock snapshot and the resolve snapshot. */
+function cycleReturns(lock: PriceSnapshot, resolve: PriceSnapshot) {
+  const byTicker: Record<string, number> = {};
+  for (const t of Object.keys(lock.pricesE8)) {
+    if (resolve.pricesE8[t] !== undefined) byTicker[t] = returnBetween(lock.pricesE8[t], resolve.pricesE8[t]);
+  }
+  return { byTicker, sp: returnBetween(lock.spE8, resolve.spE8) };
+}
+
+async function main() {
+  const key = process.env.KEEPER_KEY as `0x${string}` | undefined;
+  if (!key) throw new Error("KEEPER_KEY not set (the onlyKeeper EOA private key)");
+  if (addresses.governance === "0x0000000000000000000000000000000000000000")
+    throw new Error("addresses.governance is unset — deploy contracts and fill shared/src/addresses.ts");
+
+  const mode = (process.env.MODE ?? "replay") as "replay" | "live";
+  const poolAssets = (process.env.POOL_ASSETS?.split(",").map((s) => s.trim()).filter(Boolean)) ?? DEFAULT_POOLS;
+  const timing = DEMO_TIMING;
+
+  const source: PriceSource = mode === "live" ? new LiveAPISource(UNIVERSE) : new ReplayFixtureSource(await loadFixture());
+  const adapter = new ViemChainAdapter(key);
+  log(`keeper ${adapter.keeper} | mode=${mode} | pools=[${poolAssets.join(",")}] | window=${timing.votingWindowSec}s hold=${timing.holdSec}s`);
+
+  // Remember each cycle's lock-time prices so resolve scores against what the fund actually bought.
+  const lockSnapshots = new Map<number, PriceSnapshot>();
+
+  for (;;) {
+    try {
+      const state = await adapter.getState();
+      const cycleId = await adapter.getCycleId();
+
+      if (state === "IDLE") {
+        const snap = await source.snapshotForCycle(cycleId);
+        log(`cycle ${cycleId} OPEN — posting prices: ${snap.label}`);
+        await adapter.setPrices(snap);
+        await adapter.repegPools(poolAssets, snap);
+        lockSnapshots.set(cycleId, snap);
+        await adapter.openCycle();
+        log(`cycle ${cycleId} voting open for ${timing.votingWindowSec}s`);
+        await sleep(timing.votingWindowSec);
+      } else if (state === "OPEN") {
+        log(`cycle ${cycleId} LOCK — selecting basket + executing swaps`);
+        await adapter.lockCycle();
+        await adapter.repegPools(poolAssets, lockSnapshots.get(cycleId) ?? (await source.snapshotForCycle(cycleId)));
+        log(`cycle ${cycleId} holding for ${timing.holdSec}s`);
+        await sleep(timing.holdSec);
+      } else {
+        // LOCKED → resolve: advance one market week, then score + pay out.
+        const next = await source.snapshotForCycle(cycleId + 1);
+        log(`cycle ${cycleId} RESOLVE — advancing to: ${next.label}`);
+        await adapter.setPrices(next);
+        await adapter.repegPools(poolAssets, next);
+
+        const lock = lockSnapshots.get(cycleId) ?? (await source.snapshotForCycle(cycleId));
+        const { byTicker, sp } = cycleReturns(lock, next);
+        const reads = await adapter.readResolveInputs();
+        const out = computeResolve({ ...reads, returnByTicker: byTicker, spReturn: sp });
+        log(`cycle ${cycleId} resolving ${out.members.length} voters (S&P ${(sp * 100).toFixed(1)}%)`);
+        await adapter.resolveCycle(out);
+        lockSnapshots.delete(cycleId);
+        log(`cycle ${cycleId} resolved → IDLE`);
+      }
+    } catch (e) {
+      log(`error: ${(e as Error).message} — retrying in 15s`);
+      await sleep(15);
+    }
+  }
+}
+
+main().catch((e) => {
+  log(`fatal: ${(e as Error).message}`);
+  process.exit(1);
+});
