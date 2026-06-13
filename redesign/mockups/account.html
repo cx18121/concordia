@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Portfolio | Community Fund DAO</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: "#06080C",
+                        teal: {
+                            DEFAULT: "#2DD4BF",
+                            deep: "#14B8A6",
+                            bright: "#5FF0DC"
+                        },
+                        text: {
+                            primary: "#F4F7FA",
+                            muted: "#9AA7B4",
+                            subtle: "#7E8A98"
+                        },
+                        gain: "#34E3A8",
+                        loss: "#FF6B6B"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        display: ["Outfit", "sans-serif"],
+                        body: ["Inter", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #06080C;
+            color: #F4F7FA;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        }
+        .ambient-glow {
+            position: fixed;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(45, 212, 191, 0.08) 0%, rgba(59, 130, 246, 0.04) 50%, rgba(6, 8, 12, 0) 100%);
+            filter: blur(80px);
+            z-index: -1;
+            animation: drift 20s infinite alternate ease-in-out;
+        }
+        @keyframes drift {
+            from { transform: translate(-10%, -10%); }
+            to { transform: translate(10%, 10%); }
+        }
+        .chart-gradient {
+            fill: url(#chart-fill);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<!-- Ambient Background Elements -->
+<div class="ambient-glow top-[-200px] left-[-200px]"></div>
+<div class="ambient-glow bottom-[-200px] right-[-200px]" style="animation-delay: -5s; background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, rgba(45, 212, 191, 0.03) 50%, rgba(6, 8, 12, 0) 100%);"></div>
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+<nav class="max-w-[1140px] mx-auto flex items-center justify-between px-6 py-2 bg-white/5 backdrop-blur-xl rounded-full border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-gradient-to-br from-teal to-teal-deep rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(45,212,191,0.4)]">
+<span class="material-symbols-outlined text-obsidian text-sm font-bold" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<span class="font-display text-xl font-bold text-[#F4F7FA] tracking-tight">Community Fund</span>
+</div>
+<div class="hidden md:flex items-center gap-8 font-body text-sm font-medium tracking-wide">
+<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="#">Overview</a>
+<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="#">Vote</a>
+<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="#">Forum</a>
+<a class="text-[#F4F7FA] border-b-2 border-[#2DD4BF] shadow-[0_4px_12px_-2px_rgba(45,212,191,0.3)] cursor-pointer" href="#">Portfolio</a>
+<a class="text-[#9AA7B4] hover:text-[#F4F7FA] transition-all duration-300 cursor-pointer" href="#">Leaderboard</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center px-3 py-1 bg-white/10 rounded-full text-xs font-semibold text-teal gap-2 border border-teal/20">
+<span class="w-2 h-2 rounded-full bg-teal animate-pulse"></span>
+                    USDC $5,000.00
+                </div>
+<button class="material-symbols-outlined text-[#9AA7B4] hover:text-[#F4F7FA] transition-all active:scale-95">settings</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-white/5">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLNLSSgg6wRHbj5KifMibDbvp-x8zcBFWxhdqCuGFITpAddv-1bNPianpRQvv9IRx7R3M5K-Fm8INcreF6hsGJagbAWxZEYdnxmsLNBy7KiaOeWXOqsCgxQGab63lYggQtivCqOiIODUa-7qvXkyLqgnUg89yLPvbLWqVlHcoNyGdE_MgVWeSRkWZ2Lgg1QFS4qr5uRPNAfPSwoWO-cB8hjs0QhLPKt9xjRk0SGdGztMtsgmY76r5xAu-jadbhhibr6X8VmIPhApM"/>
+</div>
+</div>
+</nav>
+</header>
+<main class="max-w-[1140px] mx-auto pt-32 pb-20 px-6">
+<!-- Global Stats Row (Free Layout) -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-0 mb-16 items-center">
+<div class="px-6 border-r border-white/10 last:border-0 py-2">
+<p class="text-[11px] font-medium uppercase tracking-[0.05em] text-text-subtle mb-1">Assets Under Mgmt</p>
+<h2 class="font-display text-4xl font-extrabold text-text-primary">$43.8K</h2>
+</div>
+<div class="px-6 border-r border-white/10 last:border-0 py-2">
+<p class="text-[11px] font-medium uppercase tracking-[0.05em] text-text-subtle mb-1">NAV / Share</p>
+<div class="flex items-baseline gap-2">
+<h2 class="font-display text-4xl font-extrabold text-text-primary">1.188</h2>
+<span class="text-gain text-sm font-semibold">▲ 18.8%</span>
+</div>
+</div>
+<div class="px-6 border-r border-white/10 last:border-0 py-2">
+<p class="text-[11px] font-medium uppercase tracking-[0.05em] text-text-subtle mb-1">S&amp;P Benchmark</p>
+<div class="flex items-baseline gap-2">
+<h2 class="font-display text-4xl font-extrabold text-text-primary">1.028</h2>
+<span class="text-gain text-sm font-semibold">▲ 2.8%</span>
+</div>
+</div>
+<div class="px-6 border-r border-white/10 last:border-0 py-2">
+<p class="text-[11px] font-medium uppercase tracking-[0.05em] text-text-subtle mb-1">Alpha vs S&amp;P</p>
+<h2 class="font-display text-4xl font-extrabold text-teal">+16.0%</h2>
+</div>
+</section>
+<!-- Performance Chart Section -->
+<section class="mb-16">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-xl font-display font-bold text-text-primary">Performance</h3>
+<p class="text-sm text-text-subtle">Fund Performance vs Market Index</p>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-1 bg-teal rounded-full"></span>
+<span class="text-xs text-text-muted">Community Fund</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-0 border-t border-dashed border-text-subtle"></span>
+<span class="text-xs text-text-muted">S&amp;P 500</span>
+</div>
+</div>
+<div class="flex bg-white/5 rounded-full p-1 border border-white/5">
+<button class="px-3 py-1 text-xs font-semibold text-teal rounded-full bg-white/10 shadow-sm">1M</button>
+<button class="px-3 py-1 text-xs font-medium text-text-muted hover:text-text-primary">3M</button>
+<button class="px-3 py-1 text-xs font-medium text-text-muted hover:text-text-primary">6M</button>
+<button class="px-3 py-1 text-xs font-medium text-text-muted hover:text-text-primary">YTD</button>
+<button class="px-3 py-1 text-xs font-medium text-text-muted hover:text-text-primary">ALL</button>
+</div>
+</div>
+</div>
+<!-- Robinhood-style Chart Placeholder -->
+<div class="relative w-full h-[400px]">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 1000 400">
+<defs>
+<lineargradient id="chart-fill" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.15"></stop>
+<stop offset="100%" stop-color="#2DD4BF" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Benchmark (S&P 500) -->
+<path d="M0,320 L100,310 L200,315 L300,290 L400,295 L500,280 L600,285 L700,270 L800,275 L900,265 L1000,260" fill="none" opacity="0.5" stroke="#7E8A98" stroke-dasharray="6,4" stroke-width="1.5"></path>
+<!-- Area Fill -->
+<path class="chart-gradient" d="M0,350 L100,320 L200,280 L300,295 L400,220 L500,180 L600,210 L700,140 L800,110 L900,125 L1000,80 L1000,400 L0,400 Z"></path>
+<!-- Fund Line -->
+<path class="drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]" d="M0,350 L100,320 L200,280 L300,295 L400,220 L500,180 L600,210 L700,140 L800,110 L900,125 L1000,80" fill="none" stroke="#2DD4BF" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<!-- Pulse Point -->
+<circle class="animate-pulse" cx="1000" cy="80" fill="#5FF0DC" r="4">
+<animate attributename="r" dur="2s" repeatcount="indefinite" values="4;6;4"></animate>
+</circle>
+</svg>
+<!-- Chart Labels (Time Axis) -->
+<div class="absolute bottom-[-24px] left-0 right-0 flex justify-between px-2 text-[10px] uppercase font-semibold text-text-subtle tracking-wider">
+<span>Oct 24</span>
+<span>Oct 31</span>
+<span>Nov 07</span>
+<span>Nov 14</span>
+<span>Nov 21</span>
+<span>Nov 28</span>
+</div>
+</div>
+</section>
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Your Stake (The Focus Card) -->
+<div class="lg:col-span-7">
+<div class="glass-card rounded-xl p-8 transition-transform hover:translate-y-[-4px] duration-300">
+<div class="flex justify-between items-start mb-10">
+<div>
+<p class="text-xs font-medium uppercase tracking-[0.08em] text-text-subtle mb-1">Your Position Value</p>
+<div class="flex items-baseline gap-3">
+<h1 class="text-5xl font-display font-extrabold text-text-primary tracking-tight">$5,942.50</h1>
+<span class="px-2 py-0.5 rounded bg-teal/10 text-teal text-[10px] font-bold uppercase tracking-wide border border-teal/20">11.4% of fund</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-text-subtle cursor-pointer hover:text-text-primary transition-colors">north_east</span>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+<div>
+<p class="text-[10px] text-text-subtle uppercase mb-1">Deposited</p>
+<p class="text-sm font-semibold">$5,000.00</p>
+</div>
+<div>
+<p class="text-[10px] text-text-subtle uppercase mb-1">Accuracy</p>
+<p class="text-sm font-semibold text-gain">+0.6%</p>
+</div>
+<div>
+<p class="text-[10px] text-text-subtle uppercase mb-1">Cycles played</p>
+<p class="text-sm font-semibold">5</p>
+</div>
+<div>
+<p class="text-[10px] text-text-subtle uppercase mb-1">Claimable</p>
+<p class="text-sm font-semibold text-teal">$8.05</p>
+</div>
+</div>
+<div class="h-px w-full bg-white/10 mb-10"></div>
+<div class="space-y-6">
+<h4 class="text-sm font-bold text-text-primary uppercase tracking-wider">Expand Position</h4>
+<div class="flex flex-col sm:flex-row gap-4">
+<div class="flex-1 relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">$</span>
+<input class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-8 pr-4 text-text-primary placeholder-text-subtle focus:ring-1 focus:ring-teal focus:border-teal transition-all outline-none" placeholder="2,000" type="text"/>
+</div>
+<button class="bg-gradient-to-r from-teal to-teal-deep text-obsidian font-bold py-3 px-8 rounded-xl hover:shadow-[0_0_20px_rgba(45,212,191,0.4)] active:scale-[0.98] transition-all">Deposit</button>
+</div>
+<div class="flex items-center justify-between">
+<a class="text-xs font-semibold text-teal hover:text-teal-bright flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+                                Mint demo USDC
+                            </a>
+<p class="text-[10px] text-text-subtle italic">Deposits are epoch-locked — they activate at the next cycle open</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Quick Stats / Next Epoch -->
+<div class="lg:col-span-5 space-y-6">
+<!-- Epoch Card -->
+<div class="glass-card rounded-xl p-6 border-l-4 border-l-teal">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-text-muted uppercase tracking-widest">Next Epoch</span>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-teal animate-pulse"></span>
+<span class="text-[10px] font-bold text-teal uppercase">Open</span>
+</div>
+</div>
+<div class="flex items-center gap-6 mb-4">
+<div class="text-center">
+<p class="text-2xl font-display font-bold text-text-primary">14</p>
+<p class="text-[9px] text-text-subtle uppercase">Hours</p>
+</div>
+<div class="text-center">
+<p class="text-2xl font-display font-bold text-text-primary">28</p>
+<p class="text-[9px] text-text-subtle uppercase">Mins</p>
+</div>
+<div class="text-center">
+<p class="text-2xl font-display font-bold text-text-primary">11</p>
+<p class="text-[9px] text-text-subtle uppercase">Secs</p>
+</div>
+</div>
+<button class="w-full py-2.5 rounded-lg border border-white/10 text-xs font-bold text-text-muted hover:bg-white/5 hover:text-text-primary transition-all">View Governance Timeline</button>
+</div>
+<!-- Navigational Group Cards -->
+<div class="glass-card rounded-xl p-6 group cursor-pointer hover:translate-y-[-2px] transition-all duration-300 relative overflow-hidden">
+<div class="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
+<span class="material-symbols-outlined text-lg">arrow_outward</span>
+</div>
+<div class="flex items-center gap-4 mb-3">
+<div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-teal">how_to_vote</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-text-primary">Cast Your Vote</h4>
+<p class="text-[10px] text-text-subtle">3 Active Proposals</p>
+</div>
+</div>
+<p class="text-xs text-text-muted">Influence the fund's direction by voting on new asset allocations and strategy shifts.</p>
+</div>
+<div class="glass-card rounded-xl p-6 group cursor-pointer hover:translate-y-[-2px] transition-all duration-300 relative overflow-hidden">
+<div class="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
+<span class="material-symbols-outlined text-lg">leaderboard</span>
+</div>
+<div class="flex items-center gap-4 mb-3">
+<div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-teal">emoji_events</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-text-primary">Leaderboard</h4>
+<p class="text-[10px] text-text-subtle">Rank #42 of 1,284</p>
+</div>
+</div>
+<p class="text-xs text-text-muted">Compare your portfolio accuracy against the community. Earn badges for top-tier forecasting.</p>
+</div>
+</div>
+</div>
+<!-- Basket List Section -->
+<section class="mt-20">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-display font-bold text-text-primary">Fund Composition</h3>
+<button class="text-xs font-semibold text-text-subtle hover:text-text-primary transition-colors">View All Assets</button>
+</div>
+<div class="space-y-0">
+<!-- Header -->
+<div class="grid grid-cols-12 gap-4 px-4 py-2 border-b border-white/5">
+<div class="col-span-5 text-[10px] font-bold text-text-subtle uppercase tracking-widest">Asset</div>
+<div class="col-span-2 text-[10px] font-bold text-text-subtle uppercase tracking-widest text-right">Weight</div>
+<div class="col-span-3 text-[10px] font-bold text-text-subtle uppercase tracking-widest text-right">Performance (1M)</div>
+<div class="col-span-2"></div>
+</div>
+<!-- Asset Rows -->
+<div class="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
+<div class="col-span-5 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center font-bold text-indigo-400">SOL</div>
+<div>
+<p class="text-sm font-bold text-text-primary">Solana</p>
+<p class="text-xs text-text-subtle">SOL</p>
+</div>
+</div>
+<div class="col-span-2 text-right">
+<p class="text-sm font-semibold text-text-primary">42.5%</p>
+</div>
+<div class="col-span-3 text-right">
+<div class="flex items-center justify-end gap-2">
+<span class="text-sm font-bold text-gain">+24.8%</span>
+<span class="material-symbols-outlined text-gain text-sm">trending_up</span>
+</div>
+</div>
+<div class="col-span-2 text-right">
+<span class="material-symbols-outlined text-text-subtle group-hover:text-text-primary opacity-0 group-hover:opacity-100 transition-all">chevron_right</span>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
+<div class="col-span-5 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center font-bold text-blue-400">ETH</div>
+<div>
+<p class="text-sm font-bold text-text-primary">Ethereum</p>
+<p class="text-xs text-text-subtle">ETH</p>
+</div>
+</div>
+<div class="col-span-2 text-right">
+<p class="text-sm font-semibold text-text-primary">28.0%</p>
+</div>
+<div class="col-span-3 text-right">
+<div class="flex items-center justify-end gap-2">
+<span class="text-sm font-bold text-gain">+8.2%</span>
+<span class="material-symbols-outlined text-gain text-sm">trending_up</span>
+</div>
+</div>
+<div class="col-span-2 text-right">
+<span class="material-symbols-outlined text-text-subtle group-hover:text-text-primary opacity-0 group-hover:opacity-100 transition-all">chevron_right</span>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
+<div class="col-span-5 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center font-bold text-yellow-400">BTC</div>
+<div>
+<p class="text-sm font-bold text-text-primary">Bitcoin</p>
+<p class="text-xs text-text-subtle">BTC</p>
+</div>
+</div>
+<div class="col-span-2 text-right">
+<p class="text-sm font-semibold text-text-primary">15.5%</p>
+</div>
+<div class="col-span-3 text-right">
+<div class="flex items-center justify-end gap-2">
+<span class="text-sm font-bold text-loss">-2.4%</span>
+<span class="material-symbols-outlined text-loss text-sm">trending_down</span>
+</div>
+</div>
+<div class="col-span-2 text-right">
+<span class="material-symbols-outlined text-text-subtle group-hover:text-text-primary opacity-0 group-hover:opacity-100 transition-all">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Simple Atmospheric Footer -->
+<footer class="max-w-[1140px] mx-auto py-12 px-6 border-t border-white/5">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-2 grayscale opacity-40">
+<div class="w-6 h-6 bg-text-subtle rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-obsidian text-[12px]">shield</span>
+</div>
+<span class="text-xs font-bold text-text-subtle">Protocol Insured by Nexus</span>
+</div>
+<div class="flex items-center gap-8">
+<a class="text-[10px] font-bold text-text-subtle uppercase tracking-widest hover:text-teal transition-colors" href="#">Documentation</a>
+<a class="text-[10px] font-bold text-text-subtle uppercase tracking-widest hover:text-teal transition-colors" href="#">Governance</a>
+<a class="text-[10px] font-bold text-text-subtle uppercase tracking-widest hover:text-teal transition-colors" href="#">Risk Disclaimer</a>
+</div>
+<p class="text-[10px] text-text-subtle">© 2024 Community Fund DAO. Precision yields for the collective.</p>
+</div>
+</footer>
+<script>
+        // Simple micro-interactions
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                if (!btn.classList.contains('active')) {
+                    btn.classList.add('transition-all');
+                }
+            });
+        });
+        
+        // Dynamic chart point movement simulation
+        const pulsePoint = document.querySelector('circle');
+        if (pulsePoint) {
+            setInterval(() => {
+                const cy = parseFloat(pulsePoint.getAttribute('cy'));
+                const newCy = cy + (Math.random() - 0.5) * 4;
+                if (newCy > 60 && newCy < 100) {
+                    pulsePoint.setAttribute('cy', newCy);
+                }
+            }, 3000);
+        }
+    </script>
+<script>
+(function(){
+  var map={'Overview':'cinematic.html','Vote':'vote.html','Forum':'stitch-forum.html','Portfolio':'stitch-portfolio.html','Leaderboard':'stitch-leaderboard.html'};
+  [].forEach.call(document.querySelectorAll('a,button,span,div,li,p'),function(n){
+    if(/^H[1-6]$/.test(n.tagName))return;
+    var t=(n.textContent||'').trim();
+    if(t.length<=14 && map[t]){ n.style.cursor='pointer'; n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();location.href=map[t];}); }
+  });
+})();
+</script>
+</body></html>
