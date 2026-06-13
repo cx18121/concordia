@@ -1,0 +1,44 @@
+import { describe, expect, test } from "bun:test";
+import { HTTPCapability } from "@chainlink/cre-sdk";
+import { configSchema, initWorkflow, onTick } from "./workflow";
+
+// Verifies the workflow loads under the real @chainlink/cre-sdk + Bun and wires the HTTP trigger
+// (so `cre workflow simulate --listen` can drive it). The handler's on-chain dispatch is exercised
+// end-to-end by `cre workflow simulate`; its pure inputs — resolve compute + report encoders — are
+// unit-tested in ../../test/.
+
+const cfg = {
+  mode: "replay" as const,
+  poolAssets: ["NVDA", "AAPL"],
+  evms: [
+    {
+      chainSelectorName: "ethereum-testnet-sepolia-base-1",
+      oracle: "0x0000000000000000000000000000000000000001",
+      governance: "0x0000000000000000000000000000000000000002",
+      executor: "0x0000000000000000000000000000000000000003",
+      gasLimit: "3000000",
+    },
+  ],
+};
+
+describe("config", () => {
+  test("accepts the staging shape and defaults mode to replay", () => {
+    const parsed = configSchema.parse({ evms: cfg.evms });
+    expect(parsed.mode).toBe("replay");
+    expect(parsed.poolAssets).toEqual([]);
+  });
+
+  test("rejects an unknown mode", () => {
+    expect(() => configSchema.parse({ mode: "bogus", evms: cfg.evms })).toThrow();
+  });
+});
+
+describe("initWorkflow", () => {
+  test("registers a single HTTP-triggered handler bound to onTick", () => {
+    const handlers = initWorkflow(configSchema.parse(cfg));
+    expect(handlers).toHaveLength(1);
+    expect(handlers[0].fn).toBe(onTick);
+    // The trigger is the CRE HTTP trigger capability (what `simulate --listen` serves).
+    expect(handlers[0].trigger.capabilityId()).toBe(HTTPCapability.CAPABILITY_ID);
+  });
+});

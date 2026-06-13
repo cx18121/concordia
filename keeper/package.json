@@ -2,5 +2,19 @@
   "name": "keeper",
   "private": true,
   "type": "module",
-  "description": "Chainlink CRE workflow: prices, pool re-peg, cycle lifecycle, resolve compute. Runs on Bun >=1.2.21 (CRE TS SDK requirement)."
+  "description": "Chainlink CRE workflow + always-on heartbeat: prices, pool re-peg, cycle lifecycle, resolve compute. Runs on Bun >=1.2.21 (CRE TS SDK requirement).",
+  "scripts": {
+    "build-fixture": "bun run scripts/build-fixture.ts",
+    "start": "bun run scripts/run.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chf/shared": "file:../shared",
+    "viem": "^2.45.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/bun": "latest"
+  }
 }

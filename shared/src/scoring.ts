@@ -21,7 +21,7 @@ export function voteWeightedExcess(
 }
 
 /** EWMA smoothing for accuracy: α·thisCycle + (1−α)·old. */
-export function ewma(oldAcc: number, thisCycle: number, alphaBps = CONSTANTS.EWMA_ALPHA_BPS): number {
+export function ewma(oldAcc: number, thisCycle: number, alphaBps: number = CONSTANTS.EWMA_ALPHA_BPS): number {
   const a = alphaBps / 1e4;
   return a * thisCycle + (1 - a) * oldAcc;
 }
