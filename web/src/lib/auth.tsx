@@ -65,7 +65,9 @@ function AuthBridge({ children }: { children: ReactNode }) {
       setIsVerified(true);
       return true;
     }
-    // Render <WorldIDVerify/> and resolve once its onVerified fires.
+    // Re-entry guard: a flow is already live; don't clobber its resolver.
+    if (pendingResolve.current) return false;
+    // Render <WorldIDVerify/> and resolve once its onVerified / onCancel fires.
     return new Promise<boolean>((resolve) => {
       pendingResolve.current = resolve;
       setVerifying(true);
@@ -76,6 +78,13 @@ function AuthBridge({ children }: { children: ReactNode }) {
     setIsVerified(true);
     setVerifying(false);
     pendingResolve.current?.(true);
+    pendingResolve.current = null;
+  }, []);
+
+  // Modal dismissed or proof failed: unblock the caller without verifying.
+  const onCancel = useCallback(() => {
+    setVerifying(false);
+    pendingResolve.current?.(false);
     pendingResolve.current = null;
   }, []);
 
@@ -104,7 +113,9 @@ function AuthBridge({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={value}>
       {children}
-      {verifying && <WorldIDVerify signal={address ?? ""} onVerified={onVerified} />}
+      {verifying && (
+        <WorldIDVerify signal={address ?? ""} onVerified={onVerified} onCancel={onCancel} />
+      )}
     </AuthContext.Provider>
   );
 }

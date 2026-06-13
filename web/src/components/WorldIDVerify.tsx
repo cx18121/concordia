@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   IDKitRequestWidget,
   deviceLegacy,
@@ -12,16 +12,20 @@ const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
 interface Props {
   onVerified?: () => void;
+  /** Fired exactly once when the modal is dismissed (or proof fails) without a prior success. */
+  onCancel?: () => void;
   /** Bound into the proof so it commits to the wallet (idkit v4: passed to the preset, surfaces as signal_hash). */
   signal?: string;
 }
 
-export default function WorldIDVerify({ onVerified, signal }: Props) {
+export default function WorldIDVerify({ onVerified, onCancel, signal }: Props) {
   const [open, setOpen] = useState(false);
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // True once onSuccess ran, so the close that follows isn't reported as a cancel.
+  const succeededRef = useRef(false);
 
   const appId = process.env.NEXT_PUBLIC_WORLD_APP_ID as `app_${string}`;
   const action = process.env.NEXT_PUBLIC_WORLD_ACTION!;
@@ -60,14 +64,24 @@ export default function WorldIDVerify({ onVerified, signal }: Props) {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error((data as { error?: string }).error ?? "Verification failed");
+      const message = (data as { error?: string }).error ?? "Verification failed";
+      setError(message);
+      // Proof failed: closing the modal below reports it as a cancel to the parent.
+      throw new Error(message);
     }
   }
 
   function onSuccess() {
+    succeededRef.current = true;
     setVerified(true);
     setOpen(false);
     onVerified?.();
+  }
+
+  // Dismissed (or closed after a failed proof) without a success → notify parent once.
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next && !succeededRef.current) onCancel?.();
   }
 
   if (verified) {
@@ -84,7 +98,7 @@ export default function WorldIDVerify({ onVerified, signal }: Props) {
       {rpContext && (
         <IDKitRequestWidget
           open={open}
-          onOpenChange={setOpen}
+          onOpenChange={handleOpenChange}
           app_id={appId}
           action={action}
           rp_context={rpContext}
