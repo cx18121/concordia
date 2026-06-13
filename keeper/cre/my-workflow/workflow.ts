@@ -1,22 +1,30 @@
-// Chainlink CRE workflow — the off-chain brain on a DON (CONTRACTS.md §6). One cron handler that
-// advances the on-chain cycle one step per tick: read Governance.state() → do the next job.
+// Chainlink CRE workflow — the off-chain brain on a DON (CONTRACTS.md §6). An HTTP-triggered
+// handler that advances the on-chain cycle one step per "tick": read Governance.state() → do the
+// next job.
 //   IDLE   → post prices (Oracle) + openCycle (Governance)
 //   OPEN   → lockCycle (Governance)
 //   LOCKED → post next week's prices + resolveCycle (per-member EWMA accuracy + reward credit)
+//
+// Why an HTTP trigger (not cron): `cre workflow simulate --listen` keeps the simulator alive and
+// runs the workflow on each request to http://localhost:2000/trigger — so a trivial external "tick"
+// (a curl loop for always-on, or a button on stage) drives a continuous, real-on-chain demo with
+// NO deployment (`--broadcast` writes real testnet txs via the mock forwarder). Confirmed by the
+// CRE organizers + docs; needs CRE CLI ≥ v1.19. Cron-in-simulate is one-shot, which is why we don't
+// use it here. For a DON-hosted deploy you'd add `cron.trigger({schedule})` → the same handler.
 //
 // Writes go through Chainlink's KeystoneForwarder → receiver.onReport (see src/core/encode.ts for
 // the wire format). Reads use the EVM capability. The SAME pure core (resolve/scoring/fixture)
 // drives the Bun heartbeat in scripts/run.ts — this file is just the CRE I/O shell around it.
 //
-// Build/run entirely in simulation: `cre workflow simulate my-workflow --target staging-settings`
-// (qualifies for the prize, no deployment access needed). Default mode is `replay` — deterministic
-// real-2024 history from the bundled fixture, ideal for a repeatable sim + the live demo loop.
+// Run: `cre workflow simulate my-workflow --target staging-settings --listen --broadcast`.
+// Default mode is `replay` — deterministic real-2024 history from the bundled fixture.
 import {
   bytesToHex,
   ConsensusAggregationByFields,
   cre,
   encodeCallMsg,
   getNetwork,
+  type HTTPPayload,
   type HTTPSendRequester,
   LAST_FINALIZED_BLOCK_NUMBER,
   median,
@@ -44,7 +52,6 @@ const fixture = replayFixtureJson as ReplayFixture;
 
 // ─── Config ─────────────────────────────────────────────────
 export const configSchema = z.object({
-  schedule: z.string(), //                       6-field cron (seconds first)
   mode: z.enum(["replay", "live"]).default("replay"),
   poolAssets: z.array(z.string()).default([]), // pools to re-peg toward the posted oracle price
   evms: z.array(
@@ -133,15 +140,17 @@ function cycleReturns(lock: Snapshot, next: Snapshot) {
   return { byTicker, sp: returnBetween(lock.spE8, next.spE8) };
 }
 
-// ─── Cron handler: advance the cycle one step ───────────────
-export const onCronTrigger = (runtime: Runtime<Config>): string => {
+// ─── Tick handler: advance the cycle one step ───────────────
+// Triggered by an HTTP request (the external "tick"). The body is ignored — the on-chain
+// Governance.state() is the source of truth, so each tick safely advances exactly one step.
+export const onTick = (runtime: Runtime<Config>, _payload?: HTTPPayload): string => {
   const cfg = runtime.config;
   const evm = cfg.evms[0];
   const client = evmClientFor(evm);
 
   const state = CYCLE_STATE[Number(read<bigint>(runtime, client, evm.governance, governanceKeeperAbi, "state"))];
   const cycleId = Number(read<bigint>(runtime, client, evm.governance, governanceKeeperAbi, "cycleId"));
-  runtime.log(`state=${state} cycle=${cycleId} mode=${cfg.mode}`);
+  runtime.log(`tick: state=${state} cycle=${cycleId} mode=${cfg.mode}`);
 
   if (state === "IDLE") {
     const snap = cfg.mode === "live" ? liveSnapshot(runtime) : replaySnapshot(cycleId);
@@ -184,7 +193,9 @@ function repegPools(runtime: Runtime<Config>, client: any, evm: EvmCfg, poolAsse
 }
 
 // ─── Workflow init ──────────────────────────────────────────
-export function initWorkflow(config: Config) {
-  const cron = new cre.capabilities.CronCapability();
-  return [cre.handler(cron.trigger({ schedule: config.schedule }), onCronTrigger)];
+// HTTP trigger so `simulate --listen` runs the workflow on each request (no deploy needed).
+// `trigger({})` = no authorized-key restriction, fine for local sim + the testnet demo.
+export function initWorkflow(_config: Config) {
+  const http = new cre.capabilities.HTTPCapability();
+  return [cre.handler(http.trigger({}), onTick)];
 }

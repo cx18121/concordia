@@ -1,5 +1,4 @@
 {
-  "schedule": "0 */1 * * * *",
   "mode": "replay",
   "poolAssets": ["AAPL", "NVDA", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "JPM"],
   "evms": [
