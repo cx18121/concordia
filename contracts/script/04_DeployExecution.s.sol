@@ -29,18 +29,33 @@ contract DeployExecutionScript is BaseScript {
     int24 constant TICK_SPACING = 60;
     uint256 constant SEED_USDC = 100_000e6; // ~100k USDC depth per pool (ISSUES #6)
     uint256 constant REPEG_RESERVE_USDC = 20_000e6; // executor's per-pool repeg reserve (both sides)
+    uint256 constant N = 18; // must match shared/src/fund.ts UNIVERSE
 
-    string[8] TICKERS = ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "JPM"];
-    // demo oracle prices, E8 (8-dp USD)
-    uint256[8] PRICES_E8 = [
-        uint256(180e8),
-        420e8,
-        120e8,
-        175e8,
-        185e8,
-        500e8,
-        250e8,
-        200e8
+    // The full votable universe (== shared UNIVERSE). Prices are demo ballparks, E8 (8-dp USD);
+    // the keeper overwrites them with live data each cycle.
+    string[N] TICKERS = [
+        "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "JPM", "XOM",
+        "UNH", "WMT", "SPY", "QQQ", "XLK", "XLF", "XLE", "XLV", "ARKK"
+    ];
+    uint256[N] PRICES_E8 = [
+        uint256(180e8), // AAPL
+        420e8, // MSFT
+        120e8, // NVDA
+        175e8, // GOOGL
+        185e8, // AMZN
+        500e8, // META
+        250e8, // TSLA
+        200e8, // JPM
+        105e8, // XOM
+        490e8, // UNH
+        60e8, // WMT
+        510e8, // SPY
+        440e8, // QQQ
+        210e8, // XLK
+        40e8, // XLF
+        90e8, // XLE
+        145e8, // XLV
+        50e8 // ARKK
     ];
 
     function run() external {
@@ -68,16 +83,16 @@ contract DeployExecutionScript is BaseScript {
         console.log("UniswapExecutor", address(exec));
 
         // 3. One mock stock + seeded pool per ticker.
-        usdc.mint(deployerAddress, uint256(SEED_USDC) * 8 * 2);
+        usdc.mint(deployerAddress, uint256(SEED_USDC) * N * 2);
         usdc.approve(address(permit2), type(uint256).max);
         permit2.approve(address(usdc), address(positionManager), type(uint160).max, type(uint48).max);
 
         // Fund the executor's USDC repeg reserve (the stock side is funded per-pool below). Without a
         // reserve, repeg() is a no-op. The keeper can top up later — mint() is public. Caveat: a
         // sustained one-way price trend in the replay can deplete one side over many cycles.
-        usdc.mint(address(exec), REPEG_RESERVE_USDC * 8);
+        usdc.mint(address(exec), REPEG_RESERVE_USDC * N);
 
-        for (uint256 i = 0; i < 8; i++) {
+        for (uint256 i = 0; i < N; i++) {
             _deployAndSeed(hook, usdc, exec, TICKERS[i], PRICES_E8[i]);
         }
 
