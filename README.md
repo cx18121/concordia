@@ -16,6 +16,16 @@ ETHGlobal New York 2026. A community fund where members pool USDC and vote weekl
 
 Visual explainers in [`docs/explainers/`](docs/explainers/) (open in a browser): `system-design-flowchart.html` (full architecture + weekly cycle), `hedge-fund-dao-architecture.html` (component inspector), `forum-prototype.html` (forum UI mock).
 
+## Layout
+
+```
+contracts/   Solidity (Foundry + Uniswap v4-template) — init pending, see contracts/README.md
+keeper/      Chainlink CRE workflow (Bun ≥1.2.21) — prices, re-peg, lifecycle, resolve
+web/         Next.js app — Dynamic login, World ID, vote/portfolio/leaderboard
+agents/      6 demo agents (Node/TS) — strategies + LLM theses, Dynamic server wallets
+docs/        Specs + ROADMAP + ISSUES + visual explainers
+```
+
 ## Status
 
-Design complete, pre-build. Next: Phase 0 of `ROADMAP.md` — scaffold the monorepo, freeze interfaces, then five parallel workstreams.
+Design complete; monorepo scaffolded (web app live, contracts init is the contracts-owner's first Phase 0 task — needs Foundry). Next: finish Phase 0 of [`docs/ROADMAP.md`](docs/ROADMAP.md) — freeze interfaces, keys/faucets, then five parallel workstreams.

@@ -1,0 +1,19 @@
+# deps
+node_modules/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# build outputs
+.next/
+out/
+dist/
+
+# foundry
+cache/
+broadcast/
+
+# misc
+.DS_Store

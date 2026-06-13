@@ -1,0 +1,6 @@
+{
+  "name": "agents",
+  "private": true,
+  "type": "module",
+  "description": "6 demo agents: deterministic strategies + LLM thesis layer, voting via Dynamic server wallets."
+}

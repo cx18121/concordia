@@ -1,0 +1,6 @@
+{
+  "name": "keeper",
+  "private": true,
+  "type": "module",
+  "description": "Chainlink CRE workflow: prices, pool re-peg, cycle lifecycle, resolve compute. Runs on Bun >=1.2.21 (CRE TS SDK requirement)."
+}
