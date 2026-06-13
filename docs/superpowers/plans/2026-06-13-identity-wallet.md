@@ -96,9 +96,26 @@ Do not change names or signatures without telling Track B — this is frozen lik
 
 ### Task A5: Hand off the contract to Track B
 
-- [ ] Confirm `web/src/lib/auth.ts` exports exactly the frozen `AuthProvider` + `useAuth()`.
-- [ ] Tell Track B to swap their `MockAuthProvider` import for the real `AuthProvider` in `layout.tsx`.
-- [ ] **Verify:** with the real provider in place, Track B's Join button runs login → verify → (their deposit step) with no interface changes on their side.
+- [x] Confirm the lib exports exactly the frozen `AuthProvider` + `useAuth()`. Public surface (impl is `auth.tsx`, not `auth.ts`):
+  - `web/src/lib/useAuth.ts` — `export { useAuth, AuthProvider } from "./auth"` + `export type { AuthState }`. **This is Track B's import path.**
+  - `web/src/lib/auth-types.ts` — the frozen `AuthState` interface, byte-for-byte the agreed shape. Unchanged.
+- [x] Track B swap instructions documented below (their `MockAuthProvider` → real `AuthProvider`).
+- [ ] **Verify with Track B's real provider:** can't run here — Track B lives in its own branch/worktree against a mock. Verified on this side: `tsc` clean, `npm run build` green, the frozen interface is satisfied, and the `useAuth()` re-export path is stable. Final login→verify→deposit verification happens at integration once Dynamic + World RP creds are in `.env.local`.
+
+#### Track B handoff
+
+**Import unchanged:** `import { AuthProvider, useAuth, type AuthState } from "@/lib/useAuth";`
+
+**The swap:** in `web/src/app/layout.tsx` (or wherever the mock is mounted), replace your `MockAuthProvider` with the real `AuthProvider` from `@/lib/useAuth`. No call-site changes — `useAuth()` returns the same `AuthState` shape (`address`, `isConnected`, `isVerified`, `login`, `logout`, `verify`, `getWalletClient`). The real `AuthProvider` is already wired into `layout.tsx` on this branch.
+
+**Env before the real flow works** (`web/.env.local`, gitignored — placeholders are in place):
+- `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` — Dynamic dashboard (email login + embedded wallets on Base Sepolia).
+- `WORLD_RP_ID`, `RP_SIGNING_KEY`, `NEXT_PUBLIC_WORLD_APP_ID`, `NEXT_PUBLIC_WORLD_ACTION` — World Developer Portal (level `selfieCheckLegacy`, `allow_legacy_proofs: true`).
+- `NEXT_PUBLIC_DEV_BYPASS=true` — keep on to click through verify() without a real World proof.
+
+**Two things to know:**
+- **Gas:** wallets are plain EOAs (sponsorship deferred). On a testnet the judge's fresh wallet needs a small test-ETH drip to send txs — a ~10-line backend step to add at live-flip, no interface change. (True gasless = the ZeroDev/AA route, deferred to polish; it would change the user's address to a smart account, which is why it's not in v1.)
+- **verify():** `await verify()` resolves `true` on success / `false` on cancel/dismiss/failure (no hanging promise). With `DEV_BYPASS=true` it resolves `true` immediately. It returns `false` if no wallet is connected, so call `login()` first.
 
 ---
 
