@@ -26,3 +26,10 @@ export const vaultAbi = parseAbi([
   "function deposit(uint256 assets) returns (uint256)",
   "function claimRewards() returns (uint256)",
 ]);
+
+// UniswapExecutor (workstream B). The keeper calls repeg() each cycle; UI/keeper read tokenOf().
+export const executorAbi = parseAbi([
+  "function tokenOf(bytes32 asset) view returns (address)",
+  "function repeg(bytes32 asset, uint256 targetPriceE8)",
+  "function targetSqrtPriceX96(bytes32 asset, uint256 priceE8) view returns (uint160)",
+]);

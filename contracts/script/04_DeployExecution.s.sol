@@ -28,6 +28,7 @@ contract DeployExecutionScript is BaseScript {
     uint24 constant LP_FEE = 3000;
     int24 constant TICK_SPACING = 60;
     uint256 constant SEED_USDC = 100_000e6; // ~100k USDC depth per pool (ISSUES #6)
+    uint256 constant REPEG_RESERVE_USDC = 20_000e6; // executor's per-pool repeg reserve (both sides)
 
     string[8] TICKERS = ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "JPM"];
     // demo oracle prices, E8 (8-dp USD)
@@ -71,6 +72,11 @@ contract DeployExecutionScript is BaseScript {
         usdc.approve(address(permit2), type(uint256).max);
         permit2.approve(address(usdc), address(positionManager), type(uint160).max, type(uint48).max);
 
+        // Fund the executor's USDC repeg reserve (the stock side is funded per-pool below). Without a
+        // reserve, repeg() is a no-op. The keeper can top up later — mint() is public. Caveat: a
+        // sustained one-way price trend in the replay can deplete one side over many cycles.
+        usdc.mint(address(exec), REPEG_RESERVE_USDC * 8);
+
         for (uint256 i = 0; i < 8; i++) {
             _deployAndSeed(hook, usdc, exec, TICKERS[i], PRICES_E8[i]);
         }
@@ -101,6 +107,9 @@ contract DeployExecutionScript is BaseScript {
         permit2.approve(address(token), address(positionManager), type(uint160).max, type(uint48).max);
 
         _seed(key, address(token) < address(usdc), startSqrt, priceE8, address(token));
+
+        // stock side of the executor's repeg reserve (~REPEG_RESERVE_USDC worth)
+        token.mint(address(exec), (REPEG_RESERVE_USDC * 1e20) / priceE8);
 
         console.log(ticker);
         console.log("   token", address(token));
