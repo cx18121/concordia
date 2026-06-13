@@ -4,7 +4,10 @@
 // (Railway, ISSUES #13) and runs the SAME core logic the CRE workflow does (cre/my-workflow).
 //
 // Drive: the ON-CHAIN state machine is the source of truth. Each pass reads Governance.state()
-// and does the next action, so a restart resumes cleanly from wherever the cycle is.
+// and does the next action, so a restart resumes at the CORRECT phase. Caveat: timing is paced by
+// the in-process sleeps, so a restart mid-phase advances that phase immediately (it doesn't wait
+// out the remaining voting/hold window). Fine for the supervised demo; precise mid-cycle resume
+// would need an on-chain "phase-started-at" timestamp (Governance doesn't expose one).
 //
 // Env: KEEPER_KEY (0x…, the onlyKeeper EOA) · MODE=replay|live (default replay) ·
 //      POOL_ASSETS=AAPL,NVDA,… (pools to re-peg; default demo set) · RPC_URL (see @chf/shared).
@@ -74,12 +77,19 @@ async function main() {
         await sleep(timing.holdSec);
       } else {
         // LOCKED → resolve: advance one market week, then score + pay out.
+        // Recover the lock-time prices BEFORE overwriting the oracle with next week's. In replay
+        // they're deterministic from cycleId; in live (post-restart) read them off the oracle,
+        // which still holds them at this point — using current Yahoo prices here would zero out
+        // the cycle's returns and mis-score everyone.
+        const lock =
+          lockSnapshots.get(cycleId) ??
+          (mode === "replay" ? await source.snapshotForCycle(cycleId) : await adapter.readOracleSnapshot(UNIVERSE));
+
         const next = await source.snapshotForCycle(cycleId + 1);
         log(`cycle ${cycleId} RESOLVE — advancing to: ${next.label}`);
         await adapter.setPrices(next);
         await adapter.repegPools(poolAssets, next);
 
-        const lock = lockSnapshots.get(cycleId) ?? (await source.snapshotForCycle(cycleId));
         const { byTicker, sp } = cycleReturns(lock, next);
         const reads = await adapter.readResolveInputs();
         const out = computeResolve({ ...reads, returnByTicker: byTicker, spReturn: sp });

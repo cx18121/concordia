@@ -48,6 +48,23 @@ export class ViemChainAdapter {
     return Number(id);
   }
 
+  /** Read the currently-posted oracle prices for `tickers` + benchmark as a snapshot.
+   *  Used to recover live-mode lock prices after a restart: when the cycle is LOCKED the oracle
+   *  still holds the lock-time prices — read them BEFORE overwriting with the resolve prices. */
+  async readOracleSnapshot(tickers: readonly string[]): Promise<PriceSnapshot> {
+    const pricesE8: Record<string, bigint> = {};
+    const [entries, spE8] = await Promise.all([
+      Promise.all(
+        tickers.map(async (t) => [t, (await this.pub.readContract({
+          address: addresses.oracle, abi: oracleKeeperAbi, functionName: "price", args: [tickerToBytes32(t)],
+        })) as bigint] as const),
+      ),
+      this.pub.readContract({ address: addresses.oracle, abi: oracleKeeperAbi, functionName: "benchmark" }) as Promise<bigint>,
+    ]);
+    for (const [t, p] of entries) if (p > 0n) pricesE8[t] = p; // skip assets the oracle hasn't set
+    return { pricesE8, spE8, label: "oracle (recovered lock prices)" };
+  }
+
   /** Read the full voter set + their allocations + prior accuracy — resolve's on-chain inputs. */
   async readResolveInputs(): Promise<ResolveReads> {
     const voters = (await this.pub.readContract({

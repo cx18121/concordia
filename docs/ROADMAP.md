@@ -73,7 +73,7 @@ The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A
 - [x] Job 2: pool re-peg toward the posted oracle price (heartbeat: direct `executor.repeg`; workflow: report). Needs B's executor deployed to exercise on testnet.
 - [x] Job 3: resolve compute — read votes + prices on-chain, compute per-member EWMA accuracy + creditWeightBps → `Governance.resolveCycle` (needs Governance vote-readback views, ISSUES #C1)
 - [x] Lifecycle triggers: open → lock → resolve on the cycle schedule
-- [x] **Always-on mode:** `scripts/run.ts` loops cycles continuously, stepping the historical series on repeat — the live app's heartbeat. On-chain `state()` is the source of truth, so it resumes after restart.
+- [x] **Always-on mode:** `scripts/run.ts` loops cycles continuously, stepping the historical series on repeat — the live app's heartbeat. On-chain `state()` is the source of truth, so it resumes at the right *phase* after a restart (a mid-phase restart advances immediately rather than waiting out the remaining window — fine for the supervised demo).
 - [x] Same logic exposed as a plain script too — the heartbeat *is* that script (shared `src/core/`); Railway hosting fallback (ISSUES #13)
 - [ ] Keeper deployed somewhere persistent (Railway/Fly/CRE — see ISSUES #13) and survives restarts
 
