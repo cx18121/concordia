@@ -1,0 +1,13 @@
+{
+  "name": "@chf/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared chain-access SDK: addresses, ABIs, and typed read/vote helpers. Imported by web/, agents/, keeper/. The one place the contract interface lives in TS.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "viem": "^2.45.3"
+  }
+}

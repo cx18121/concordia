@@ -19,12 +19,15 @@ Visual explainers in [`docs/explainers/`](docs/explainers/) (open in a browser):
 ## Layout
 
 ```
-contracts/   Solidity (Foundry + Uniswap v4-template) — init pending, see contracts/README.md
+contracts/   Solidity (Foundry + Uniswap v4-template) — interfaces frozen in src/interfaces/
 keeper/      Chainlink CRE workflow (Bun ≥1.2.21) — prices, re-peg, lifecycle, resolve
 web/         Next.js app — Dynamic login, World ID, vote/portfolio/leaderboard
 agents/      6 demo agents (Node/TS) — strategies + LLM theses, Dynamic server wallets
-docs/        Specs + ROADMAP + ISSUES + visual explainers
+shared/      @chf/shared SDK — addresses, ABIs, typed read/vote helpers (web + agents + keeper)
+docs/        Specs + ROADMAP + ISSUES + agent-integration + visual explainers
 ```
+
+**Building an agent?** → [`docs/agent-integration.md`](docs/agent-integration.md) (connect + vote in ~10 lines).
 
 ## Status
 
