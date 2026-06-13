@@ -1,11 +1,13 @@
-// Keeper-side ABI fragments — the onlyKeeper write fns + the reads CRE needs that @chf/shared's
-// provisional `governanceAbi` (user/UI-facing) doesn't carry. Function shapes come from the frozen
-// interfaces in contracts/src/interfaces/*.sol; swap for generated ABIs after `forge build`.
+// Keeper-side ABI fragments — the onlyKeeper write fns + the reads the keeper needs that
+// @chf/shared's provisional `governanceAbi` (user/UI-facing) doesn't carry.
 //
-// ⚠️ Two of these are ADDITIONS the frozen interfaces don't yet expose (see docs/ISSUES.md #C1):
-//   - Governance.getVoters()        — CRE can't recompute per-member accuracy without the voter set
-//   - Governance.allocOf(member)    — …or their backed allocations
-// Workstream A must add them (cheap views over existing storage) for the keeper to resolve on-chain.
+// Verified 6/13 against the LANDED contracts on main: setPrices, resolveCycle, openCycle, lockCycle,
+// accuracyOf, and SyntheticExecutor.repeg all match exactly. The ONLY mismatch is the two array
+// views below — the contract stores `voters`/`allocOf` but its auto-getters are index-based
+// (no length, no whole-array return), so workstream A must add real array views (docs/ISSUES.md #C1).
+// Until then `readResolveInputs()` reverts loudly rather than returning a truncated/silently-wrong set.
+//   - Governance.getVoters() returns (address[])       — the voter set to score this cycle
+//   - Governance.allocOf(member) returns (Alloc[])     — their backed allocations
 import { parseAbi } from "viem";
 
 export const oracleKeeperAbi = parseAbi([
