@@ -4,9 +4,9 @@
   "evms": [
     {
       "chainSelectorName": "ethereum-testnet-sepolia-base-1",
-      "oracle": "0x0000000000000000000000000000000000000000",
-      "governance": "0x0000000000000000000000000000000000000000",
-      "executor": "0x0000000000000000000000000000000000000000",
+      "oracle": "0x65BB0F2C28F6627F89F6190d05ABBAcEF1c65a34",
+      "governance": "0x16205875989dC061368A30E7F1B2604D9F5200CF",
+      "executor": "0x26d8a89d00Bb9F63BfFBd73A11BC249F79935DEf",
       "gasLimit": "3000000"
     }
   ]
