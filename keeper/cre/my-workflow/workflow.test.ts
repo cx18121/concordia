@@ -1,11 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { HTTPCapability } from "@chainlink/cre-sdk";
+import { CronCapability } from "@chainlink/cre-sdk";
 import { configSchema, initWorkflow, onTick } from "./workflow";
 
-// Verifies the workflow loads under the real @chainlink/cre-sdk + Bun and wires the HTTP trigger
-// (so `cre workflow simulate --listen` can drive it). The handler's on-chain dispatch is exercised
-// end-to-end by `cre workflow simulate`; its pure inputs — resolve compute + report encoders — are
-// unit-tested in ../../test/.
+// Verifies the workflow loads under the real @chainlink/cre-sdk + Bun and wires the cron trigger.
+// The handler's on-chain dispatch is exercised end-to-end by `cre workflow simulate`; its pure inputs
+// — resolve compute + report encoders — are unit-tested in ../../test/.
 
 const cfg = {
   mode: "replay" as const,
@@ -34,11 +33,10 @@ describe("config", () => {
 });
 
 describe("initWorkflow", () => {
-  test("registers a single HTTP-triggered handler bound to onTick", () => {
+  test("registers a single cron-triggered handler bound to onTick", () => {
     const handlers = initWorkflow(configSchema.parse(cfg));
     expect(handlers).toHaveLength(1);
     expect(handlers[0].fn).toBe(onTick);
-    // The trigger is the CRE HTTP trigger capability (what `simulate --listen` serves).
-    expect(handlers[0].trigger.capabilityId()).toBe(HTTPCapability.CAPABILITY_ID);
+    expect(handlers[0].trigger.capabilityId()).toBe(CronCapability.CAPABILITY_ID);
   });
 });
