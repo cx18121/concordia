@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import { useCycle, usePosition } from "@/lib/data";
+import JoinFlow from "@/components/JoinFlow";
 import "@/styles/overview.css";
 
 function fmtClock(secs: number): string {
@@ -714,8 +715,7 @@ export default function Overview() {
         {/* Public Join CTA — reveals the B4 deposit step on verify. */}
         {joined ? (
           <div className="join-slot">
-            {/* B4: <JoinFlow/> mounts here */}
-            <p>{"Verified ✓ — deposit step wired in B4."}</p>
+            <JoinFlow />
           </div>
         ) : (
           <button className="ovl-join" onClick={handleJoin}>

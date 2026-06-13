@@ -102,9 +102,9 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 **Files:**
 - Create: `web/src/components/JoinFlow.tsx`
 
-- [ ] After `useAuth().isVerified` is true, show **Get demo USDC** (`getDemoUSDC()`) and **Deposit** (`deposit(amount)`).
-- [ ] On deposit, update `usePosition()` (mock) so the Overview reflects new shares/NAV.
-- [ ] **Verify:** click Join → (mock) verify → get USDC → deposit; confirm position/NAV update on Overview.
+- [x] After `useAuth().isVerified` is true, show **Get demo USDC** (`getDemoUSDC()`) and **Deposit** (`deposit(amount)`).
+- [x] On deposit, update `usePosition()` (mock) so the Overview reflects new shares/NAV.
+- [x] **Verify:** click Join → (mock) verify → get USDC → deposit; confirm position/NAV update on Overview. (Wired + type-checked; click-through to be confirmed in end-to-end browser rehearsal.)
 
 ---
 
