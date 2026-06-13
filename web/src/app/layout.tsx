@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 // so the dark theme applies and Tailwind utilities still win on the ported pages.
 import "./globals.css";
 import { MockAuthProvider } from "@/lib/mockAuth";
+import { AuthProvider } from "@/lib/auth";
 import { MockDataProvider } from "@/lib/data";
 import Nav from "@/components/Nav";
 
@@ -10,6 +11,10 @@ export const metadata: Metadata = {
   title: "Concordia",
   description: "A community hedge fund DAO.",
 };
+
+// Mock by default; live mode uses the real Dynamic auth provider. The live data
+// hooks are self-contained (they poll the chain), so no data provider is needed.
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== "false";
 
 export default function RootLayout({
   children,
@@ -46,17 +51,27 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <MockAuthProvider>
-          <MockDataProvider>
-            {/* Global ambient background — layout owns it; pages must not duplicate .amb. */}
-            <div className="amb">
-              <i className="a" />
-              <i className="b" />
-            </div>
-            <Nav />
-            {children}
-          </MockDataProvider>
-        </MockAuthProvider>
+        {(() => {
+          const inner = (
+            <>
+              {/* Global ambient background — layout owns it; pages must not duplicate .amb. */}
+              <div className="amb">
+                <i className="a" />
+                <i className="b" />
+              </div>
+              <Nav />
+              {children}
+            </>
+          );
+          // Live mode: real Dynamic auth, no data provider (live hooks self-poll).
+          return USE_MOCK ? (
+            <MockAuthProvider>
+              <MockDataProvider>{inner}</MockDataProvider>
+            </MockAuthProvider>
+          ) : (
+            <AuthProvider>{inner}</AuthProvider>
+          );
+        })()}
       </body>
     </html>
   );

@@ -1,8 +1,8 @@
 import { type PublicClient, type WalletClient, stringToHex } from "viem";
-import { addresses } from "./addresses.js";
-import { governanceAbi, oracleAbi, vaultAbi, erc20Abi } from "./abi.js";
-import { publicClient } from "./client.js";
-import { CYCLE_STATE, type Cycle, type Pick, type Alloc } from "./types.js";
+import { addresses } from "./addresses";
+import { governanceAbi, oracleAbi, vaultAbi, erc20Abi } from "./abi";
+import { publicClient } from "./client";
+import { CYCLE_STATE, type Cycle, type Pick, type Alloc } from "./types";
 
 /** The votable asset universe (demo set). S&P (`^GSPC`) is the benchmark, not votable. */
 export const UNIVERSE = [
@@ -75,8 +75,8 @@ export async function getPosition(
     address: addresses.vault, abi: vaultAbi, functionName: "balanceOf", args: [user],
   })) as bigint;
   const navUsd =
-    shares === 0n
-      ? 0n
+    shares === BigInt(0)
+      ? BigInt(0)
       : ((await pub.readContract({
           address: addresses.vault, abi: vaultAbi, functionName: "convertToAssets", args: [shares],
         })) as bigint);

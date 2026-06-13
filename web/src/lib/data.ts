@@ -19,6 +19,23 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useAuth } from "./useAuth";
+import {
+  publicClient,
+  getCycle as scGetCycle,
+  getPrices as scGetPrices,
+  getPosition as scGetPosition,
+  getVotingPower as scGetVotingPower,
+  getAccuracy as scGetAccuracy,
+  getCyclesParticipated as scGetCycles,
+  getLeaderboard as scGetLeaderboard,
+  getRewardCredit as scGetRewardCredit,
+  getDemoUSDC as scGetDemoUSDC,
+  deposit as scDeposit,
+  claim as scClaim,
+  buildAllocs as scBuildAllocs,
+  castVote as scCastVote,
+} from "@concordia/shared";
 
 // ---------------------------------------------------------------------------
 // Types (mirror @concordia/shared locally — web/ can't resolve the workspace
@@ -240,39 +257,44 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
   return createElement(MockDataContext.Provider, { value }, children);
 }
 
-// Read context unconditionally (rules of hooks), then assert. In mock mode the
-// provider is always mounted; in live mode the read hooks never reach the
-// assertion because the live branch throws "not wired" first.
-function useMockContext(): MockContextValue {
-  const ctx = useContext(MockDataContext);
-  if (USE_MOCK && !ctx) {
-    throw new Error("MockDataProvider missing — mount it in layout.tsx");
-  }
-  return ctx as MockContextValue;
-}
-
 // ===========================================================================
-// Live adapter — STUB. B7 fills this in once web/ can resolve @concordia/shared.
-//
-// B7 wiring (do not implement here):
-//   useCycle()        -> getCycle(publicClient())          -> { id, state }, derive secondsLeft from endsAt
-//   usePrices()       -> getPrices(publicClient())         -> Record<string,bigint> E8, /1e8 to dollars
-//   usePosition()     -> getPosition/convertToAssets(...)  -> shares + NAV/cost USD, returnPct
-//   useVotingPower()  -> getVotingPower(publicClient())    -> bigint bps, /100 to percent
-//   useAccuracy()     -> getAccuracy(publicClient())       -> signed E4 bigint, /100 to percent (null if unscored)
-//   useLeaderboard()  -> getLeaderboard(publicClient())    -> rows (votingPowerPct, accuracy)
-//   getDemoUSDC()     -> faucet/mint via getWalletClient()
-//   deposit(amount)   -> vault.deposit  via getWalletClient()
-//   castVote(allocs)  -> castVote(allocs) via getWalletClient()  (Alloc[] = on-chain bps unit)
-//   claim()           -> claimRewards    via getWalletClient()
-// Writes use useAuth().getWalletClient(); reads use publicClient().
+// Live adapter — reads deployed contracts via @concordia/shared. Each read hook
+// is self-contained (polls on its own interval), so live mode needs NO data
+// provider in layout.tsx — only the auth provider for writes. Reads use the
+// public RPC (no key); writes use useAuth().getWalletClient() (Dynamic).
 // ===========================================================================
 
-const LIVE_NOT_WIRED = "live adapter not wired — see B7";
+const POLL_MS = 6000;
+const ZERO_POSITION: Position = { shares: 0, navUsd: 0, costUsd: 0, returnPct: 0 };
 
-function liveNotWired(): never {
-  throw new Error(LIVE_NOT_WIRED);
+/** Poll `fetcher` on an interval (live mode only); re-poll when `key` changes. */
+function useLivePoll<T>(initial: T, key: string, fetcher: () => Promise<T>): T {
+  const [val, setVal] = useState<T>(initial);
+  useEffect(() => {
+    if (USE_MOCK) return;
+    let alive = true;
+    const run = () => {
+      fetcher()
+        .then((v) => alive && setVal(v))
+        .catch(() => {});
+    };
+    run();
+    const id = setInterval(run, POLL_MS);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+    // `fetcher` is recreated each render; only re-subscribe when `key` changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return val;
 }
+
+const shortAddr = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
+
+// web and shared resolve separate (identical-version) viem copies; cast the client
+// to the exact type the shared read helpers expect to bridge the nominal mismatch.
+const livePub = () => publicClient() as unknown as Parameters<typeof scGetCycle>[0];
 
 // ===========================================================================
 // Public surface — pages import these. Each branches mock vs live on USE_MOCK.
@@ -280,40 +302,83 @@ function liveNotWired(): never {
 // ===========================================================================
 
 export function useCycle(): Cycle {
-  const { state, secondsLeft } = useMockContext();
-  if (!USE_MOCK) return liveNotWired();
-  return { id: state.cycleId, state: state.cycleState, secondsLeft };
+  const mock = useContext(MockDataContext);
+  const live = useLivePoll<Cycle>({ id: BigInt(0), state: "IDLE", secondsLeft: 0 }, "cycle", async () => {
+    const c = await scGetCycle(livePub());
+    // No on-chain phase-end timestamp, so secondsLeft isn't derivable live.
+    return { id: c.id, state: c.state as CycleState, secondsLeft: 0 };
+  });
+  if (USE_MOCK) {
+    if (!mock) throw new Error("MockDataProvider missing — mount it in layout.tsx");
+    return { id: mock.state.cycleId, state: mock.state.cycleState, secondsLeft: mock.secondsLeft };
+  }
+  return live;
 }
 
 export function usePrices(): Record<string, number> {
-  const { state } = useMockContext();
-  if (!USE_MOCK) return liveNotWired();
-  return state.prices;
+  const mock = useContext(MockDataContext);
+  const live = useLivePoll<Record<string, number>>({}, "prices", async () => {
+    const e8 = await scGetPrices(livePub(), UNIVERSE);
+    const out: Record<string, number> = {};
+    for (const [t, v] of Object.entries(e8)) out[t] = Number(v) / 1e8;
+    return out;
+  });
+  if (USE_MOCK) return mock!.state.prices;
+  return live;
 }
 
 export function usePosition(): Position {
-  const { state } = useMockContext();
-  if (!USE_MOCK) return liveNotWired();
-  return state.position;
+  const mock = useContext(MockDataContext);
+  const { address } = useAuth();
+  const live = useLivePoll<Position>(ZERO_POSITION, address ?? "", async () => {
+    if (!address) return ZERO_POSITION;
+    const { shares, navUsd } = await scGetPosition(livePub(), address);
+    const nav = Number(navUsd) / 1e6;
+    // Cost basis isn't tracked on-chain (ERC-4626) — show NAV as cost (0% delta).
+    return { shares: Number(shares) / 1e6, navUsd: nav, costUsd: nav, returnPct: 0 };
+  });
+  if (USE_MOCK) return mock!.state.position;
+  return live;
 }
 
 export function useVotingPower(): number {
-  const { state } = useMockContext();
-  if (!USE_MOCK) return liveNotWired();
-  return state.votingPowerPct;
+  const mock = useContext(MockDataContext);
+  const { address } = useAuth();
+  const live = useLivePoll<number>(0, address ?? "", async () => {
+    if (!address) return 0;
+    return Number(await scGetVotingPower(livePub(), address)) / 100;
+  });
+  if (USE_MOCK) return mock!.state.votingPowerPct;
+  return live;
 }
 
-/** null until the cycle resolves; a sample percent afterwards. */
+/** null until the member has been scored (cyclesParticipated > 0); a percent after. */
 export function useAccuracy(): number | null {
-  const { state } = useMockContext();
-  if (!USE_MOCK) return liveNotWired();
-  return state.accuracy;
+  const mock = useContext(MockDataContext);
+  const { address } = useAuth();
+  const live = useLivePoll<number | null>(null, address ?? "", async () => {
+    if (!address) return null;
+    const pub = livePub();
+    if ((await scGetCycles(pub, address)) === BigInt(0)) return null;
+    return Number(await scGetAccuracy(pub, address)) / 100;
+  });
+  if (USE_MOCK) return mock!.state.accuracy;
+  return live;
 }
 
 export function useLeaderboard(): LeaderboardRow[] {
-  const { state } = useMockContext();
-  if (!USE_MOCK) return liveNotWired();
-  return state.leaderboard;
+  const mock = useContext(MockDataContext);
+  const live = useLivePoll<LeaderboardRow[]>([], "leaderboard", async () => {
+    const rows = await scGetLeaderboard(livePub());
+    return rows.map((r, i) => ({
+      rank: i + 1,
+      name: shortAddr(r.member),
+      votingPowerPct: Number(r.votingPowerBps) / 100,
+      accuracy: Number(r.accuracyE4) / 100,
+    }));
+  });
+  if (USE_MOCK) return mock!.state.leaderboard;
+  return live;
 }
 
 export interface FundActions {
@@ -321,9 +386,9 @@ export interface FundActions {
   deposit(amount: number): Promise<void>;
   castVote(allocs: Pick[]): Promise<void>;
   claim(): Promise<void>;
-  /** Dev trigger (mock only): resolve the cycle so accuracy + claim appear. */
+  /** Mock: resolve the cycle locally. Live: POST the keeper's advance route. */
   resolveCycle(): Promise<void>;
-  /** Has the cycle resolved? Gates the claim affordance in the UI. */
+  /** Mock: cycle resolved. Live: you have a claimable reward balance. */
   canClaim: boolean;
   /** True once claim() has run. */
   claimed: boolean;
@@ -332,38 +397,67 @@ export interface FundActions {
 }
 
 export function useFundActions(): FundActions {
-  // Always call the hook (rules of hooks); the live branch ignores the value.
+  // Always call hooks (rules of hooks); the unused branch's values are ignored.
   const ctx = useContext(MockDataContext);
+  const { address, getWalletClient } = useAuth();
+  const [claimedLive, setClaimedLive] = useState(false);
+  const [lastVoteLive, setLastVoteLive] = useState<Pick[] | null>(null);
+  const rewardCredit = useLivePoll<bigint>(BigInt(0), address ?? "", async () =>
+    address ? scGetRewardCredit(livePub(), address) : BigInt(0),
+  );
+
+  const requireWallet = useCallback(async () => {
+    const w = await getWalletClient();
+    if (!w) throw new Error("Connect a wallet first.");
+    // web and shared resolve separate (identical-version) viem copies; cast to the
+    // shared write helpers' WalletClient type to bridge the nominal mismatch.
+    return w as unknown as Parameters<typeof scDeposit>[0];
+  }, [getWalletClient]);
 
   const getDemoUSDC = useCallback(async () => {
-    if (!USE_MOCK) liveNotWired();
-    // Mock: demo USDC is a no-op; deposit() supplies the funds directly.
-  }, []);
+    if (USE_MOCK) return; // mock: deposit() supplies the funds directly
+    await scGetDemoUSDC(await requireWallet(), BigInt(10_000_000_000)); // 10,000 demo USDC
+  }, [requireWallet]);
 
   const deposit = useCallback(
     async (amount: number) => {
-      if (!USE_MOCK) liveNotWired();
-      ctx?.dispatch({ type: "DEPOSIT", amount });
+      if (USE_MOCK) {
+        ctx?.dispatch({ type: "DEPOSIT", amount });
+        return;
+      }
+      await scDeposit(await requireWallet(), BigInt(Math.round(amount * 1e6)));
     },
-    [ctx],
+    [ctx, requireWallet],
   );
 
   const castVote = useCallback(
     async (allocs: Pick[]) => {
-      if (!USE_MOCK) liveNotWired();
-      ctx?.dispatch({ type: "VOTE", picks: allocs });
+      if (USE_MOCK) {
+        ctx?.dispatch({ type: "VOTE", picks: allocs });
+        return;
+      }
+      await scCastVote(await requireWallet(), scBuildAllocs(allocs));
+      setLastVoteLive(allocs);
     },
-    [ctx],
+    [ctx, requireWallet],
   );
 
   const claim = useCallback(async () => {
-    if (!USE_MOCK) liveNotWired();
-    ctx?.dispatch({ type: "CLAIM" });
-  }, [ctx]);
+    if (USE_MOCK) {
+      ctx?.dispatch({ type: "CLAIM" });
+      return;
+    }
+    await scClaim(await requireWallet());
+    setClaimedLive(true);
+  }, [ctx, requireWallet]);
 
   const resolveCycle = useCallback(async () => {
-    if (!USE_MOCK) liveNotWired();
-    ctx?.dispatch({ type: "RESOLVE" });
+    if (USE_MOCK) {
+      ctx?.dispatch({ type: "RESOLVE" });
+      return;
+    }
+    // Live: the keeper advances cycles. Ask the backend to step it (see /api/advance).
+    await fetch("/api/advance", { method: "POST" }).catch(() => {});
   }, [ctx]);
 
   return {
@@ -372,8 +466,8 @@ export function useFundActions(): FundActions {
     castVote,
     claim,
     resolveCycle,
-    canClaim: USE_MOCK ? Boolean(ctx?.state.resolved) : false,
-    claimed: USE_MOCK ? Boolean(ctx?.state.claimed) : false,
-    lastVote: USE_MOCK ? ctx?.state.lastVote ?? null : null,
+    canClaim: USE_MOCK ? Boolean(ctx?.state.resolved) : rewardCredit > BigInt(0),
+    claimed: USE_MOCK ? Boolean(ctx?.state.claimed) : claimedLive,
+    lastVote: USE_MOCK ? ctx?.state.lastVote ?? null : lastVoteLive,
   };
 }
