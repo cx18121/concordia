@@ -52,9 +52,9 @@ contract CycleTest is Test {
         nvda = new MockERC20("Mock NVDA", "mNVDA", 18);
         vault.registerAsset(AAPL, address(aapl));
         vault.registerAsset(NVDA, address(nvda));
-        vm.stopPrank();
         exec.register(AAPL, address(aapl));
         exec.register(NVDA, address(nvda));
+        vm.stopPrank();
 
         // verify + fund the three members, then deposit (deposit registers membership)
         _join(alice, 10_000 * USDC_ONE);
@@ -248,5 +248,96 @@ contract CycleTest is Test {
         vm.expectRevert(FundVault.NotVerified.selector);
         vault.deposit(USDC_ONE);
         vm.stopPrank();
+    }
+
+    // ---------------------------------------------------------------- review fixes (regressions)
+
+    /// Deposits during OPEN are allowed (they land in the navAtLock baseline) but rejected once
+    /// LOCKED — otherwise post-lock capital would be counted as fund performance.
+    function test_depositGuard_openVsLocked() public {
+        _postPrices(200e8, 100e8, 5000e8);
+        vm.prank(keeper);
+        gov.openCycle();
+
+        // OPEN: a fresh deposit still works
+        usdc.mint(alice, 1_000 * USDC_ONE);
+        vm.startPrank(alice);
+        usdc.approve(address(vault), 1_000 * USDC_ONE);
+        vault.deposit(1_000 * USDC_ONE);
+        vm.stopPrank();
+
+        vm.prank(alice);
+        gov.castVote(_alloc(AAPL, 10000));
+        vm.prank(keeper);
+        gov.lockCycle(); // LOCKED
+
+        // LOCKED: deposits rejected
+        usdc.mint(alice, 1_000 * USDC_ONE);
+        vm.startPrank(alice);
+        usdc.approve(address(vault), 1_000 * USDC_ONE);
+        vm.expectRevert(FundVault.DepositsLocked.selector);
+        vault.deposit(1_000 * USDC_ONE);
+        vm.stopPrank();
+    }
+
+    /// A vote for an unregistered symbol is rejected at cast time, so it can never reach
+    /// lockCycle and brick the cycle in OPEN (executor would revert on the unknown asset).
+    function test_voteRejectsUnregisteredAsset() public {
+        _postPrices(200e8, 100e8, 5000e8);
+        vm.prank(keeper);
+        gov.openCycle();
+        vm.prank(alice);
+        vm.expectRevert(Governance.UnknownAsset.selector);
+        gov.castVote(_alloc(bytes32("DOGE"), 10000));
+    }
+
+    /// Only the executor's owner can register/remap a symbol → no griefing the traded set.
+    function test_syntheticRegisterOnlyOwner() public {
+        vm.prank(alice);
+        vm.expectRevert(SyntheticExecutor.NotOwner.selector);
+        exec.register(bytes32("DOGE"), address(aapl));
+    }
+
+    /// settle rejects a keeper credit split that doesn't sum to 100% on a rewarding cycle,
+    /// preventing over-credit that would later underflow rewardPool on claim.
+    function test_settleRejectsBadCreditWeights() public {
+        _toLockedWithAlpha();
+
+        address[] memory ms = _three();
+        int256[] memory newAcc = new int256[](3);
+        uint256[] memory bad = new uint256[](3);
+        bad[0] = 6000;
+        bad[1] = 6000;
+        bad[2] = 2000; // sums to 14000, not 1e4
+
+        vm.prank(keeper);
+        vm.expectRevert(FundVault.BadCreditWeights.selector);
+        gov.resolveCycle(ms, newAcc, bad);
+    }
+
+    function _three() internal view returns (address[] memory ms) {
+        ms = new address[](3);
+        ms[0] = alice;
+        ms[1] = bob;
+        ms[2] = carol;
+    }
+
+    /// open → all three vote → lock → both stocks +10%, S&P +2% (fund excess +8%, positive HWM).
+    function _toLockedWithAlpha() internal {
+        _postPrices(200e8, 100e8, 5000e8);
+        vm.prank(keeper);
+        gov.openCycle();
+        vm.prank(alice);
+        gov.castVote(_alloc(AAPL, 10000));
+        vm.prank(bob);
+        gov.castVote(_alloc(NVDA, 10000));
+        IGovernance.Alloc[] memory split = new IGovernance.Alloc[](2);
+        split[0] = IGovernance.Alloc(AAPL, 5000);
+        split[1] = IGovernance.Alloc(NVDA, 5000);
+        vm.prank(carol);
+        gov.castVote(split);
+        vm.prank(keeper);
+        gov.lockCycle();
+        _postPrices(220e8, 110e8, 5100e8);
     }
 }

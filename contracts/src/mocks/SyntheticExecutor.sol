@@ -20,20 +20,26 @@ import {MockERC20} from "./MockERC20.sol";
 contract SyntheticExecutor is IUniswapExecutor {
     IPriceOracle public immutable oracle;
     address public immutable usdc;
+    address public immutable owner;
     uint8 private immutable _usdcDecimals;
 
     mapping(bytes32 => address) public tokenOf;
 
     error UnknownAsset();
+    error NotOwner();
 
     constructor(address usdc_, IPriceOracle oracle_) {
         usdc = usdc_;
         oracle = oracle_;
+        owner = msg.sender;
         _usdcDecimals = IERC20Metadata(usdc_).decimals();
     }
 
     /// @notice Register an asset's mock token (setup only; mirrors the real executor's pool set).
+    /// @dev Owner-only: an open registry would let anyone remap a traded symbol to another token,
+    ///      so the Vault would spend USDC on tokens it neither values nor closes.
     function register(bytes32 asset, address token) external {
+        if (msg.sender != owner) revert NotOwner();
         tokenOf[asset] = token;
     }
 

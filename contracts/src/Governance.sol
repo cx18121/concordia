@@ -7,10 +7,12 @@ import {IGovernance} from "./interfaces/IGovernance.sol";
 import {IFundVault} from "./interfaces/IFundVault.sol";
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 
-/// @dev The lock-snapshot getters the Vault exposes but IFundVault doesn't declare.
+/// @dev Extra Vault getters used here that IFundVault doesn't declare: the lock snapshot,
+///      and the asset registry (to reject votes for unregistered symbols).
 interface IVaultSnapshot {
     function navAtLock() external view returns (uint256);
     function benchAtLock() external view returns (uint256);
+    function tokenOf(bytes32 asset) external view returns (address);
 }
 
 /// @title Governance — votes, voting-power snapshot, accuracy store, selection, cycle lifecycle
@@ -66,6 +68,7 @@ contract Governance is IGovernance {
     error NotEligible();
     error BadWeights();
     error AlreadyVoted();
+    error UnknownAsset();
     error LengthMismatch();
 
     modifier onlyKeeper() {
@@ -184,6 +187,8 @@ contract Governance is IGovernance {
         uint256 power = powerSnapE4[msg.sender];
         for (uint256 i = 0; i < allocations.length; i++) {
             bytes32 a = allocations[i].asset;
+            // only registered assets — an unknown symbol would brick lockCycle (executor reverts)
+            if (IVaultSnapshot(address(vault)).tokenOf(a) == address(0)) revert UnknownAsset();
             allocOf[msg.sender].push(allocations[i]);
             if (!_assetSeen[a]) {
                 _assetSeen[a] = true;

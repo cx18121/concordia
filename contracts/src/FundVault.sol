@@ -69,6 +69,8 @@ contract FundVault is ERC4626, IFundVault {
     error NotVerified();
     error LengthMismatch();
     error NotIdle();
+    error DepositsLocked();
+    error BadCreditWeights();
     error NothingToClaim();
 
     modifier onlyAdmin() {
@@ -119,6 +121,10 @@ contract FundVault is ERC4626, IFundVault {
     /// @inheritdoc IFundVault
     function deposit(uint256 assets) external returns (uint256 shares) {
         if (!verified[msg.sender]) revert NotVerified();
+        // Epoch-lock: once a cycle is LOCKED, navAtLock is fixed; cash deposited after that
+        // would be counted as fund performance in fundExcessE4() (new capital ≠ alpha).
+        // Deposits during OPEN are fine — they land in the navAtLock baseline taken at lock.
+        if (governance != address(0) && IGov(governance).state() == 2 /* LOCKED */ ) revert DepositsLocked();
         // becoming a shareholder makes you a governance member (idempotent)
         if (governance != address(0)) IGovernanceMembership(governance).registerMember(msg.sender);
         shares = deposit(assets, msg.sender); // ERC4626: mints at current NAV
@@ -237,6 +243,16 @@ contract FundVault is ERC4626, IFundVault {
         uint256 gainUSDC = (navAtLock * chargeableE4) / BPS;
         uint16 pct = IGov(governance).REWARD_POOL_PCT();
         uint256 poolUSDC = (gainUSDC * pct) / BPS;
+
+        // When we actually credit a pool, the keeper's split must sum to 100% — otherwise
+        // total rewardCredit could exceed rewardPool and later claims would underflow it.
+        if (poolUSDC > 0) {
+            uint256 sumW;
+            for (uint256 i = 0; i < creditWeightBps.length; i++) {
+                sumW += creditWeightBps[i];
+            }
+            if (sumW != BPS) revert BadCreditWeights();
+        }
 
         rewardPool += poolUSDC;
         for (uint256 i = 0; i < members.length; i++) {
