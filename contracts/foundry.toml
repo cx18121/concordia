@@ -12,3 +12,12 @@ via_ir = false
 [lint]
 exclude_lints = ["screaming-snake-case-immutable", "screaming-snake-case-const"]
 lint_on_build = false
+
+# Deploy + verify the execution stack. Set BASE_SEPOLIA_RPC_URL + ETHERSCAN_API_KEY in env:
+#   forge script script/04_DeployExecution.s.sol --tc DeployExecutionScript \
+#     --rpc-url base_sepolia --private-key $PK --broadcast --verify
+[rpc_endpoints]
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+
+[etherscan]
+base_sepolia = { key = "${ETHERSCAN_API_KEY}", chain = 84532, url = "https://api-sepolia.basescan.org/api" }

@@ -57,12 +57,12 @@ PriceOracle, FundVault, Governance. Build vault with **synthetic positions first
 ### B — Uniswap execution layer  *(owner: ____)*  ⚠️ riskiest — start immediately
 Standalone `UniswapExecutor` module + the pools. Test against a stub vault; A integrates it behind `executeBasket`/`closePositions`.
 
-- [ ] Mock stock ERC-20s (~8 tickers is plenty for the demo) with mint rights
-- [ ] **KYCHook (`beforeSwap` allowlist) deployed via HookMiner/CREATE2 — do this first, it blocks everything**
-- [ ] Create v4 pools (mockX/USDC) with hook attached, seed liquidity at realistic prices
-- [ ] `UniswapExecutor`: swap USDC→token and token→USDC via Universal Router (+Permit2), tests
-- [ ] Re-peg helper: small swap to move pool price to a target (keeper calls this)
-- [ ] Deployed + verified on Base Sepolia, addresses committed to a shared `deployments.json`
+- [x] Mock stock ERC-20s (~8 tickers is plenty for the demo) with mint rights — `MockStock` (configurable decimals; also serves as mock USDC at 6dp)
+- [x] **KYCHook (`beforeSwap` allowlist) deployed via HookMiner/CREATE2 — do this first, it blocks everything** — mined `BEFORE_SWAP_FLAG`; allowlists the executor
+- [x] Create v4 pools (mockX/USDC) with hook attached, seed liquidity at realistic prices — deploy script stands up 8 pools seeded ~100k each at oracle prices (verified in sim)
+- [x] `UniswapExecutor`: swap USDC→token and token→USDC — **direct** `PoolManager.unlock`→`swap` (not Universal Router; see ISSUES #14), tests (14/14 pass)
+- [x] Re-peg helper: small swap to move pool price to a target (keeper calls this) — `repeg()`, price-limited; lands within 0.1% of target in tests
+- [ ] Deployed + verified on Base Sepolia, addresses committed to `shared/src/addresses.ts` — script ready + sim-verified; **blocked on RPC/key creds** (ISSUES #15)
 
 ### C — Keeper (Chainlink CRE)  *(owner: ____)*
 The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A finished. **Runs on Bun ≥1.2.21** (CRE TS SDK requirement) — keep it its own package, separate from the Node toolchain.
