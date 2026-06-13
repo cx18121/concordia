@@ -128,8 +128,8 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Modify: `web/src/app/account/page.tsx` (+ `account.css` from `account.html`)
 - Modify: `web/src/app/settings/page.tsx` (+ `settings.css` from `stitch-settings.html`)
 
-- [ ] Mechanical paste of each page's markup + CSS into its route. Bind only trivially (leaderboard → `useLeaderboard()` mock); account/settings can render static mock content.
-- [ ] **Verify:** each page renders inside the shared shell with correct styling; nav highlights the active tab.
+- [x] Mechanical paste of each page's markup + CSS into its route. Bind only trivially (leaderboard → `useLeaderboard()` mock); account/settings can render static mock content. (Note: the `stitch-*` mockups are Tailwind-CDN based — their per-page config tokens were added to globals.css `@theme` + Material Symbols font link in layout, so the utility classes port verbatim.)
+- [x] **Verify:** each page renders inside the shared shell with correct styling; nav highlights the active tab. (Headless: /leaderboard /account /settings all 200, leaderboard shows useLeaderboard() names, no hydration errors; visual styling pending browser rehearsal.)
 
 ---
 

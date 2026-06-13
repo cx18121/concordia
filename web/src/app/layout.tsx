@@ -35,6 +35,13 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap"
           rel="stylesheet"
         />
+        {/* Material Symbols — the leaderboard/account/settings ports use these
+            icon glyphs (the mockups loaded the same font). */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body>
         <MockAuthProvider>
