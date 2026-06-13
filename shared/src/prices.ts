@@ -10,7 +10,7 @@ export const yahooSymbol = (t: string) =>
 /** Latest price for one ticker. */
 export async function livePrice(ticker: string): Promise<number> {
   const res = await fetch(`${YF}/${yahooSymbol(ticker)}`, { headers: UA });
-  const json = await res.json();
+  const json = (await res.json()) as any;
   return json.chart.result[0].meta.regularMarketPrice as number;
 }
 
@@ -25,6 +25,6 @@ export async function livePrices(tickers: readonly string[]): Promise<Record<str
 export async function weeklyCloses(ticker: string, period1: number, period2: number): Promise<number[]> {
   const url = `${YF}/${yahooSymbol(ticker)}?period1=${period1}&period2=${period2}&interval=1wk`;
   const res = await fetch(url, { headers: UA });
-  const json = await res.json();
+  const json = (await res.json()) as any;
   return json.chart.result[0].indicators.quote[0].close as number[];
 }
