@@ -35,9 +35,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap"
           rel="stylesheet"
         />
-        {/* Material Symbols — the leaderboard/account/settings ports use these
-            icon glyphs (the mockups loaded the same font). */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        {/* Material Symbols — leaderboard/account/settings/forum ports use these
+            icon glyphs. display=block is intentional: it renders the glyph blank
+            until the font loads instead of flashing the raw ligature text (e.g.
+            "north_east"). The rule prefers swap, but that's wrong for an icon font. */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font, @next/next/google-font-display */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
           rel="stylesheet"

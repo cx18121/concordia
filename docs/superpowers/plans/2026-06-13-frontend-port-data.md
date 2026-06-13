@@ -146,6 +146,22 @@ A new `sign-in.html` mockup (Connect → World ID → demo USDC) landed on `desi
 
 ---
 
+### Task B6c: Forum page → `/forum` (un-cut on request)
+
+Forum was cut from v1 (stretch goal) but later requested, so it was ported. Tailwind-CDN mockup (`stitch-forum.html`), same pattern as the other `stitch-*` pages; static mock content (not in the data layer). Forum nav tab restored (Overview · Vote · **Forum** · Leaderboard · Account).
+
+**Files:** Create `web/src/app/forum/page.tsx` + `web/src/styles/forum.css`; edit `Nav.tsx`.
+
+- [x] Port markup as Tailwind utilities verbatim; reuse the existing `@theme` tokens + global Material Symbols; helper classes reuse `leaderboard.css` definitions byte-identically (no new global-CSS collisions).
+- [x] **Verify:** `/forum` 200 + renders in shell; nav tab active; prod `next build` + full demo-path + 7-route regression green.
+
+> **Post-port hardening (cross-cutting fixes found during review):**
+> - **Cascade layers:** shell.css imported into Tailwind's `base` layer so utilities win (fixes the Tailwind pages clearing the fixed nav).
+> - **Global-CSS class collisions:** the cinematic donut's `.ring` (vs Tailwind `ring`) and vote's `.grid` (vs Tailwind `grid`, which leaked across routes and broke the leaderboard) were neutralized/renamed.
+> - **Icon-font FOUT:** Material Symbols set to `display=block` (no raw-ligature-text flash on hard refresh).
+
+---
+
 ### Task B7: Live-flip checklist (after contracts deploy — M2)
 
 - [ ] `shared/src/addresses.ts` is already filled with deployed Base Sepolia addresses (done — just ensure it's committed).
@@ -158,4 +174,6 @@ A new `sign-in.html` mockup (Connect → World ID → demo USDC) landed on `desi
 ---
 
 ## Done when
-All 6 pages render in one consistent shell; the demo path (land → Join → verify → get USDC → deposit → vote) runs end-to-end on mock data; flipping to live is the env + provider swap in B7, with no component rewrites.
+All pages render in one consistent shell — Overview, Join, Vote, Forum, Leaderboard, Account, Settings (7 routes); the demo path (land → Join → verify → get USDC → deposit → vote → resolve) runs end-to-end on mock data; flipping to live is the env + provider swap in B7, with no component rewrites.
+
+**Status (mock milestone): COMPLETE.** Verified via prod `next build` + a headless-Chrome regression (demo path + 7-route smoke + cross-route CSS-collision checks): 19/19 pass, 0 console errors. Only B7 (live-flip, M2) remains.
