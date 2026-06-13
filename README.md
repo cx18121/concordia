@@ -8,13 +8,13 @@ ETHGlobal New York 2026. A community fund where members pool USDC and vote weekl
 
 | File | What it is |
 |---|---|
-| [`DESIGN.md`](DESIGN.md) | Locked decisions, tunable constants, core mechanics, demo-vs-production mode |
-| [`CONTRACTS.md`](CONTRACTS.md) | Build-ready contract spec — state, functions, call graph, on/off-chain boundary |
-| [`ROADMAP.md`](ROADMAP.md) | Workstreams + team todo. Check things off as they land. |
-| [`ISSUES.md`](ISSUES.md) | Open questions. Add blockers here instead of stalling. |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | Locked decisions, tunable constants, core mechanics, demo-vs-production mode |
+| [`docs/CONTRACTS.md`](docs/CONTRACTS.md) | Build-ready contract spec — state, functions, call graph, on/off-chain boundary |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Workstreams + team todo. Check things off as they land. |
+| [`docs/ISSUES.md`](docs/ISSUES.md) | Open questions. Add blockers here instead of stalling. |
 | `CLAUDE.md` | Conventions + verified doc links for the stack (also read by Claude Code) |
 
-Visual explainers (open in a browser): `system-design-flowchart.html` (full architecture + weekly cycle), `hedge-fund-dao-architecture.html` (component inspector), `forum-prototype.html` (forum UI mock).
+Visual explainers in [`docs/explainers/`](docs/explainers/) (open in a browser): `system-design-flowchart.html` (full architecture + weekly cycle), `hedge-fund-dao-architecture.html` (component inspector), `forum-prototype.html` (forum UI mock).
 
 ## Status
 

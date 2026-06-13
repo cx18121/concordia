@@ -39,13 +39,13 @@ Fill in the `owner: ____` blanks in ROADMAP.md at kickoff.
 World ID verification needs the World App on the judge's phone (device-level verification is instant, no Orb needed — but the app must be installed). World-track judges will have it; other judges may not. Options: (a) a couple of pre-verified demo accounts judges can log into, (b) a clearly-labeled "demo bypass" that marks the account unverified-but-allowed. Must not undermine the World submission — the real path has to be the default and actually work. Ask the World booth what they expect.
 
 **#11 — Gas for judges' embedded wallets** · OPEN · owner: ____
-Judges' fresh Dynamic wallets have zero ETH. Options: Dynamic gas sponsorship for embedded wallets (check what their SDK supports on Base Sepolia), or our backend drips a little ETH to each new wallet on signup. Must be invisible — a judge can never be told to find a faucet.
+Judges' fresh Dynamic wallets have zero ETH. **Verified 6/12:** Dynamic's EVM gas sponsorship explicitly supports Base Sepolia (84532) — but only for **V3 MPC embedded wallets**, and it **requires contacting Dynamic to enable** on your environment. Action: ask at the Dynamic booth / support TODAY. Fallback: our backend drips ETH to new wallets on signup. Either way it must be invisible — a judge can never be told to find a faucet.
 
 **#12 — Cycle cadence for always-on mode** · OPEN · owner: ____
 How long is one cycle in live mode? Tradeoff: judge patience (their vote should resolve within their visit) vs. enough voting-window time to act. Strawman: **5 min total — 90s voting window, 3.5 min hold.** Make it a keeper config value and tune on-site. Also decide what the UI shows someone who lands mid-hold (countdown + deposit-queues-anytime + browse).
 
-**#13 — Hosting: web + keeper** · OPEN · owner: ____
-Web on Vercel (easy). The keeper must run *continuously* — Vercel can't do that. Railway/Fly/a VPS for the keeper script, or the deployed CRE workflow if access lands (#5). Be honest in the submission about what runs where (CRE simulated/deployed vs. script driver).
+**#13 — Hosting: web + keeper** · OPEN · owner: ____ · leaning below
+Web on Vercel (easy, auto-deploys from GitHub). The keeper must run *continuously* — Vercel can't do that. **Leaning: Railway** for the keeper + agents (we have prior Railway experience; supports Bun via Dockerfile/nixpacks), or the deployed CRE workflow if access lands (#5). Be honest in the submission about what runs where (CRE simulated/deployed vs. script driver).
 
 ---
 
@@ -58,3 +58,4 @@ Web on Vercel (easy). The keeper must run *continuously* — Vercel can't do tha
 - **No real tokenized stocks on any usable testnet** — Ondo/xStocks/Dinari all mainnet-only or gated; Robinhood Chain has them but is an isolated chain. We deploy mocks. (Verified 6/12)
 - **Top-N selection replaced** — basket is proportional-to-votes with cap + dust floor; count emerges from votes. (6/12, DESIGN.md)
 - **Confidential AI Attester cut** — only served agent theses; not KYC; weak fit. (6/12)
+- **Tech stack verified, no dependency conflicts** (6/12, fetched docs + npm): World ID = **JavaScript/React** (`@worldcoin/idkit` 4.1.8, `react >=18` — the "Go/Python only" worry was a mix-up with the CRE SDK); backend verify is REST (any language). AgentKit = TS/Node, **v0.2.0 beta**. CRE SDK = TS + Go; **TS SDK requires Bun ≥1.2.21**. Dynamic = React SDK (viem ≥2.45.3, wagmi ≥2.14.11, react 18–19) + Node server wallets; Base Sepolia ✓. Uniswap v4-sdk = TS (ethers-v5 internals, coexists with viem). Next.js confirmed as frontend (API routes host the World ID verify + AgentKit endpoints). React 18/19 + Next 14/15 satisfies every peer dep.

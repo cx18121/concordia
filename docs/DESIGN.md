@@ -107,7 +107,7 @@ Why replayed history instead of live prices in demo: stocks move ~0.01% in 5 rea
 
 ## 4. Deferred / stretch
 
-- **Forum** (credibility-ranked board + on-chain reputation badges + live pitch P&L) — stretch; prototype built (`forum-prototype.html`).
+- **Forum** (credibility-ranked board + on-chain reputation badges + live pitch P&L) — stretch; prototype built (`explainers/forum-prototype.html`).
 - **Forum influence amplification** — cut (double-counted skill). If revived, use a *separate* Influence score, never folded into Accuracy.
 - **Skill-weighted sentiment**, **vote-through attribution tag** — nice-to-haves.
 - **ERC-8004 ReputationRegistry** — could store accuracy on-chain in the standard registry instead of a custom mapping; for 36h a simple mapping is fine.

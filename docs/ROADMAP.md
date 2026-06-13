@@ -18,7 +18,9 @@ These unblock everything else. Do them first, together.
   - [ ] Chainlink CRE account + **request deployment access NOW** (lead time; local simulation is the fallback)
   - [ ] World developer portal: `app_id` + action created (one for verify, one for agent linking)
   - [ ] Dynamic environment ID created, test login works
+  - [ ] **Ask Dynamic to enable gas sponsorship** (Base Sepolia, V3 MPC embedded wallets — requires manual enablement on their side; see ISSUES #11)
   - [ ] Pick the stock price API + get a key (see ISSUES #1)
+  - [ ] Install **Bun ≥1.2.21** (the CRE TS SDK runs on Bun, not Node) + the CRE CLI
 - [ ] Base Sepolia ETH in every dev wallet (Coinbase/Alchemy faucets)
 - [ ] Decide mock-USDC vs Circle USDC (see ISSUES #2) and deploy whichever
 - [ ] Everyone reads `DESIGN.md` + `CONTRACTS.md` (30 min, seriously)
@@ -52,7 +54,7 @@ Standalone `UniswapExecutor` module + the pools. Test against a stub vault; A in
 - [ ] Deployed + verified on Base Sepolia, addresses committed to a shared `deployments.json`
 
 ### C — Keeper (Chainlink CRE)  *(owner: ____)*
-The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A finished.
+The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A finished. **Runs on Bun ≥1.2.21** (CRE TS SDK requirement) — keep it its own package, separate from the Node toolchain.
 
 - [ ] CRE workflow scaffold from `cre-templates` (cron trigger), local simulation running
 - [ ] **Price source behind an interface** — `ReplayFixtureSource` (historical 2024 weeks, loops) and `LiveAPISource` (real-time), selected by config. Demo vs production is a config flag, not a fork.
@@ -65,7 +67,7 @@ The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A
 - [ ] Keeper deployed somewhere persistent (Railway/Fly/CRE — see ISSUES #13) and survives restarts
 
 ### D — Frontend + identity  *(owner: ____)*
-Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. `forum-prototype.html` is the visual reference for the leaderboard/feed look.
+Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. `explainers/forum-prototype.html` is the visual reference for the leaderboard/feed look.
 
 - [ ] Dynamic login → embedded wallet, Base Sepolia network config
 - [ ] **Judge onboarding, zero friction:** gas sponsorship or auto-drip on signup (ISSUES #11) + "get demo USDC" mint button — no faucet hunting

@@ -10,10 +10,10 @@ ETHGlobal NY 2026 hackathon project: a **Community Hedge Fund DAO** — members 
 
 ## Read first (canonical)
 
-- **`DESIGN.md`** — locked decisions + tunable constants (values adjustable, decisions settled).
-- **`CONTRACTS.md`** — build-ready contract spec: state, functions, access, call graph, on/off-chain boundary. Source of truth for implementation.
-- **`ROADMAP.md`** — workstreams + team todo; check items off as they land. **`ISSUES.md`** — open questions; add blockers there instead of stalling, move resolved items down with the answer.
-- HTML files are visual explainers (open in a browser), not logic source.
+- **`docs/DESIGN.md`** — locked decisions + tunable constants (values adjustable, decisions settled).
+- **`docs/CONTRACTS.md`** — build-ready contract spec: state, functions, access, call graph, on/off-chain boundary. Source of truth for implementation.
+- **`docs/ROADMAP.md`** — workstreams + team todo; check items off as they land. **`docs/ISSUES.md`** — open questions; add blockers there instead of stalling, move resolved items down with the answer.
+- `docs/explainers/*.html` are visual explainers (open in a browser), not logic source.
 
 ## Architecture in brief
 
@@ -50,6 +50,8 @@ The goal is a live demo that works on stage. That means **verify narrow, not wid
 | Dynamic | https://www.dynamic.xyz/docs · agents/server wallets: https://www.dynamic.xyz/docs/overview/agents/overview |
 | OpenZeppelin ERC-4626 | https://docs.openzeppelin.com/contracts/5.x/erc4626 |
 | Base Sepolia | network + faucets: https://docs.base.org/chain/network-faucets · USDC faucet: https://faucet.circle.com |
+
+**Languages (verified 6/12):** TypeScript everywhere off-chain, Solidity on-chain. One exception: the keeper — the CRE TS SDK (`@chainlink/cre-sdk`) **runs on Bun ≥1.2.21, not Node** — keep it its own package. World ID backend verification is a plain REST call (`POST developer.world.org/api/v4/verify/{rp_id}`) from a Next.js API route; IDKit is React (`react >=18`, works with 18/19). AgentKit is v0.2.0 **beta** — expect rough edges. Uniswap `v4-sdk` uses ethers-v5 types internally but coexists fine with viem v2 (Dynamic needs viem ≥2.45.3, wagmi ≥2.14.11).
 
 ## Locked decisions — don't relitigate without strong cause
 
