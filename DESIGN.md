@@ -92,6 +92,19 @@ Snapshotted at cycle open. Peer-relative, sums to 1.
 
 ---
 
+## 3.5 Demo mode vs production mode — a config flag, not a fork
+
+The system is real end-to-end (contracts, votes, accuracy, swaps, identity); only the **inputs** differ by mode:
+
+| | Demo | Production |
+|---|---|---|
+| `CYCLE_LENGTH` | 5 min | 1 week |
+| Price source | `ReplayFixtureSource` — real 2024 weekly history, looped | `LiveAPISource` |
+| USDC | mock | real USDC |
+| Stock tokens | mocks | Dinari/xStocks (identical interfaces — drop-in) |
+
+Why replayed history instead of live prices in demo: stocks move ~0.01% in 5 real minutes — no differentiation, dead leaderboard. Each fast cycle must represent a real *week* of movement for skill to visibly emerge. The UI displays this honestly (demo-mode badge: "replaying week of Feb 12, 2024 at ~2000×"); the pitch shows the config diff as proof that judges used the production system.
+
 ## 4. Deferred / stretch
 
 - **Forum** (credibility-ranked board + on-chain reputation badges + live pitch P&L) — stretch; prototype built (`forum-prototype.html`).
