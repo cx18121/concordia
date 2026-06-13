@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
+import { addresses, vaultAbi, walletClientFromKey, publicClient } from "@concordia/shared";
+import type { Hex } from "viem";
 
-// In-memory nullifier store — enough for the demo.
-// Once Vault is deployed, swap for Vault.verify(walletAddress, proof) on-chain.
+// In-memory nullifier store — enough for the demo (resets on redeploy).
 const usedNullifiers = new Set<string>();
 
 export async function POST(request: Request): Promise<Response> {
-  const { idkitResponse } = await request.json();
+  const { idkitResponse, wallet } = await request.json();
 
+  // 1. Off-chain: verify the World ID proof via the developer REST endpoint.
   const rpId = process.env.WORLD_RP_ID!;
   const res = await fetch(`https://developer.world.org/api/v4/verify/${rpId}`, {
     method: "POST",
@@ -30,5 +32,31 @@ export async function POST(request: Request): Promise<Response> {
     usedNullifiers.add(nullifier);
   }
 
-  return NextResponse.json({ success: true });
+  // 2. On-chain: admin attests the wallet so deposits stop reverting NotVerified.
+  if (!wallet || !/^0x[0-9a-fA-F]{40}$/.test(wallet)) {
+    return NextResponse.json({ error: "Missing or invalid wallet address" }, { status: 400 });
+  }
+  const adminKey = process.env.ADMIN_PRIVATE_KEY as Hex | undefined;
+  if (!adminKey) {
+    return NextResponse.json({ error: "Server missing ADMIN_PRIVATE_KEY" }, { status: 500 });
+  }
+
+  try {
+    const admin = walletClientFromKey(adminKey);
+    const hash = await admin.writeContract({
+      address: addresses.vault,
+      abi: vaultAbi,
+      functionName: "verify",
+      args: [wallet as `0x${string}`, "0x"],
+      account: admin.account!,
+      chain: admin.chain,
+    });
+    // Wait so the client can deposit immediately after this returns.
+    await publicClient().waitForTransactionReceipt({ hash });
+    return NextResponse.json({ success: true, txHash: hash });
+  } catch (e) {
+    // World side is already idempotent (nullifier consumed); surface the chain error.
+    const message = e instanceof Error ? e.message : "On-chain verify failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

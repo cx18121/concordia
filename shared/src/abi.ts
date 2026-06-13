@@ -30,6 +30,7 @@ export const vaultAbi = parseAbi([
   "function convertToAssets(uint256 shares) view returns (uint256)", // shares -> USDC at current NAV
   "function deposit(uint256 assets) returns (uint256)",
   "function claimRewards() returns (uint256)",
+  "function verify(address user, bytes proof)", // admin-only: attest a World-ID-verified wallet
 ]);
 
 // Mock USDC / ERC-20. `mint` is the public "get demo USDC" faucet (MockStock).

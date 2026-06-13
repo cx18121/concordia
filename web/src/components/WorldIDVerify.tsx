@@ -76,7 +76,8 @@ export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart 
     const res = await fetch("/api/verify", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ idkitResponse: result }),
+      // signal is the wallet address — the route admin-attests it on-chain (Vault.verify).
+      body: JSON.stringify({ idkitResponse: result, wallet: signal }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
