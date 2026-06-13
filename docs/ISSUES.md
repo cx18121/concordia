@@ -8,8 +8,8 @@ Format: **#N — title** · status · owner · what unblocks it.
 
 ## Open — needs a person (booth visit or team kickoff)
 
-**#5 — CRE deployment access timing** · OPEN · owner: ____ · ⚠️ has lead time
-CRE live deployment is early-access (`cre account access`); Chainlink said at the event they'll deploy simulated workflows for teams, and **local simulation qualifies for the prize.** Request access in Phase 0; build simulation-first regardless.
+**#5 — CRE: build in sim; live deploy is optional** · OPEN (low) · owner: ____
+**Build everything in CLI simulation** (`cre workflow simulate`) — no access needed, secrets in local `.env`, and **simulation alone qualifies for the prize** (Chainlink's own requirement, in the prize text you pasted: "Demonstrate a successful simulation (via the CRE CLI) **or** a live deployment"). They also offer: "show us a successful simulation, our team will deploy it to live CRE for you." So live deploy needs no work from us. If we *do* want to self-deploy: verified 6/12 it's ~1–2h, code unchanged — add a `production` target, push secrets to the Vault DON (`cre secrets create`), `cre workflow deploy`+`activate` via the **private registry** (no wallet/gas). The *only* gate is Early Access approval (`cre account access` / app.chain.link/cre/request-access) — unknown turnaround, so request it early *just in case*, but it blocks nothing (sim is the plan). Optional: confirm specifics on Chainlink Discord.
 
 **#9 — Who owns which workstream?** · OPEN
 Fill the `owner: ____` blanks in ROADMAP.md at kickoff. Nothing parallelizes until this is done.

@@ -221,6 +221,8 @@ CRE runs on a schedule (or is triggered). One workflow, three jobs:
 
 Everything money-related (pool size, HWM, custody, the actual USDC split) is done by the contract in `settle()`. CRE only supplies the per-member arithmetic.
 
+**CRE write mechanics (verified 6/12):** the contract CRE writes to (here Governance, via `resolveCycle`) is a **consumer** that implements `IReceiver.onReport(bytes metadata, bytes report)`; CRE delivers through Chainlink's fixed `KeystoneForwarder` (managed infra — you don't configure its address in the workflow, but the consumer should access-control on it, and the sim vs production forwarder are different contracts). **Build entirely in CLI simulation** (`cre workflow simulate`) — secrets live in a local `.env`, no access needed, and **simulation alone qualifies for the prize**. Live deploy (optional) = add a `production` target + push secrets to the Vault DON (`cre secrets create`) + `cre workflow deploy` & `activate` via the **private registry** (no wallet/gas). The code is identical sim↔live; the only real gate is Early Access approval — request early (ISSUES #5), or let Chainlink deploy your sim for you.
+
 ---
 
 ## 7. Uniswap execution layer
