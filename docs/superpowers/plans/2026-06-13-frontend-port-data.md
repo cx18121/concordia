@@ -73,12 +73,12 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 **Files:**
 - Create: `web/src/lib/data.ts`
 
-- [ ] Define the hooks the UI binds to: `useCycle()`, `usePrices()`, `usePosition()`, `useVotingPower()`, `useAccuracy()`, `useLeaderboard()`, and write actions `getDemoUSDC()`, `deposit(amount)`, `castVote(allocs)`, `claim()`. Types mirror `@concordia/shared` (`Cycle`, `Pick`, `Alloc`).
-- [ ] Implement a **mock adapter**: seeded, realistic values (a cycle in `OPEN` with a countdown, ~8 tickers with prices, a sample position + NAV, a leaderboard). Write actions mutate local React state and resolve.
-- [ ] Include a `resolveCycle()` dev trigger in the mock adapter that flips the cycle to resolved, updates NAV from the new prices, and sets a sample `useAccuracy()` score — this drives the demo's "watch the cycle resolve → accuracy appears → claim" beat without real contracts. (A button/keypress wires it in B5.)
-- [ ] Implement a **live adapter**: calls `@concordia/shared` (`getCycle`, `getPrices`, `getVotingPower`, `castVote`, etc.) via `publicClient()`; writes use `useAuth().getWalletClient()`.
-- [ ] Switch on `process.env.NEXT_PUBLIC_USE_MOCK` (default `true`).
-- [ ] **Verify:** a temp page printing the hooks shows mock data; flipping the env (with real addresses) is the only change needed later.
+- [x] Define the hooks the UI binds to: `useCycle()`, `usePrices()`, `usePosition()`, `useVotingPower()`, `useAccuracy()`, `useLeaderboard()`, and write actions `getDemoUSDC()`, `deposit(amount)`, `castVote(allocs)`, `claim()`. Types mirror `@concordia/shared` (`Cycle`, `Pick`, `Alloc`).
+- [x] Implement a **mock adapter**: seeded, realistic values (a cycle in `OPEN` with a countdown, ~8 tickers with prices, a sample position + NAV, a leaderboard). Write actions mutate local React state and resolve.
+- [x] Include a `resolveCycle()` dev trigger in the mock adapter that flips the cycle to resolved, updates NAV from the new prices, and sets a sample `useAccuracy()` score — this drives the demo's "watch the cycle resolve → accuracy appears → claim" beat without real contracts. (A button/keypress wires it in B5.)
+- [x] Implement a **live adapter** (STUB per Setup notes — structured + B7 wiring map, throws until B7 wires `@concordia/shared`): calls `@concordia/shared` (`getCycle`, `getPrices`, `getVotingPower`, `castVote`, etc.) via `publicClient()`; writes use `useAuth().getWalletClient()`.
+- [x] Switch on `process.env.NEXT_PUBLIC_USE_MOCK` (default `true`).
+- [x] **Verify:** a temp page printing the hooks shows mock data; flipping the env (with real addresses) is the only change needed later.
 
 ---
 

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "../styles/shell.css";
 import { MockAuthProvider } from "@/lib/mockAuth";
+import { MockDataProvider } from "@/lib/data";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
@@ -37,13 +38,15 @@ export default function RootLayout({
       </head>
       <body>
         <MockAuthProvider>
-          {/* Global ambient background — layout owns it; pages must not duplicate .amb. */}
-          <div className="amb">
-            <i className="a" />
-            <i className="b" />
-          </div>
-          <Nav />
-          {children}
+          <MockDataProvider>
+            {/* Global ambient background — layout owns it; pages must not duplicate .amb. */}
+            <div className="amb">
+              <i className="a" />
+              <i className="b" />
+            </div>
+            <Nav />
+            {children}
+          </MockDataProvider>
         </MockAuthProvider>
       </body>
     </html>
