@@ -67,14 +67,14 @@ Standalone `UniswapExecutor` module + the pools. Test against a stub vault; A in
 ### C — Keeper (Chainlink CRE)  *(owner: ____)*
 The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A finished. **Runs on Bun ≥1.2.21** (CRE TS SDK requirement) — keep it its own package, separate from the Node toolchain.
 
-- [ ] CRE workflow scaffold from `cre-templates` (cron trigger), local simulation running
-- [ ] **Price source behind an interface** — `ReplayFixtureSource` (historical 2024 weeks, loops) and `LiveAPISource` (real-time), selected by config. Demo vs production is a config flag, not a fork.
-- [ ] Job 1: fetch stock + S&P prices from price source → `Oracle.setPrices`
-- [ ] Job 2: pool re-peg via B's helper (needs B on testnet; stub until then)
-- [ ] Job 3: resolve compute — read votes + prices on-chain, compute per-member EWMA accuracy + creditWeightBps → `Governance.resolveCycle`
-- [ ] Lifecycle triggers: open → lock → resolve on the cycle schedule
-- [ ] **Always-on mode:** loop cycles continuously every N minutes (see ISSUES #12), stepping through the historical price series on repeat — this IS the live app's heartbeat and replaces a one-time replay seed
-- [ ] Same logic exposed as a plain script too (local tests + hosting fallback)
+- [x] CRE workflow scaffold from `cre-templates` (cron trigger) — `keeper/cre/`, **compiles to WASM** (`cre workflow build`, CLI v1.20). `simulate` now needs `cre login` (ISSUES #5a).
+- [x] **Price source behind an interface** — `ReplayFixtureSource` (real 2024 weeks, loops) + `LiveAPISource` (Yahoo), selected by config. Demo vs production is a config flag.
+- [x] Job 1: fetch stock + S&P prices from price source → `Oracle.setPrices`
+- [x] Job 2: pool re-peg toward the posted oracle price (heartbeat: direct `executor.repeg`; workflow: report). Needs B's executor deployed to exercise on testnet.
+- [x] Job 3: resolve compute — read votes + prices on-chain, compute per-member EWMA accuracy + creditWeightBps → `Governance.resolveCycle` (needs Governance vote-readback views, ISSUES #C1)
+- [x] Lifecycle triggers: open → lock → resolve on the cycle schedule
+- [x] **Always-on mode:** `scripts/run.ts` loops cycles continuously, stepping the historical series on repeat — the live app's heartbeat. On-chain `state()` is the source of truth, so it resumes after restart.
+- [x] Same logic exposed as a plain script too — the heartbeat *is* that script (shared `src/core/`); Railway hosting fallback (ISSUES #13)
 - [ ] Keeper deployed somewhere persistent (Railway/Fly/CRE — see ISSUES #13) and survives restarts
 
 ### D — Frontend + identity  *(owner: ____)*

@@ -1,0 +1,14 @@
+{
+  "schedule": "0 */1 * * * *",
+  "mode": "replay",
+  "poolAssets": ["AAPL", "NVDA", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "JPM"],
+  "evms": [
+    {
+      "chainSelectorName": "ethereum-testnet-sepolia-base-1",
+      "oracle": "0x0000000000000000000000000000000000000000",
+      "governance": "0x0000000000000000000000000000000000000000",
+      "executor": "0x0000000000000000000000000000000000000000",
+      "gasLimit": "3000000"
+    }
+  ]
+}

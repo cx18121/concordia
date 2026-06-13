@@ -1,0 +1,15 @@
+{
+  "name": "chf-keeper-workflow",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "main.ts",
+  "scripts": { "typecheck": "tsc --noEmit", "test": "bun test" },
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.6.0",
+    "@chf/shared": "file:../../../shared",
+    "viem": "2.34.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": { "typescript": "5.9.3", "@types/bun": "latest" }
+}

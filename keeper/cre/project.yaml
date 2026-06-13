@@ -1,0 +1,12 @@
+# CRE project settings — RPC endpoints per target. Base Sepolia is where Uniswap v4 is live
+# (DESIGN §1). The CRE chain-selector name for Base Sepolia is `ethereum-testnet-sepolia-base-1`
+# (verified against @chainlink/cre-sdk: chainId 84532, selector 10344971235874465080).
+staging-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia-base-1
+      url: https://sepolia.base.org
+
+production-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia-base-1
+      url: https://sepolia.base.org

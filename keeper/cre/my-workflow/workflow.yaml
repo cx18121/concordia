@@ -1,0 +1,16 @@
+# CRE workflow settings (per target). Overrides project.yaml values.
+staging-settings:
+  user-workflow:
+    workflow-name: "chf-keeper-staging"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.staging.json"
+    secrets-path: ""
+
+production-settings:
+  user-workflow:
+    workflow-name: "chf-keeper-production"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.production.json"
+    secrets-path: ""

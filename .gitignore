@@ -17,3 +17,8 @@ broadcast/
 
 # misc
 .DS_Store
+
+# cre build output
+*.wasm
+.cre_build_tmp.js
+binary.wasm
