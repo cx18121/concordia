@@ -97,11 +97,11 @@ Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. 
 ### E — Agents + replay  *(owner: ____ — can double with C)*
 The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's resolve logic.
 
-- [ ] 6 deterministic strategies (momentum, value, mean-rev, sector, low-vol, contrarian) over the historical price series
-- [ ] Historical data: 12 weeks of real prices for the universe + S&P (committed as fixture; loops in always-on mode)
-- [ ] LLM thesis layer (one short rationale per vote; cache outputs so the app never waits on an API)
-- [ ] Agents vote automatically every cycle in always-on mode (they're the app's life — judges should always see fresh activity)
-- [ ] Seed script: fund agent wallets, deposits (10k/6k/4k/3k/2k/1k), run enough cycles that the leaderboard tells the story (small-skilled > big-mediocre) — **tune the window/strategies until it does**
+- [x] 6 deterministic strategies (momentum, value, mean-rev, sector, low-vol, contrarian) over the historical price series — `agents/src/strategies.ts`
+- [x] Historical data: 12 weeks of prices for the universe + S&P (committed fixture; loops in always-on mode) — `agents/src/fixture.ts` *(representative values; swap in the real Yahoo pull, same shape)*
+- [x] LLM thesis layer (one short rationale per vote; cached to disk + offline template fallback so the app never waits on an API) — `agents/src/thesis.ts`
+- [x] Agents vote automatically every cycle in always-on mode — `agents/src/run.ts` (`npm run run`)
+- [x] Seed script: deposits (10k/6k/4k/3k/2k/1k), runs the replay, prints the leaderboard — `agents/src/seed.ts` (`npm run seed`). Story holds: small-skilled SectorBot ($2k) tops big-mediocre ContrarianBot ($10k). *(Votes go through a `LocalGovernance` sim; flip to `OnChainGovernance` + Dynamic server wallets once contracts deploy — see `agents/src/governance-adapter.ts`.)*
 
 ---
 
