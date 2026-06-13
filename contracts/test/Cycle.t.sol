@@ -30,10 +30,14 @@ contract CycleTest is Test {
     SyntheticExecutor exec;
     MockERC20 aapl;
     MockERC20 nvda;
+    MockERC20 msft;
+    MockERC20 googl;
 
     // symbols
     bytes32 constant AAPL = bytes32("AAPL");
     bytes32 constant NVDA = bytes32("NVDA");
+    bytes32 constant MSFT = bytes32("MSFT");
+    bytes32 constant GOOGL = bytes32("GOOGL");
 
     uint256 constant USDC_ONE = 1e6; // 6-dp USDC
 
@@ -50,10 +54,16 @@ contract CycleTest is Test {
 
         aapl = new MockERC20("Mock AAPL", "mAAPL", 18);
         nvda = new MockERC20("Mock NVDA", "mNVDA", 18);
+        msft = new MockERC20("Mock MSFT", "mMSFT", 18);
+        googl = new MockERC20("Mock GOOGL", "mGOOGL", 18);
         vault.registerAsset(AAPL, address(aapl));
         vault.registerAsset(NVDA, address(nvda));
+        vault.registerAsset(MSFT, address(msft));
+        vault.registerAsset(GOOGL, address(googl));
         exec.register(AAPL, address(aapl));
         exec.register(NVDA, address(nvda));
+        exec.register(MSFT, address(msft));
+        exec.register(GOOGL, address(googl));
         vm.stopPrank();
 
         // verify + fund the three members, then deposit (deposit registers membership)
@@ -83,6 +93,21 @@ contract CycleTest is Test {
         oracle.setPrices(a, p, spE8);
     }
 
+    function _postPrices4(uint256 aaplE8, uint256 nvdaE8, uint256 msftE8, uint256 googlE8, uint256 spE8) internal {
+        bytes32[] memory a = new bytes32[](4);
+        a[0] = AAPL;
+        a[1] = NVDA;
+        a[2] = MSFT;
+        a[3] = GOOGL;
+        uint256[] memory p = new uint256[](4);
+        p[0] = aaplE8;
+        p[1] = nvdaE8;
+        p[2] = msftE8;
+        p[3] = googlE8;
+        vm.prank(keeper);
+        oracle.setPrices(a, p, spE8);
+    }
+
     function _alloc(bytes32 asset, uint16 w) internal pure returns (IGovernance.Alloc[] memory) {
         IGovernance.Alloc[] memory al = new IGovernance.Alloc[](1);
         al[0] = IGovernance.Alloc(asset, w);
@@ -96,8 +121,8 @@ contract CycleTest is Test {
         assertEq(vault.totalAssets(), 20_000 * USDC_ONE, "NAV at deposit");
         assertEq(gov.memberCount(), 3);
 
-        // --- prices at open/lock: AAPL 200, NVDA 100, S&P 5000 ---
-        _postPrices(200e8, 100e8, 5000e8);
+        // --- prices at open/lock: AAPL 200, NVDA 100, MSFT 400, GOOGL 150, S&P 5000 ---
+        _postPrices4(200e8, 100e8, 400e8, 150e8, 5000e8);
 
         // --- OPEN: snapshot power (cycle 0: accuracy all 0 → power == capital share) ---
         vm.prank(keeper);
@@ -107,36 +132,43 @@ contract CycleTest is Test {
         assertEq(gov.votingPower(bob), 3000);
         assertEq(gov.votingPower(carol), 2000);
 
-        // --- VOTE: alice→AAPL, bob→NVDA, carol→50/50 ---
+        // --- VOTE: alice→AAPL, bob→NVDA, carol→MSFT/GOOGL 50/50 ---
         vm.prank(alice);
         gov.castVote(_alloc(AAPL, 10000));
         vm.prank(bob);
         gov.castVote(_alloc(NVDA, 10000));
         IGovernance.Alloc[] memory split = new IGovernance.Alloc[](2);
-        split[0] = IGovernance.Alloc(AAPL, 5000);
-        split[1] = IGovernance.Alloc(NVDA, 5000);
+        split[0] = IGovernance.Alloc(MSFT, 5000);
+        split[1] = IGovernance.Alloc(GOOGL, 5000);
         vm.prank(carol);
         gov.castVote(split);
 
-        // raw votes: AAPL 3000, NVDA 2000 → 60/40, both clip to 30% cap → renorm 50/50
+        // raw votes: AAPL 50%, NVDA 30%, MSFT 10%, GOOGL 10%. Water-fill cap at 30%:
+        // AAPL pins to 30%, its overflow lifts NVDA past 30% so it pins too, MSFT/GOOGL absorb
+        // the rest → 30/30/20/20, summing to 100% with NOTHING above the cap.
         (bytes32[] memory bAssets, uint256[] memory bWeights) = gov.selectBasket();
-        assertEq(bAssets.length, 2);
-        assertEq(bWeights[0], 5000);
-        assertEq(bWeights[1], 5000);
+        assertEq(bAssets.length, 4);
+        assertEq(bWeights[0], 3000, "AAPL capped at 30%");
+        assertEq(bWeights[1], 3000, "NVDA capped at 30%");
+        assertEq(bWeights[2], 2000, "MSFT absorbs");
+        assertEq(bWeights[3], 2000, "GOOGL absorbs");
+        for (uint256 i = 0; i < bWeights.length; i++) {
+            assertLe(bWeights[i], 3000, "no position exceeds the 30% cap");
+        }
 
         // --- LOCK: execute the basket, snapshot NAV + benchmark ---
         vm.prank(keeper);
         gov.lockCycle();
         assertEq(uint8(gov.state()), uint8(IGovernance.State.LOCKED));
-        assertEq(vault.navAtLock(), 20_000 * USDC_ONE, "NAV unchanged buying at oracle");
+        assertApproxEqAbs(vault.navAtLock(), 20_000 * USDC_ONE, 4, "NAV unchanged buying at oracle");
         assertEq(vault.benchAtLock(), 5000e8);
-        // positions held, cash ~drained into them
+        // all four positions held, cash drained into them (fully invested under the cap)
         assertGt(aapl.balanceOf(address(vault)), 0);
-        assertGt(nvda.balanceOf(address(vault)), 0);
-        assertApproxEqAbs(vault.totalAssets(), 20_000 * USDC_ONE, 2, "NAV continuous through lock");
+        assertGt(googl.balanceOf(address(vault)), 0);
+        assertApproxEqAbs(vault.totalAssets(), 20_000 * USDC_ONE, 4, "NAV continuous through lock");
 
-        // --- PRICE MOVE: both stocks +10%, S&P +2% → fund excess ≈ +8% ---
-        _postPrices(220e8, 110e8, 5100e8);
+        // --- PRICE MOVE: all stocks +10%, S&P +2% → fund excess ≈ +8% ---
+        _postPrices4(220e8, 110e8, 440e8, 165e8, 5100e8);
         assertApproxEqAbs(vault.totalAssets(), 22_000 * USDC_ONE, 10, "NAV +10% from positions");
         assertEq(gov.fundExcessE4(), 800, "excess = +10% - +2% = +8% (800 E4)");
 
@@ -313,6 +345,47 @@ contract CycleTest is Test {
         vm.prank(keeper);
         vm.expectRevert(FundVault.BadCreditWeights.selector);
         gov.resolveCycle(ms, newAcc, bad);
+    }
+
+    /// Beating the benchmark while still losing money (market down more than the fund) is a
+    /// positive EXCESS but a negative dollar return. No reward pool may be funded — paying then
+    /// would carve a bonus out of everyone's shrinking principal. The relative high-water mark
+    /// must also stay put, so it can pay on a later cycle that's up in absolute terms.
+    function test_downMarketNoReward() public {
+        _postPrices4(200e8, 100e8, 400e8, 160e8, 5000e8);
+        vm.prank(keeper);
+        gov.openCycle();
+        vm.prank(alice);
+        gov.castVote(_alloc(AAPL, 10000));
+        vm.prank(bob);
+        gov.castVote(_alloc(NVDA, 10000));
+        IGovernance.Alloc[] memory split = new IGovernance.Alloc[](2);
+        split[0] = IGovernance.Alloc(MSFT, 5000);
+        split[1] = IGovernance.Alloc(GOOGL, 5000);
+        vm.prank(carol);
+        gov.castVote(split);
+        vm.prank(keeper);
+        gov.lockCycle();
+        assertEq(vault.navAtLock(), 20_000 * USDC_ONE);
+
+        // market −10%, fund −5%: positive relative excess, negative absolute return
+        _postPrices4(190e8, 95e8, 380e8, 152e8, 4500e8);
+        assertApproxEqAbs(vault.totalAssets(), 19_000 * USDC_ONE, 10, "fund down 5% in dollars");
+        assertEq(gov.fundExcessE4(), 500, "still +5% vs the market");
+
+        address[] memory ms = _three();
+        int256[] memory newAcc = new int256[](3);
+        uint256[] memory credit = new uint256[](3);
+        credit[0] = 5000;
+        credit[1] = 3000;
+        credit[2] = 2000;
+        vm.prank(keeper);
+        gov.resolveCycle(ms, newAcc, credit);
+
+        assertEq(vault.rewardPool(), 0, "no bonus when the fund lost money");
+        assertEq(vault.hwmExcessE4(), 0, "high-water mark not advanced on a down-money cycle");
+        assertEq(gov.cyclesParticipated(alice), 1, "cycle still resolved + accuracy recorded");
+        assertApproxEqAbs(vault.totalAssets(), 19_000 * USDC_ONE, 10, "shareholders bore the full loss");
     }
 
     function _three() internal view returns (address[] memory ms) {

@@ -201,10 +201,15 @@ contract Governance is IGovernance {
 
     // -------------------------------------------------------------- selection
 
-    /// @notice Proportional-to-votes basket with a per-position cap and a dust floor; the count
-    ///         emerges from the votes (no top-N). Renormalized to ~1e4. See DESIGN §3.
-    /// @dev One heavier on-chain loop, but bounded by the votable universe (≈20). Returns empty
-    ///      arrays on an empty cycle (no votes) — the Vault then simply sits in cash.
+    /// @notice Proportional-to-votes basket with a HARD per-position cap and a dust floor; the
+    ///         count emerges from the votes (no top-N). See DESIGN §3.
+    /// @dev Water-fill cap: any asset whose proportional weight exceeds POSITION_CAP_BPS is pinned
+    ///      at the cap, and the freed budget is redistributed across the remaining assets — iterated
+    ///      until no weight exceeds the cap. Unlike a single cap+renormalize, this actually holds
+    ///      every weight ≤ cap. If too few assets were voted to fill 1e4 under the cap (e.g. 2 names
+    ///      at a 30% cap can only reach 60%), the remainder stays in cash — by design, since that's
+    ///      what the diversification cap is for. Returns empty on an empty cycle (Vault sits in cash).
+    ///      Bounded by the votable universe (≈20), so the iteration is cheap.
     function selectBasket() public view returns (bytes32[] memory assets, uint256[] memory weights) {
         uint256 n = votedAssets.length;
         uint256 total;
@@ -213,29 +218,61 @@ contract Governance is IGovernance {
         }
         if (total == 0) return (new bytes32[](0), new uint256[](0));
 
+        // 1. drop dust (on the raw proportional value) → candidate set + their vote weights
         uint256 nav = vault.totalAssets();
-        bytes32[] memory keptA = new bytes32[](n);
-        uint256[] memory keptW = new uint256[](n);
-        uint256 kept;
-        uint256 sumKept;
+        bytes32[] memory candA = new bytes32[](n);
+        uint256[] memory candV = new uint256[](n);
+        uint256 m;
         for (uint256 i = 0; i < n; i++) {
             bytes32 a = votedAssets[i];
-            uint256 w = (assetWeightE4[a] * BPS) / total; // proportional to votes
-            if (w > POSITION_CAP_BPS) w = POSITION_CAP_BPS; // diversification cap
-            uint256 posUSDC = (nav * w) / BPS;
-            if (DUST_FLOOR_USDC > 0 && posUSDC < DUST_FLOOR_USDC) continue; // anti-dust drop
-            keptA[kept] = a;
-            keptW[kept] = w;
-            sumKept += w;
-            kept++;
+            uint256 v = assetWeightE4[a];
+            if (v == 0) continue;
+            uint256 rawW = (v * BPS) / total;
+            if (DUST_FLOOR_USDC > 0 && (nav * rawW) / BPS < DUST_FLOOR_USDC) continue;
+            candA[m] = a;
+            candV[m] = v;
+            m++;
         }
-        if (kept == 0 || sumKept == 0) return (new bytes32[](0), new uint256[](0));
+        if (m == 0) return (new bytes32[](0), new uint256[](0));
 
-        assets = new bytes32[](kept);
-        weights = new uint256[](kept);
-        for (uint256 i = 0; i < kept; i++) {
-            assets[i] = keptA[i];
-            weights[i] = (keptW[i] * BPS) / sumKept; // renormalize survivors to sum ≈ 1e4
+        // 2. water-fill the cap
+        uint256[] memory w = new uint256[](m);
+        bool[] memory capped = new bool[](m);
+        uint256 budget = BPS;
+        while (true) {
+            uint256 sumUncappedV;
+            for (uint256 j = 0; j < m; j++) {
+                if (!capped[j]) sumUncappedV += candV[j];
+            }
+            if (sumUncappedV == 0) break; // everything pinned at the cap; rest stays cash
+
+            bool anyNew;
+            uint256 newlyPinned;
+            for (uint256 j = 0; j < m; j++) {
+                if (capped[j]) continue;
+                uint256 tentative = (budget * candV[j]) / sumUncappedV;
+                if (tentative > POSITION_CAP_BPS) {
+                    capped[j] = true;
+                    w[j] = POSITION_CAP_BPS;
+                    newlyPinned += POSITION_CAP_BPS;
+                    anyNew = true;
+                }
+            }
+            if (anyNew) {
+                budget -= newlyPinned;
+            } else {
+                for (uint256 j = 0; j < m; j++) {
+                    if (!capped[j]) w[j] = (budget * candV[j]) / sumUncappedV;
+                }
+                break;
+            }
+        }
+
+        assets = new bytes32[](m);
+        weights = new uint256[](m);
+        for (uint256 j = 0; j < m; j++) {
+            assets[j] = candA[j];
+            weights[j] = w[j];
         }
     }
 

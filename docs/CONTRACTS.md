@@ -174,11 +174,14 @@ resolveCycle(address[] members_, int256[] newAccuracyE4, uint256[] creditWeightB
 // ---- internal ----
 selectBasket() returns (bytes32[], uint256[]):
     total = Σ assetWeightE4;
-    for a in votedAssets:
-        w = assetWeightE4[a] * 1e4 / total;       // proportional to votes
-        if (value(w) < DUST_FLOOR_USDC) drop;     // anti-dust
-        if (w > POSITION_CAP_BPS) w = POSITION_CAP_BPS;  // cap
-    renormalize remaining to sum 1e4;             // count EMERGES from votes
+    drop any asset whose proportional value < DUST_FLOOR_USDC;   // anti-dust
+    water-fill the POSITION_CAP_BPS cap:                          // count EMERGES from votes
+        pin any asset over the cap AT the cap, redistribute the freed budget
+        proportionally across the rest, iterate until none exceed the cap.
+    // HARD cap: every weight ≤ cap. If too few assets were voted to reach 1e4 under the cap
+    // (e.g. 2 names at a 30% cap → max 60%), weights sum to < 1e4 and the REMAINDER STAYS IN
+    // CASH — consumers must not assume the basket sums to 1e4. (Naive cap-then-renormalize was
+    // rejected: renormalizing capped weights pushes them back over the cap — see ISSUES.)
 
 // ---- views (forum + UI read these) ----
 votingPower(address) · accuracyOf(address) · confidenceOf(address)

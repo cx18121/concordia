@@ -237,10 +237,20 @@ contract FundVault is ERC4626, IFundVault {
     {
         if (members.length != creditWeightBps.length) revert LengthMismatch();
         cumExcessE4 += cycleExcessE4;
-        if (cumExcessE4 <= hwmExcessE4) return; // no new high → no reward this cycle
+        if (cumExcessE4 <= hwmExcessE4) return; // no new relative high → no reward this cycle
+
+        // Absolute-gain gate: only ever redistribute money the fund ACTUALLY made. Beating the
+        // benchmark while still losing money (market down more than us) is a positive excess but
+        // a negative dollar return — paying a bonus then would erode everyone's principal. So we
+        // require NAV to have grown, AND cap the rewardable gain at the real dollar gain. (Keeps
+        // the relative high-water mark intact for a later cycle that's also up in absolute terms.)
+        uint256 navNow = totalAssets();
+        if (navNow <= navAtLock) return;
+        uint256 absGainUSDC = navNow - navAtLock;
 
         uint256 chargeableE4 = uint256(cumExcessE4 - hwmExcessE4);
-        uint256 gainUSDC = (navAtLock * chargeableE4) / BPS;
+        uint256 relGainUSDC = (navAtLock * chargeableE4) / BPS;
+        uint256 gainUSDC = relGainUSDC < absGainUSDC ? relGainUSDC : absGainUSDC;
         uint16 pct = IGov(governance).REWARD_POOL_PCT();
         uint256 poolUSDC = (gainUSDC * pct) / BPS;
 

@@ -73,6 +73,10 @@ Snapshotted at cycle open. Peer-relative, sums to 1.
 >
 > The number of holdings emerges from the votes — no top-N, no magic threshold.
 
+**Cap is a hard limit (water-fill):** the cap is enforced by pinning over-cap names at the cap and redistributing to the rest until nothing exceeds it — *not* cap-then-renormalize (which would push capped names back over the cap). Consequence: if votes concentrate in too few names to fill 100% under the cap (e.g. 2 names at a 30% cap → 60% max), **the shortfall stays in cash** by design. So a basket can sum to < 100% — the keeper/UI must not assume it's fully invested.
+
+**Success reward only on real money made:** the bonus is gated on *both* a new benchmark-relative high-water mark *and* a positive absolute dollar return, and is capped at the actual dollar gain. Beating the S&P while still losing money (market down more than the fund) pays **nothing** — paying then would carve a bonus out of everyone's shrinking principal.
+
 ### Fees & rewards
 - **No management fee** for the demo (`MGMT_FEE = 0`).
 - **Success reward**: `REWARD_POOL_PCT` of the **alpha** (return above S&P), charged **only when the fund sets a new high vs the benchmark** (high-water mark — never double-charges recovered ground).
