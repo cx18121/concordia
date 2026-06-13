@@ -120,4 +120,4 @@ Do not change names or signatures without telling Track B — this is frozen lik
 ---
 
 ## Done when
-Email login creates a gas-sponsored embedded wallet on Base Sepolia; World ID verification flips `isVerified`; `useAuth()` matches the frozen contract; Track B drops in the real provider with zero code changes.
+Email login creates an embedded (plain EOA) wallet on Base Sepolia; World ID verification flips `isVerified`; `useAuth()` matches the frozen contract; Track B drops in the real provider with zero code changes. _(Gas sponsorship deferred per A3 — judge gets a small test-ETH drip at live-flip; true gasless/AA is polish.)_
