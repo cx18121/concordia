@@ -5,12 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { countUp } from "@/lib/countUp";
 
-// Tabs: [label, href, isActive(pathname)]. Forum is cut from v1, so it is
-// omitted (spec "Out of scope"). Active state derives from the current path
-// instead of shell.js's body.dataset.page.
+// Tabs: [label, href, isActive(pathname)]. Active state derives from the
+// current path instead of shell.js's body.dataset.page.
 const TABS: [string, string, (p: string) => boolean][] = [
   ["Overview", "/", (p) => p === "/"],
   ["Vote", "/vote", (p) => p.startsWith("/vote")],
+  ["Forum", "/forum", (p) => p.startsWith("/forum")],
   ["Leaderboard", "/leaderboard", (p) => p.startsWith("/leaderboard")],
   ["Account", "/account", (p) => p.startsWith("/account")],
 ];
