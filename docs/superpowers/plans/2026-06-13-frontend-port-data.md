@@ -59,12 +59,12 @@ This keeps all of B0–B6 buildable with zero workspace setup.
 - Modify: `web/src/app/layout.tsx` (import shell.css + global fonts; wrap in `MockAuthProvider`; render `<Nav>`)
 - Create: empty route pages `web/src/app/{vote,leaderboard,account,settings}/page.tsx`
 
-- [ ] `npm install viem` in `web/` (needed for the `AuthState` type and live mode).
-- [ ] Copy `shell.css` into `web/src/styles/` and import it in `layout.tsx`. Add the Google Fonts `<link>` (Inter, Outfit) the mocks use, in `layout.tsx`.
-- [ ] Port `shell.js` into `<Nav>`: it just builds the nav markup (brand, tabs, wallet balance, gear). Replace `location.href` navigation with Next `<Link>`. Keep the `countUp` helper as a small util (used by data-bound numbers).
-- [ ] Wrap children in `MockAuthProvider` in `layout.tsx`.
-- [ ] Create placeholder route pages so the nav tabs resolve.
-- [ ] **Verify:** `npm run dev`; nav renders on every route, tabs navigate, no console errors.
+- [x] `npm install viem` in `web/` (needed for the `AuthState` type and live mode).
+- [x] Copy `shell.css` into `web/src/styles/` and import it in `layout.tsx`. Add the Google Fonts `<link>` (Inter, Outfit) the mocks use, in `layout.tsx`.
+- [x] Port `shell.js` into `<Nav>`: it just builds the nav markup (brand, tabs, wallet balance, gear). Replace `location.href` navigation with Next `<Link>`. Keep the `countUp` helper as a small util (used by data-bound numbers).
+- [x] Wrap children in `MockAuthProvider` in `layout.tsx`.
+- [x] Create placeholder route pages so the nav tabs resolve.
+- [x] **Verify:** `npm run dev`; nav renders on every route, tabs navigate, no console errors.
 
 ---
 
