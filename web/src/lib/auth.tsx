@@ -19,7 +19,12 @@ import type { AuthState } from "./auth-types";
 // Base Sepolia + "create embedded wallet on login" are enabled in the Dynamic
 // dashboard (Embedded Wallet → "Create on Sign up"), not as provider props.
 // Plain EOA embedded wallet — gas sponsorship / account abstraction is deferred.
-const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID ?? "";
+const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
+if (!environmentId || environmentId === "REPLACE_ME") {
+  console.warn(
+    "[AuthProvider] NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID is not set — Dynamic login will not work.",
+  );
+}
 
 const AuthContext = createContext<AuthState | null>(null);
 
@@ -46,14 +51,19 @@ function AuthBridge({ children }: { children: ReactNode }) {
   }, [handleLogOut]);
 
   const verify = useCallback(async (): Promise<boolean> => {
-    // A4: trigger the World ID IDKit flow (WorldIDVerify), POST to /api/verify,
-    // and on success call setIsVerified(true) and return true.
+    // A4: World ID wiring goes here. NOTE WorldIDVerify is a React component, not a
+    // callable — render <WorldIDVerify onVerified={() => setIsVerified(true)} /> in
+    // AuthBridge's JSX (gated behind a state flag this fn flips), don't call it from here.
     return false;
   }, []);
 
   const getWalletClient = useCallback(async (): Promise<WalletClient | null> => {
     if (!primaryWallet || !isEthereumWallet(primaryWallet)) return null;
-    return primaryWallet.getWalletClient();
+    try {
+      return await primaryWallet.getWalletClient();
+    } catch {
+      return null;
+    }
   }, [primaryWallet]);
 
   const value = useMemo<AuthState>(
@@ -76,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <DynamicContextProvider
       settings={{
-        environmentId,
+        environmentId: environmentId ?? "",
         walletConnectors: [EthereumWalletConnectors],
       }}
     >
