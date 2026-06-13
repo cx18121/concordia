@@ -33,7 +33,7 @@ These unblock everything else. Do them first, together.
   - [ ] Install **Bun ≥1.2.21** (the CRE TS SDK runs on Bun, not Node) + the CRE CLI
   - [ ] Price API needs **no key** — Yahoo Finance v8 (ISSUES #1). Pull the 12-week historical fixture once and commit it (one URL/ticker, S&P = `%5EGSPC`).
 - [ ] Base Sepolia ETH in every dev wallet (Coinbase/Alchemy faucets) + a funded backend "drip" wallet for judge onboarding (ISSUES #11)
-- [ ] Deploy **mock USDC** with a public `mint()` (decided, ISSUES #2) — doubles as the "get demo USDC" button
+- [x] Deploy **mock USDC** with a public `mint()` (decided, ISSUES #2) — doubles as the "get demo USDC" button (`src/mocks/MockERC20.sol`, configurable decimals)
 - [ ] Everyone reads `DESIGN.md` + `CONTRACTS.md` (30 min, seriously)
 
 ---
@@ -45,14 +45,14 @@ Each workstream builds against the frozen interfaces + stubs, so nobody waits on
 ### A — Core contracts  *(owner: ____)*
 PriceOracle, FundVault, Governance. Build vault with **synthetic positions first** (record weights, value at oracle price) so the whole fund logic is testable before Uniswap lands; swap in B's executor at integration.
 
-- [ ] PriceOracle: `setPrices` (onlyKeeper) + views, tests
-- [ ] FundVault: ERC-4626 deposit/redeem at NAV, `verified` gate, withdraw queue at boundary
-- [ ] FundVault: `totalAssets()` NAV from oracle prices (synthetic positions)
-- [ ] FundVault: `settle()` — HWM gate, reward pool from own NAV, `rewardCredit`, `claimRewards`
-- [ ] Governance: members, power snapshot (`openCycle`), `castVote`, state machine
-- [ ] Governance: `selectBasket` — proportional + cap + dust floor + renormalize, empty-cycle guards
-- [ ] Governance: `lockCycle` / `resolveCycle` wiring to vault
-- [ ] Foundry tests: full cycle on a local fork with a scripted keeper (no CRE yet)
+- [x] PriceOracle: `setPrices` (onlyKeeper) + views, tests
+- [x] FundVault: ERC-4626 deposit/redeem at NAV, `verified` gate, withdraw queue at boundary
+- [x] FundVault: `totalAssets()` NAV from oracle prices (synthetic positions)
+- [x] FundVault: `settle()` — HWM gate, reward pool from own NAV, `rewardCredit`, `claimRewards`
+- [x] Governance: members, power snapshot (`openCycle`), `castVote`, state machine
+- [x] Governance: `selectBasket` — proportional + cap + dust floor + renormalize, empty-cycle guards
+- [x] Governance: `lockCycle` / `resolveCycle` wiring to vault
+- [x] Foundry tests: full cycle on a local fork with a scripted keeper (no CRE yet) — `test/Cycle.t.sol` (synthetic positions; swaps in B's executor at integration)
 
 ### B — Uniswap execution layer  *(owner: ____)*  ⚠️ riskiest — start immediately
 Standalone `UniswapExecutor` module + the pools. Test against a stub vault; A integrates it behind `executeBasket`/`closePositions`.
