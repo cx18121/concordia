@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IDKitRequestWidget,
   deviceLegacy,
@@ -12,14 +12,22 @@ const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
 interface Props {
   onVerified?: () => void;
+  /** Fired exactly once when the modal is dismissed (or proof fails) without a prior success. */
+  onCancel?: () => void;
+  /** Bound into the proof so it commits to the wallet (idkit v4: passed to the preset, surfaces as signal_hash). */
+  signal?: string;
+  /** When true, fetch the RP signature and open the modal on mount (verify()-driven use); standalone use leaves this off and waits for a click. */
+  autoStart?: boolean;
 }
 
-export default function WorldIDVerify({ onVerified }: Props) {
+export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart }: Props) {
   const [open, setOpen] = useState(false);
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // True once onSuccess ran, so the close that follows isn't reported as a cancel.
+  const succeededRef = useRef(false);
 
   const appId = process.env.NEXT_PUBLIC_WORLD_APP_ID as `app_${string}`;
   const action = process.env.NEXT_PUBLIC_WORLD_ACTION!;
@@ -45,10 +53,24 @@ export default function WorldIDVerify({ onVerified }: Props) {
       setOpen(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
+      // Modal never opened, so no close event will fire: resolve the bridge promise here.
+      onCancel?.();
     } finally {
       setLoading(false);
     }
   }
+
+  // verify()-driven use renders this with autoStart and expects the modal to open
+  // itself; standalone use omits autoStart and waits for the button click.
+  // Deferred a tick so handleClick's synchronous setState doesn't run in the effect body.
+  useEffect(() => {
+    if (!autoStart) return;
+    const id = setTimeout(() => {
+      void handleClick();
+    }, 0);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleVerify(result: IDKitResult) {
     const res = await fetch("/api/verify", {
@@ -58,14 +80,43 @@ export default function WorldIDVerify({ onVerified }: Props) {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error((data as { error?: string }).error ?? "Verification failed");
+      const message = (data as { error?: string }).error ?? "Verification failed";
+      setError(message);
+      // Proof failed: closing the modal below reports it as a cancel to the parent.
+      throw new Error(message);
     }
   }
 
   function onSuccess() {
+    succeededRef.current = true;
     setVerified(true);
     setOpen(false);
     onVerified?.();
+  }
+
+  // Dismissed (or closed after a failed proof) without a success → notify parent once.
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next && !succeededRef.current) onCancel?.();
+  }
+
+  const widget = rpContext && (
+    <IDKitRequestWidget
+      open={open}
+      onOpenChange={handleOpenChange}
+      app_id={appId}
+      action={action}
+      rp_context={rpContext}
+      allow_legacy_proofs={true}
+      preset={deviceLegacy(signal ? { signal } : undefined)}
+      handleVerify={handleVerify}
+      onSuccess={onSuccess}
+    />
+  );
+
+  // Bridge mode: invisible glue — only the IDKit modal (a portal) should show.
+  if (autoStart) {
+    return <>{widget}</>;
   }
 
   if (verified) {
@@ -79,19 +130,7 @@ export default function WorldIDVerify({ onVerified }: Props) {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      {rpContext && (
-        <IDKitRequestWidget
-          open={open}
-          onOpenChange={setOpen}
-          app_id={appId}
-          action={action}
-          rp_context={rpContext}
-          allow_legacy_proofs={true}
-          preset={deviceLegacy()}
-          handleVerify={handleVerify}
-          onSuccess={onSuccess}
-        />
-      )}
+      {widget}
       <button
         onClick={handleClick}
         disabled={loading}
