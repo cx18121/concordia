@@ -5,6 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Community Fund | Leaderboard</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="stylesheet" href="shell.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -87,11 +88,12 @@
         }
     </style>
 </head>
-<body class="min-h-screen">
-<div class="ambient-glow glow-1"></div>
-<div class="ambient-glow glow-2"></div>
-<!-- TopNavBar Shell -->
-<nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between rounded-full mt-4 mx-auto max-w-[1140px] px-6 py-2 bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+<body data-page="leaderboard" class="min-h-screen">
+<!-- Ambient background (shared shell) -->
+<div class="amb"><i class="a"></i><i class="b"></i></div>
+<!-- Shared navigation shell -->
+<div id="nav-root"></div>
+<template><nav>
 <div class="flex items-center gap-8">
 <span class="font-display font-extrabold text-xl text-[#F4F7FA] tracking-tight">Community Fund</span>
 <div class="hidden md:flex items-center gap-6">
@@ -116,13 +118,12 @@
 <img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_o0IkTMYcU0R1Kzqa1wmhqiQhpfpCp52tSpjXjHl1ESFqqw4EnmY7jAvePGyL7FFS5-8-xfOMxEhJ9nysojGClp-Q5UxzWIuZYudHxgiQ1uOeRH9800bnwGE-F7tp73XFVmxyKv4vbKBXM4uyErjB8o_NX_70czZgXExTN_9pI6jG2jMQHJ7rGwSTEap5PjG4DZvo730WB_0CJ7aNgoIJKLFRJDXrHjBH2ZDZA2O3Z8O0Oc-DX881bU4pZJA8vBDQqMuT4Q2TaGo"/>
 </div>
 </div>
-</nav>
+</nav></template>
 <!-- Main Content -->
-<main class="max-w-[1140px] mx-auto pt-32 pb-20 px-6">
+<main class="max-w-[1140px] mx-auto pt-32 pb-20 px-6 relative z-10">
 <!-- Header Section -->
 <header class="mb-12 text-center md:text-left">
-<h1 class="font-display text-5xl md:text-6xl text-text-primary mb-4 tracking-tight">Leaderboard</h1>
-<p class="text-text-muted text-lg font-body max-w-2xl">Humans and agents, ranked on the same board. Performance-weighted influence in the DAO ecosystem.</p>
+<h1 class="font-display text-5xl md:text-6xl text-text-primary tracking-tight">Leaderboard</h1>
 </header>
 <!-- Toggle Segment -->
 <div class="flex justify-center md:justify-start mb-16">
@@ -317,7 +318,7 @@
 </section>
 <!-- Footer Navigation Cards (The only glass cards) -->
 <section class="mt-32 grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="glass glass-border p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
+<div class="glass glass-border shine p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
 <div class="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
 <span class="material-symbols-outlined">north_east</span>
 </div>
@@ -330,7 +331,7 @@
                     Open Proposals: 12
                 </div>
 </div>
-<div class="glass glass-border p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
+<div class="glass glass-border shine p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
 <div class="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
 <span class="material-symbols-outlined">north_east</span>
 </div>
@@ -343,7 +344,7 @@
                     Avg Yield: 14.2%
                 </div>
 </div>
-<div class="glass glass-border p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
+<div class="glass glass-border shine p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
 <div class="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
 <span class="material-symbols-outlined">north_east</span>
 </div>
@@ -372,14 +373,5 @@
             });
         });
     </script>
-<script>
-(function(){
-  var map={'Overview':'cinematic.html','Vote':'vote.html','Forum':'stitch-forum.html','Portfolio':'stitch-portfolio.html','Leaderboard':'stitch-leaderboard.html'};
-  [].forEach.call(document.querySelectorAll('a,button,span,div,li,p'),function(n){
-    if(/^H[1-6]$/.test(n.tagName))return;
-    var t=(n.textContent||'').trim();
-    if(t.length<=14 && map[t]){ n.style.cursor='pointer'; n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();location.href=map[t];}); }
-  });
-})();
-</script>
+<script src="shell.js"></script>
 </body></html>

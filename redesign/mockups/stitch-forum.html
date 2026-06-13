@@ -5,6 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Forum | Community Fund</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="stylesheet" href="shell.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&amp;family=Inter:wght@400;500;600&amp;family=Public+Sans:wght@700;800&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -74,12 +75,12 @@
         }
     </style>
 </head>
-<body class="bg-obsidian text-text-primary min-h-screen selection:bg-teal/30">
-<!-- Ambient Glows -->
-<div class="glow-ambient top-[-200px] left-[-200px]" style="animation: pulse 15s infinite alternate;"></div>
-<div class="glow-ambient bottom-[-300px] right-[-200px]" style="animation: pulse 12s infinite alternate-reverse;"></div>
-<!-- Navigation Shell -->
-<nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 rounded-full mt-4 mx-auto max-w-[1140px] w-[95%] bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl shadow-teal/5">
+<body data-page="forum" class="bg-obsidian text-text-primary min-h-screen selection:bg-teal/30">
+<!-- Ambient background (shared shell) -->
+<div class="amb"><i class="a"></i><i class="b"></i></div>
+<!-- Shared navigation shell -->
+<div id="nav-root"></div>
+<template><nav>
 <div class="flex items-center gap-8">
 <div class="text-xl font-display font-bold text-[#F4F7FA] tracking-tight flex items-center gap-2">
 <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-teal to-blue-500 flex items-center justify-center">
@@ -107,18 +108,15 @@
 <img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional close-up portrait of a tech-savvy investor in a sleek, minimalist environment. The person has a confident expression, wearing modern glasses that reflect a subtle digital interface. The lighting is dramatic and moody, utilizing deep shadows and cool blue-teal highlights to match a cinematic dark fintech aesthetic. The background is softly blurred, suggesting a high-end workspace or modern gallery space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfrZfO-CQEeiCTYe4qPmavlTmcyxsDCBxQk-9saQPQE_BmwQCF6IeoREdo00vR8vpI2TVoYsks2YQQR4TprCemnVNwucpUr_F3GKe9JGH6jGOJgJo2cNa8SoAbhuZIBcIxiM-bH5q56jKwd-VOgiTiqYP-smrNuc61q5L0ASbpgFeRoyEZe-PvSY6xv9QQRNdpZbz1wP6hCO5JtNWN9JcFgL_Lr4zjekzxshv8yJKqflipn_CH6SGRxgFNFafS3Pu9XJohzZHR2j0"/>
 </div>
 </div>
-</nav>
+</nav></template>
 <!-- Main Content Canvas -->
-<main class="pt-32 pb-24 px-6 max-w-[1280px] mx-auto">
+<main class="pt-32 pb-24 px-6 max-w-[1280px] mx-auto relative z-10">
 <!-- Header Section -->
 <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
 <div class="space-y-2">
 <h1 class="text-6xl font-display font-extrabold tracking-tight text-text-primary">
                     Forum
                 </h1>
-<p class="text-text-muted text-lg font-medium max-w-xl">
-                    Credibility-ranked theses — every post wears its author live <span class="text-teal">on-chain reputation</span>.
-                </p>
 </div>
 <button class="bg-gradient-to-r from-teal to-teal-deep text-obsidian px-8 py-3 rounded-full font-bold text-sm tracking-wide flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-teal/20">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_circle</span>
@@ -316,7 +314,7 @@
 </div>
 </main>
 <!-- Footer Stats -->
-<footer class="max-w-[1280px] mx-auto px-6 py-12 border-t border-white/5">
+<footer class="max-w-[1280px] mx-auto px-6 py-12 border-t border-white/5 relative z-10">
 <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
 <div class="space-y-1">
 <p class="text-[11px] font-bold uppercase tracking-widest text-text-subtle">Total Active Theses</p>
@@ -358,14 +356,5 @@
         `;
         document.head.append(style);
     </script>
-<script>
-(function(){
-  var map={'Overview':'cinematic.html','Vote':'vote.html','Forum':'stitch-forum.html','Portfolio':'stitch-portfolio.html','Leaderboard':'stitch-leaderboard.html'};
-  [].forEach.call(document.querySelectorAll('a,button,span,div,li,p'),function(n){
-    if(/^H[1-6]$/.test(n.tagName))return;
-    var t=(n.textContent||'').trim();
-    if(t.length<=14 && map[t]){ n.style.cursor='pointer'; n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();location.href=map[t];}); }
-  });
-})();
-</script>
+<script src="shell.js"></script>
 </body></html>

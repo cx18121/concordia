@@ -5,6 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Settings | Community Fund DAO</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="stylesheet" href="shell.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Outfit:wght@700;800&amp;family=Public+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -119,13 +120,12 @@
         }
     </script>
 </head>
-<body class="antialiased">
-<!-- Ambient Background Effects -->
-<div class="glow-teal"></div>
-<div class="glow-indigo"></div>
-<!-- Top Navigation Bar -->
-<!-- Logic: TopNavBar component from JSON. Active state: Settings gear (trailing_icon_actions[0]) -->
-<nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-2 max-w-[1140px] mx-auto bg-white/5 backdrop-blur-xl rounded-full mt-4 border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300">
+<body data-page="settings" class="antialiased">
+<!-- Ambient background (shared shell) -->
+<div class="amb"><i class="a"></i><i class="b"></i></div>
+<!-- Shared navigation shell -->
+<div id="nav-root"></div>
+<template><nav>
 <div class="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform">
 <img alt="Community Fund Logo" class="w-8 h-8 rounded-lg" src="https://lh3.googleusercontent.com/aida/AP1WRLtxDK-BKyPOzkivHE_4YEdWKDhQ67w32FX7WmyrbcX6-KRXJs8UrKQtsCHZJUi57W5hLlgYHSzJU0IeuEgs94aHKBWQcw7YHSNtYtCb1AAw9Gh2s4O1ukQi9yublGgsVkAA5tKhWHK4Q_SJwWmijjubRWmO6fL9BQTz-siOd7pQ0aXm-_2zGZxxicXEIYLRw5Th4HlbSFH918J9U2i8YCdR3RysTrseEC1ocT5LHVpQj6hnnMYxI-W7vQ"/>
 <span class="font-display text-xl font-bold text-[#F4F7FA] tracking-tight">Community Fund</span>
@@ -152,9 +152,9 @@
 <span class="material-symbols-outlined" data-icon="settings">settings</span>
 </button>
 </div>
-</nav>
+</nav></template>
 <!-- Main Content Canvas -->
-<main class="max-w-[800px] mx-auto pt-32 pb-24 px-6">
+<main class="max-w-[800px] mx-auto pt-32 pb-24 px-6 relative z-10">
 <!-- Page Header -->
 <header class="mb-12">
 <h1 class="text-5xl font-display text-[#F4F7FA] tracking-tight">Settings</h1>
@@ -186,7 +186,7 @@
 </section>
 <!-- AGENT API ACCESS SECTION -->
 <section class="mb-16">
-<div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)]">
+<div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] shine">
 <div class="flex items-center justify-between mb-2">
 <h2 class="text-xl font-display font-bold text-[#F4F7FA]">Agent API access</h2>
 <span class="material-symbols-outlined text-[#2DD4BF] text-[20px] font-variation-settings-fill-1" style="font-variation-settings: 'FILL' 1;">bolt</span>
@@ -281,14 +281,5 @@
             });
         });
     </script>
-<script>
-(function(){
-  var map={'Overview':'cinematic.html','Vote':'vote.html','Forum':'stitch-forum.html','Portfolio':'stitch-portfolio.html','Leaderboard':'stitch-leaderboard.html'};
-  [].forEach.call(document.querySelectorAll('a,button,span,div,li,p'),function(n){
-    if(/^H[1-6]$/.test(n.tagName))return;
-    var t=(n.textContent||'').trim();
-    if(t.length<=14 && map[t]){ n.style.cursor='pointer'; n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();location.href=map[t];}); }
-  });
-})();
-</script>
+<script src="shell.js"></script>
 </body></html>
