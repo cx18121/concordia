@@ -8,19 +8,6 @@ How to use this file: check things off as they land. If you hit a blocker or an 
 
 ---
 
-## 🚨 Urgent — time-sensitive, do before anything else
-
-Booths are only staffed during the event, and two of these have lead time. In priority order:
-
-- [ ] **Assign workstream owners** (fill the `owner: ____` blanks below) — nothing parallelizes until this is done
-- [ ] **Dynamic booth: ask them to enable gas sponsorship** on our environment (Base Sepolia, V3 MPC embedded wallets — manual enablement on their side, ISSUES #11). Without it, judge onboarding needs a gas-drip fallback.
-- [ ] **Chainlink: request CRE deployment access** (`cre account access`) — lead time; simulation is the fallback but ask now (ISSUES #5)
-- [ ] **World booth, three questions in one visit:** is there an on-chain verifier on Base Sepolia or do we verify in backend (#3)? Can a Dynamic server wallet register with AgentKit (#4)? What do they expect for judges without World App (#10)?
-- [ ] **Install Foundry + init contracts from v4-template** (instructions in `contracts/README.md`) — blocks workstreams A *and* B, and B is the critical path
-- [ ] **Freeze the interfaces** (first task after contracts init) — this is what lets all five workstreams run in parallel
-
----
-
 ## Phase 0 — Setup & unblockers (everyone, first ~2 hours)
 
 These unblock everything else. Do them first, together.
@@ -31,9 +18,7 @@ These unblock everything else. Do them first, together.
   - [ ] Chainlink CRE account + **request deployment access NOW** (lead time; local simulation is the fallback)
   - [ ] World developer portal: `app_id` + action created (one for verify, one for agent linking)
   - [ ] Dynamic environment ID created, test login works
-  - [ ] **Ask Dynamic to enable gas sponsorship** (Base Sepolia, V3 MPC embedded wallets — requires manual enablement on their side; see ISSUES #11)
   - [ ] Pick the stock price API + get a key (see ISSUES #1)
-  - [ ] Install **Bun ≥1.2.21** (the CRE TS SDK runs on Bun, not Node) + the CRE CLI
 - [ ] Base Sepolia ETH in every dev wallet (Coinbase/Alchemy faucets)
 - [ ] Decide mock-USDC vs Circle USDC (see ISSUES #2) and deploy whichever
 - [ ] Everyone reads `DESIGN.md` + `CONTRACTS.md` (30 min, seriously)
@@ -67,7 +52,7 @@ Standalone `UniswapExecutor` module + the pools. Test against a stub vault; A in
 - [ ] Deployed + verified on Base Sepolia, addresses committed to a shared `deployments.json`
 
 ### C — Keeper (Chainlink CRE)  *(owner: ____)*
-The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A finished. **Runs on Bun ≥1.2.21** (CRE TS SDK requirement) — keep it its own package, separate from the Node toolchain.
+The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A finished.
 
 - [ ] CRE workflow scaffold from `cre-templates` (cron trigger), local simulation running
 - [ ] **Price source behind an interface** — `ReplayFixtureSource` (historical 2024 weeks, loops) and `LiveAPISource` (real-time), selected by config. Demo vs production is a config flag, not a fork.
@@ -80,7 +65,7 @@ The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A
 - [ ] Keeper deployed somewhere persistent (Railway/Fly/CRE — see ISSUES #13) and survives restarts
 
 ### D — Frontend + identity  *(owner: ____)*
-Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. `explainers/forum-prototype.html` is the visual reference for the leaderboard/feed look.
+Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. `forum-prototype.html` is the visual reference for the leaderboard/feed look.
 
 - [ ] Dynamic login → embedded wallet, Base Sepolia network config
 - [ ] **Judge onboarding, zero friction:** gas sponsorship or auto-drip on signup (ISSUES #11) + "get demo USDC" mint button — no faucet hunting
