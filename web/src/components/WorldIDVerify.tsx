@@ -12,9 +12,11 @@ const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
 interface Props {
   onVerified?: () => void;
+  /** Bound into the proof so it commits to the wallet (idkit v4: passed to the preset, surfaces as signal_hash). */
+  signal?: string;
 }
 
-export default function WorldIDVerify({ onVerified }: Props) {
+export default function WorldIDVerify({ onVerified, signal }: Props) {
   const [open, setOpen] = useState(false);
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
   const [loading, setLoading] = useState(false);
@@ -87,7 +89,7 @@ export default function WorldIDVerify({ onVerified }: Props) {
           action={action}
           rp_context={rpContext}
           allow_legacy_proofs={true}
-          preset={deviceLegacy()}
+          preset={deviceLegacy(signal ? { signal } : undefined)}
           handleVerify={handleVerify}
           onSuccess={onSuccess}
         />

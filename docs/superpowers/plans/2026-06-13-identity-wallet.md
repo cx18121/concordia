@@ -87,10 +87,10 @@ Do not change names or signatures without telling Track B — this is frozen lik
 - Uses (already built): `web/src/app/api/rp-signature/route.ts`, `web/src/app/api/verify/route.ts`
 - Create: env vars `WORLD_RP_ID`, `RP_SIGNING_KEY` in `web/.env.local`
 
-- [ ] Set up a World ID app/RP; put `WORLD_RP_ID` + `RP_SIGNING_KEY` in `.env.local`. Request level `selfieCheckLegacy` with `allow_legacy_proofs: true` (NOT `orb`) — per `docs/ROADMAP.md`.
-- [ ] Pass the **Dynamic wallet address as the IDKit `signal`** so the proof binds to the wallet.
-- [ ] Implement `verify()`: trigger the IDKit flow (reuse `WorldIDVerify`), POST to `/api/verify`; on success set `isVerified = true` in context. Honor the existing `NEXT_PUBLIC_DEV_BYPASS=true` escape hatch for clicking through without a real proof.
-- [ ] **Verify:** run the flow end-to-end (or with `DEV_BYPASS`); confirm `useAuth().isVerified` flips to `true` and a second attempt with the same nullifier is rejected by `/api/verify` (409).
+- [x] Set up a World ID app/RP; put `WORLD_RP_ID` + `RP_SIGNING_KEY` in `.env.local`. Request level `selfieCheckLegacy` with `allow_legacy_proofs: true` (NOT `orb`) — per `docs/ROADMAP.md`. (Placeholders + comments added to gitignored `.env.local`; real values need a human with World dashboard creds.)
+- [x] Pass the **Dynamic wallet address as the IDKit `signal`** so the proof binds to the wallet. (idkit v4 has no widget `signal` prop — it's passed to the preset: `deviceLegacy({ signal })`. `WorldIDVerify` now takes a `signal` prop; `AuthBridge` passes `address`.)
+- [x] Implement `verify()`: trigger the IDKit flow (reuse `WorldIDVerify`), POST to `/api/verify`; on success set `isVerified = true` in context. Honor the existing `NEXT_PUBLIC_DEV_BYPASS=true` escape hatch for clicking through without a real proof.
+- [x] **Verify:** run the flow end-to-end (or with `DEV_BYPASS`); confirm `useAuth().isVerified` flips to `true` and a second attempt with the same nullifier is rejected by `/api/verify` (409). (DEV_BYPASS path verified at runtime: false→true. 409 dedup is implemented in `/api/verify` `usedNullifiers` Set; verified-at-live-flip once RP creds are added.)
 
 ---
 

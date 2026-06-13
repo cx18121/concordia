@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -15,6 +16,9 @@ import {
 import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
 import type { WalletClient } from "viem";
 import type { AuthState } from "./auth-types";
+import WorldIDVerify from "@/components/WorldIDVerify";
+
+const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
 // Base Sepolia + "create embedded wallet on login" are enabled in the Dynamic
 // dashboard (Embedded Wallet → "Create on Sign up"), not as provider props.
@@ -32,9 +36,14 @@ const AuthContext = createContext<AuthState | null>(null);
 function AuthBridge({ children }: { children: ReactNode }) {
   const { primaryWallet, setShowAuthFlow, handleLogOut } = useDynamicContext();
 
-  // A4: World ID verification flips this. Keep the state here so A4 only has to
-  // wire verify() to the IDKit flow + /api/verify and call setIsVerified(true).
+  // World ID verification flips this. logout() resets it.
   const [isVerified, setIsVerified] = useState(false);
+
+  // verify() drives the World ID flow by rendering <WorldIDVerify/> (a component,
+  // not a callable). verifying gates the render; pendingResolve bridges the
+  // component's onVerified callback back to the verify() promise.
+  const [verifying, setVerifying] = useState(false);
+  const pendingResolve = useRef<((ok: boolean) => void) | null>(null);
 
   const address =
     primaryWallet && isEthereumWallet(primaryWallet)
@@ -51,10 +60,23 @@ function AuthBridge({ children }: { children: ReactNode }) {
   }, [handleLogOut]);
 
   const verify = useCallback(async (): Promise<boolean> => {
-    // A4: World ID wiring goes here. NOTE WorldIDVerify is a React component, not a
-    // callable — render <WorldIDVerify onVerified={() => setIsVerified(true)} /> in
-    // AuthBridge's JSX (gated behind a state flag this fn flips), don't call it from here.
-    return false;
+    // Demo escape hatch: flip verified without a real proof.
+    if (DEV_BYPASS) {
+      setIsVerified(true);
+      return true;
+    }
+    // Render <WorldIDVerify/> and resolve once its onVerified fires.
+    return new Promise<boolean>((resolve) => {
+      pendingResolve.current = resolve;
+      setVerifying(true);
+    });
+  }, []);
+
+  const onVerified = useCallback(() => {
+    setIsVerified(true);
+    setVerifying(false);
+    pendingResolve.current?.(true);
+    pendingResolve.current = null;
   }, []);
 
   const getWalletClient = useCallback(async (): Promise<WalletClient | null> => {
@@ -79,7 +101,12 @@ function AuthBridge({ children }: { children: ReactNode }) {
     [address, isVerified, login, logout, verify, getWalletClient],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {verifying && <WorldIDVerify signal={address ?? ""} onVerified={onVerified} />}
+    </AuthContext.Provider>
+  );
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
