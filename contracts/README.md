@@ -1,24 +1,26 @@
-# contracts — Solidity (Foundry)
+# contracts — Solidity (Foundry + Uniswap v4-template)
 
-Workstreams A + B (`../docs/ROADMAP.md`). Spec: `../docs/CONTRACTS.md` — PriceOracle, FundVault (ERC-4626), Governance, KYCHook, mock stock ERC-20s.
+Workstreams A + B (`../docs/ROADMAP.md`). Spec: `../docs/CONTRACTS.md`. Frozen cross-workstream interfaces in `src/interfaces/` — change only by team agreement + an ISSUES.md note.
 
-**The interfaces are already frozen** in `src/interfaces/` (`IPriceOracle`, `IFundVault`, `IGovernance`, `IUniswapExecutor` — see that folder's README). Every workstream imports those today; don't wait on Foundry to start.
+## Setup (after clone)
 
-**Foundry not yet initialized** (wasn't installed on the scaffold machine). Contracts owner does this in Phase 0 — **note the `src/interfaces/` files must survive the init, so don't `rm -rf contracts`:**
+Dependencies (`lib/`, ~90MB) are **gitignored** — restore them, then build:
 
 ```sh
-# 1. install Foundry
-curl -L https://foundry.paradigm.xyz | bash && foundryup
-
-# 2. init the v4-template into a temp dir, then copy its scaffolding in
-#    WITHOUT clobbering our existing src/interfaces/ and README files
-forge init -t Uniswap/v4-template /tmp/v4t
-rm -rf /tmp/v4t/.git
-cp -rn /tmp/v4t/. ./        # -n = don't overwrite existing files (keeps our interfaces)
-cp /tmp/v4t/foundry.toml ./ # bring in the template's config explicitly
-forge build                 # verify src/interfaces/*.sol compile
-
-# 3. generate + commit ABIs (out/) so frontend/keeper can wire against them
+./setup.sh      # restores lib/ from the v4-template (one-time)
+forge build     # compiles src/ (interfaces + your contracts)
+forge test
 ```
 
-Base Sepolia v4 addresses (verified, see docs/CONTRACTS.md): PoolManager `0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408`. KYCHook needs CREATE2 address-mining (`HookMiner` ships in the template) — do it first; it blocks all swap testing.
+Foundry itself: `curl -L https://foundry.paradigm.xyz | bash && foundryup`, then make sure `~/.foundry/bin` is on your PATH.
+
+## Layout
+
+- `src/interfaces/` — **frozen** interfaces (IPriceOracle, IFundVault, IGovernance, IUniswapExecutor)
+- `src/Counter.sol` — template example hook; **delete when you add real contracts**
+- `script/`, `test/` — template examples (`00_DeployHook`, `03_Swap`, hook tests) — useful references for B's hook + swap work
+- Base Sepolia Uniswap v4: PoolManager `0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408`. KYCHook needs CREATE2 address-mining (`HookMiner`) — do it first, it blocks all swap testing.
+
+## Build order (A + B)
+
+mock ERC-20s → PriceOracle → FundVault (deposit/NAV) → Governance (vote/snapshot/select) → pools + KYCHook → swaps. Compiles green now; build on top.

@@ -14,7 +14,7 @@ Most research questions are now answered (see `ISSUES.md` Resolved). What's left
 
 - [ ] **Assign workstream owners** (fill the `owner: ____` blanks below) — nothing parallelizes until this is done
 - [x] **Freeze the interfaces** — `contracts/src/interfaces/` has `IPriceOracle`, `IFundVault`, `IGovernance`, `IUniswapExecutor` (from CONTRACTS.md). Every workstream imports these NOW; change only by team agreement.
-- [ ] **Install Foundry + init contracts from v4-template** (instructions in `contracts/README.md` — preserves the frozen interfaces; don't `rm -rf contracts`) — blocks A *and* B compiling; B is the critical path
+- [x] **Foundry installed + contracts initialized** from v4-template — compiles green (interfaces + template). Deps are gitignored; restore with `contracts/setup.sh`.
 - [ ] **Chainlink booth: request CRE deployment access** (`cre account access`) — has lead time; simulation is the fallback but ask now (ISSUES #5)
 - [ ] *(optional)* World booth: sanity-check `selfieCheckLegacy` satisfies the prize (ISSUES #10 — decided, has a fallback, not a blocker). Dynamic booth: ask about native gas sponsorship (we ship the drip regardless, ISSUES #11).
 
@@ -24,7 +24,7 @@ Most research questions are now answered (see `ISSUES.md` Resolved). What's left
 
 These unblock everything else. Do them first, together.
 
-- [ ] Monorepo scaffolding: `contracts/` (Foundry from v4-template), `keeper/` (Node/TS CRE workflow), `web/` (Next.js), `agents/` (Node/TS)
+- [x] Monorepo scaffolded: `contracts/` (Foundry v4-template, compiles), `keeper/` + `agents/` (stubs), `web/` (Next.js), `shared/` (@chf/shared SDK)
 - [x] **Solidity interfaces frozen** (`IPriceOracle`, `IFundVault`, `IGovernance`, `IUniswapExecutor` in `contracts/src/interfaces/`) — the contract between workstreams; change only by team agreement + note in ISSUES.md. *(ABIs generate at `forge build` after init.)*
 - [ ] Accounts & keys:
   - [ ] Chainlink CRE account + **request deployment access NOW** (lead time; local simulation is the fallback)

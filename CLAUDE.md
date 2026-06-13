@@ -39,6 +39,7 @@ The goal is a live demo that works on stage. That means **verify narrow, not wid
 - **Be honest about state.** Say what's stubbed, mocked, or untested — don't claim "done" when it only compiles. Teammates build against your pieces and the demo depends on them.
 - **Stuck? Re-scope, don't grind.** After 2–3 failed attempts, question the approach or cut the feature. Time is the scarce resource — but never cut from the demo path itself.
 - **Commits: `type: short summary` + a line on *why*.** Use `feat:` / `fix:` / `chore:` / `docs:` / `refactor:`. Keep the subject brief; if the change involves a decision or tradeoff, add one or two plain-English lines explaining it for a human reading the history (judges read commit logs). Skip the obvious — explain the non-obvious.
+- **Check off `docs/ROADMAP.md` as you go.** When you finish a roadmap item, flip its `[ ]` → `[x]` in the same commit (and tick the parent task when all its children are done). Keep it honest and current — it's the team's shared view of real progress.
 
 ## Tech-stack docs (new tech — read before using)
 
