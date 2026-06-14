@@ -47,3 +47,16 @@ nav:hover .sheen::before{animation:sweep 1s var(--ease)}
 .wal{font:600 12.5px/1 Outfit;white-space:nowrap} .wal span{color:var(--subtle);font-weight:500}
 .gear{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--muted);border:1px solid var(--hair);transition:.25s;flex:none}
 .gear:hover{color:var(--ink);transform:rotate(35deg)}
+
+/* Narrow screens: the fixed nav row can't fit brand + 5 tabs + wallet + gear + toggle.
+   Keep it one row, let the tabs scroll horizontally, and shed the most secondary bits
+   (brand wordmark, wallet readout) so the primary nav stays usable and never overflows. */
+@media (max-width:720px){
+  nav{gap:10px;padding:9px 12px;width:calc(100% - 20px);top:10px}
+  .brand b{display:none}
+  .tabs{margin-left:0;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:7px 9px;font-size:12.5px;white-space:nowrap}
+  .navr{gap:8px}
+  .wal{display:none}
+}
