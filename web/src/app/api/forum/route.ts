@@ -17,7 +17,12 @@ async function kvGet(key: string): Promise<Post[] | null> {
     });
     if (!res.ok) return null;
     const { result } = await res.json() as { result: string | null };
-    return result ? (JSON.parse(result) as Post[]) : null;
+    if (!result) return null;
+    const parsed = JSON.parse(result) as unknown;
+    // Guard against a corrupt/legacy value (e.g. a double-encoded string):
+    // treat anything that isn't a posts array as missing, so load() reseeds
+    // from SEED and the next save() rewrites the store cleanly.
+    return Array.isArray(parsed) ? (parsed as Post[]) : null;
   } catch {
     return null;
   }
@@ -26,13 +31,17 @@ async function kvGet(key: string): Promise<Post[] | null> {
 async function kvSet(key: string, posts: Post[]): Promise<void> {
   if (!KV_URL || !KV_TOKEN) return;
   try {
+    // The POST body is stored verbatim as the value, so it must be the JSON
+    // text of `posts` — a single stringify. Double-stringifying stores an
+    // escaped string that kvGet's single parse can't fully decode, which
+    // corrupts the store (and the string re-wraps/grows on every save).
     await fetch(`${KV_URL}/set/${encodeURIComponent(key)}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${KV_TOKEN}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(JSON.stringify(posts)),
+      body: JSON.stringify(posts),
     });
   } catch {}
 }

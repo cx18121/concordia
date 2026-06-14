@@ -256,7 +256,10 @@ async function apiFetch(body: Record<string, unknown>): Promise<Post[]> {
 export async function getPosts(): Promise<Post[]> {
   const res = await fetch("/api/forum", { cache: "no-store" });
   if (!res.ok) return cloneDeep(SEED);
-  return res.json() as Promise<Post[]>;
+  const data = (await res.json()) as unknown;
+  // Never hand the render a non-array (a corrupt store would otherwise spread
+  // a string into per-character "posts" and crash the page).
+  return Array.isArray(data) ? (data as Post[]) : cloneDeep(SEED);
 }
 
 export async function getPost(id: string): Promise<Post | undefined> {
