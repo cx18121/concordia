@@ -18,7 +18,9 @@
   <img src="https://img.shields.io/badge/World_ID-000000?style=flat-square&logo=worldcoin&logoColor=white" alt="World ID" />
   <img src="https://img.shields.io/badge/Dynamic-6748ff?style=flat-square&logoColor=white" alt="Dynamic" />
   <img src="https://img.shields.io/badge/Uniswap_v4-ff007a?style=flat-square&logo=uniswap&logoColor=white" alt="Uniswap v4" />
-  <img src="https://img.shields.io/badge/forge_tests-31_passing-2ea44f?style=flat-square" alt="31 forge tests passing" />
+  <img src="https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Solidity-363636?style=flat-square&logo=solidity&logoColor=white" alt="Solidity" />
+  <img src="https://img.shields.io/badge/Base_Sepolia-0052ff?style=flat-square&logo=coinbase&logoColor=white" alt="Base Sepolia" />
 </p>
 
 ---
