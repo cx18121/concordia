@@ -53,6 +53,7 @@ export default function JoinPage() {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false); // drives the success tick
   const [funding, setFunding] = useState(false);
+  const [fundError, setFundError] = useState<string | null>(null);
 
   // "Signed in as" — email if used, else the short address.
   const signedAs = email || shortAddr(auth.address);
@@ -110,11 +111,15 @@ export default function JoinPage() {
   async function handleFund() {
     if (funding) return;
     setFunding(true);
+    setFundError(null);
     try {
       await getDemoUSDC();
       await deposit(DEMO_USDC);
       await sleep(PAUSE);
       setStep("done");
+    } catch (e) {
+      // Surface the failure instead of silently dropping back to the button.
+      setFundError(e instanceof Error ? e.message : "Funding failed. Please try again.");
     } finally {
       setFunding(false);
     }
@@ -327,6 +332,29 @@ export default function JoinPage() {
                 </div>
               </div>
             )}
+
+            {/* Returning live user: Dynamic kept the session, so a click would walk
+                straight through Connect. Offer a reset so the flow can be demoed fresh. */}
+            {!isMock && auth.isConnected && (
+              <div className="hint" style={{ marginTop: 14, textAlign: "center" }}>
+                Connected as {shortAddr(auth.address)} ·{" "}
+                <button
+                  type="button"
+                  onClick={() => auth.logout()}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    color: "#ff8d8d",
+                    cursor: "pointer",
+                    font: "inherit",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Disconnect to use another account
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -459,6 +487,21 @@ export default function JoinPage() {
                 </>
               )}
             </button>
+            {fundError && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "rgba(255,107,107,.1)",
+                  border: "1px solid rgba(255,107,107,.3)",
+                  color: "#ff8d8d",
+                  font: "400 12.5px/1.4 Inter",
+                }}
+              >
+                {fundError}
+              </div>
+            )}
             <div className="foot-note">
               Gas is sponsored · tokens have no real value
             </div>

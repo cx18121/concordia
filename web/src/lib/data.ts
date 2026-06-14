@@ -901,8 +901,23 @@ export function useFundActions(): FundActions {
 
   const getDemoUSDC = useCallback(async () => {
     if (USE_MOCK) return; // mock: deposit() supplies the funds directly
-    await scGetDemoUSDC(await requireWallet(), BigInt(10_000_000_000)); // 10,000 demo USDC
-  }, [USE_MOCK, requireWallet]);
+    const w = await requireWallet();
+    // The embedded wallet is a fresh EOA with no ETH. Sponsor gas before any write
+    // (mint here, then approve + deposit) so the tx can't stall waiting on gas it
+    // lacks; a failure surfaces here instead of hanging the spinner forever.
+    if (address) {
+      const res = await fetch("/api/fund-gas", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ user: address }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Could not sponsor gas for your wallet.");
+      }
+    }
+    await scGetDemoUSDC(w, BigInt(10_000_000_000)); // 10,000 demo USDC
+  }, [USE_MOCK, requireWallet, address]);
 
   const deposit = useCallback(
     async (amount: number) => {
