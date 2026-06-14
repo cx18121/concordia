@@ -4,7 +4,7 @@
 // Verified 6/13 against the LANDED contracts on main: setPrices, resolveCycle, openCycle, lockCycle,
 // accuracyOf, and SyntheticExecutor.repeg all match exactly. The ONLY mismatch is the two array
 // views below — the contract stores `voters`/`allocOf` but its auto-getters are index-based
-// (no length, no whole-array return), so workstream A must add real array views (docs/ISSUES.md #C1).
+// (no length, no whole-array return), so workstream A must add real array views (docs/internal/ISSUES.md #C1).
 // Until then `readResolveInputs()` reverts loudly rather than returning a truncated/silently-wrong set.
 //   - Governance.getVoters() returns (address[])       — the voter set to score this cycle
 //   - Governance.allocOf(member) returns (Alloc[])     — their backed allocations

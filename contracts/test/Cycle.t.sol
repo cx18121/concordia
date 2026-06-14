@@ -192,9 +192,9 @@ contract CycleTest is Test {
         assertEq(uint8(gov.state()), uint8(IGovernance.State.IDLE));
         assertEq(gov.cycleId(), 1);
 
-        // reward pool = 25% of the 8% alpha on 20k locked NAV = 0.25 * 1600 = 400 USDC
-        uint256 expectPool = 400 * USDC_ONE;
-        assertApproxEqAbs(vault.rewardPool(), expectPool, 100, "reward pool = 25% of alpha");
+        // reward pool = 20% of the 8% alpha on 20k locked NAV = 0.20 * 1600 = 320 USDC
+        uint256 expectPool = 320 * USDC_ONE;
+        assertApproxEqAbs(vault.rewardPool(), expectPool, 100, "reward pool = 20% of alpha");
         assertApproxEqAbs(vault.rewardCredit(alice), (expectPool * 5000) / 1e4, 100);
         assertApproxEqAbs(vault.rewardCredit(bob), (expectPool * 3000) / 1e4, 100);
         assertApproxEqAbs(vault.rewardCredit(carol), (expectPool * 2000) / 1e4, 100);
@@ -206,7 +206,7 @@ contract CycleTest is Test {
         // positions closed → all cash; shareholder NAV up ~8% (alpha minus the reward cut)
         assertEq(aapl.balanceOf(address(vault)), 0);
         assertEq(nvda.balanceOf(address(vault)), 0);
-        assertApproxEqAbs(vault.totalAssets(), 21_600 * USDC_ONE, 100, "NAV = 20k +1600 alpha kept");
+        assertApproxEqAbs(vault.totalAssets(), 21_680 * USDC_ONE, 100, "NAV = 20k + gain minus the 20% reward cut");
 
         // --- CLAIM ---
         uint256 before = usdc.balanceOf(alice);

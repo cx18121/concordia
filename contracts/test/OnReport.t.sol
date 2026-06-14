@@ -113,7 +113,7 @@ contract OnReportTest is Test {
 
         assertEq(uint8(gov.state()), uint8(IGovernance.State.IDLE));
         assertEq(gov.cycleId(), 1);
-        assertApproxEqAbs(vault.rewardPool(), 400 * USDC_ONE, 100, "rewards funded identically");
+        assertApproxEqAbs(vault.rewardPool(), 320 * USDC_ONE, 100, "rewards funded identically");
         assertEq(gov.accuracyOf(alice), 200);
         assertEq(gov.cyclesParticipated(alice), 1);
     }

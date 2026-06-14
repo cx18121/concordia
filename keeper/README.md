@@ -1,6 +1,6 @@
 # keeper — Chainlink CRE workflow + always-on heartbeat
 
-The off-chain brain (workstream C in `../docs/ROADMAP.md`). One workflow, three jobs per cycle:
+The off-chain brain (workstream C in `../docs/internal/ROADMAP.md`). One workflow, three jobs per cycle:
 
 1. **Prices** — fetch stock + S&P prices → `PriceOracle.setPrices()`
 2. **Re-peg** — small swaps to keep each Uniswap pool ≈ oracle price (CRE plays the arbitrageur)

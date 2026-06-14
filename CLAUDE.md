@@ -8,13 +8,13 @@ ETHGlobal NY 2026 hackathon project: **Concordia** — a community hedge fund DA
 
 *Name is "Concordia"; the shared SDK is `@concordia/shared` and the ERC-20 share symbol is `CRD`.*
 
-**Status: built & deployed.** Contracts live + verified on Base Sepolia (addresses in `shared/src/addresses.ts`), 31 forge tests pass; keeper hosted on Railway looping cycles; web live at https://concordia-one.vercel.app (mock mode default). Remaining go-live gaps are in `docs/ROADMAP.md` (M3/M4) — notably the in-browser human flow isn't yet rehearsed end-to-end. Real build/test/run commands are at the bottom of this file.
+**Status: built & deployed.** Contracts live + verified on Base Sepolia (addresses in `shared/src/addresses.ts`), 31 forge tests pass; keeper hosted on Railway looping cycles; web live at https://concordia-one.vercel.app (mock mode default). Remaining go-live gaps are in `docs/internal/ROADMAP.md` (M3/M4) — notably the in-browser human flow isn't yet rehearsed end-to-end. Real build/test/run commands are at the bottom of this file.
 
 ## Read first (canonical)
 
 - **`docs/DESIGN.md`** — locked decisions + tunable constants (values adjustable, decisions settled).
 - **`docs/CONTRACTS.md`** — build-ready contract spec: state, functions, access, call graph, on/off-chain boundary. Source of truth for implementation.
-- **`docs/ROADMAP.md`** — workstreams + team todo; check items off as they land. **`docs/ISSUES.md`** — open questions; add blockers there instead of stalling, move resolved items down with the answer.
+- **`docs/internal/ROADMAP.md`** — workstreams + team todo; check items off as they land. **`docs/internal/ISSUES.md`** — open questions; add blockers there instead of stalling, move resolved items down with the answer.
 - `docs/explainers/*.html` are visual explainers (open in a browser), not logic source.
 
 ## Architecture in brief
@@ -41,7 +41,7 @@ The goal is a live demo that works on stage. That means **verify narrow, not wid
 - **Be honest about state.** Say what's stubbed, mocked, or untested — don't claim "done" when it only compiles. Teammates build against your pieces and the demo depends on them.
 - **Stuck? Re-scope, don't grind.** After 2–3 failed attempts, question the approach or cut the feature. Time is the scarce resource — but never cut from the demo path itself.
 - **Commits: `type: short summary` + at most one or two plain lines on *why*.** Use `feat:` / `fix:` / `chore:` / `docs:` / `refactor:`. Keep the subject brief. Write for a human reading the log (judges do) — explain the non-obvious *why* in a line or two only when there's a decision or tradeoff; otherwise just the subject. **Keep bodies short — no multi-paragraph write-ups, no bullet lists.** Describe the change itself, never the internal process that produced it (no "addressed review", no tool names).
-- **Check off `docs/ROADMAP.md` as you go.** When you finish a roadmap item, flip its `[ ]` → `[x]` in the same commit (and tick the parent task when all its children are done). Keep it honest and current — it's the team's shared view of real progress.
+- **Check off `docs/internal/ROADMAP.md` as you go.** When you finish a roadmap item, flip its `[ ]` → `[x]` in the same commit (and tick the parent task when all its children are done). Keep it honest and current — it's the team's shared view of real progress.
 
 ## Tech-stack docs (new tech — read before using)
 

@@ -68,7 +68,7 @@ Snapshotted at cycle open. Peer-relative, sums to 1.
 
 ### Selection — emerges from votes, not a fixed count
 > Hold every voted stock **in proportion to its vote weight**, subject to two risk rails:
-> - **`POSITION_CAP_PCT`** max per position (diversification), renormalized
+> - **`POSITION_CAP_PCT`** max per position (diversification), enforced by water-fill (see below)
 > - **`DUST_FLOOR`** minimum size (anti-dust)
 >
 > The number of holdings emerges from the votes — no top-N, no magic threshold.
@@ -119,16 +119,18 @@ Why replayed history instead of live prices in demo: stocks move ~0.01% in 5 rea
 
 ---
 
-## 5. Contracts (logical → likely merged for 36h)
+## 5. Contracts (logical → as shipped)
 
-| Logical contract | Holds | Likely merge |
+Built and deployed as **3 contracts + a hook** on Base Sepolia (addresses in `shared/src/addresses.ts`). The logical pieces merged as follows:
+
+| Logical contract | Holds | Shipped as |
 |---|---|---|
-| Vault (ERC-4626) | USDC, shares | + Fees & Rewards |
-| Voting | votes, power snapshot | + Reputation |
-| Reputation | accuracy scores | (into Voting) |
-| Portfolio | basket, NAV | standalone or + Vault |
-| Fees & Rewards | reward pool, HWM | (into Vault) |
+| Vault (ERC-4626) | USDC, shares | FundVault (+ Portfolio + Fees & Rewards) |
+| Voting | votes, power snapshot | Governance (+ Reputation) |
+| Reputation | accuracy scores | (into Governance) |
+| Portfolio | basket, NAV | (into FundVault) |
+| Fees & Rewards | reward pool, HWM | (into FundVault) |
+
+Plus **PriceOracle** (CRE's price mailbox) and **KYCHook** (Uniswap v4 `beforeSwap` allowlist), with **UniswapExecutor** as the fund's swap arm. See `docs/CONTRACTS.md` for the full state/function spec.
 
 Off-chain: Chainlink CRE keeper (prices, PnL, accuracy) · Agent Runtime (strategy + LLM thesis).
-
-*Next step: turn this into the actual contract set — state, functions, call graph.*

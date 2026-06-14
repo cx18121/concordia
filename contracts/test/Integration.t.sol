@@ -169,9 +169,9 @@ contract IntegrationTest is BaseTest {
             assertEq(tokenOf[syms[i]].balanceOf(address(vault)), 0, "position closed");
         }
 
-        // reward pool funded from real realized USDC (≈25% of the ~8% alpha on 20k ≈ 400 USDC)
+        // reward pool funded from real realized USDC (≈20% of the ~8% alpha on 20k ≈ 320 USDC)
         uint256 pool = vault.rewardPool();
-        assertApproxEqRel(pool, 400 * USDC_ONE, 0.05e18, "reward pool ~25% of alpha");
+        assertApproxEqRel(pool, 320 * USDC_ONE, 0.05e18, "reward pool ~20% of alpha");
         assertEq(gov.accuracyOf(alice), 200, "accuracy recorded");
         assertEq(gov.cyclesParticipated(alice), 1);
 

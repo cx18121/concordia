@@ -7,7 +7,7 @@ export const CONSTANTS = {
   EWMA_ALPHA_BPS: 2500, //     0.25 accuracy smoothing
   CONFIDENCE_CYCLES: 12, //    accuracy phase-in length
   POSITION_CAP_BPS: 3000, //   30% max per position
-  REWARD_POOL_PCT_BPS: 2500, // 25% of alpha → reward pool
+  REWARD_POOL_PCT_BPS: 2000, // 20% of alpha → reward pool
   CYCLE_MINUTES: 5, //         demo cadence
   VOTING_WINDOW_SECONDS: 90,
 } as const;

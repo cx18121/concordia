@@ -18,7 +18,7 @@ Scales used everywhere: prices `E8` (8-dp USD), weights/percentages `bps` (1e4 =
 
 **Reused / external:**
 - Mock stock ERC-20s (OZ ERC20, we mint + seed) — `mockAAPL`, `mockNVDA`, …
-- Uniswap v4 on Base Sepolia: PoolManager `0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408`, Universal Router, PositionManager, V4Quoter (see system-design doc)
+- Uniswap v4 on Base Sepolia: PoolManager `0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408` (the executor calls it directly), PositionManager (pool seeding), V4Quoter
 - World ID Router (verify proofs) · Dynamic (off-chain wallets) · Chainlink CRE (off-chain keeper)
 - Start from `v4-template` for pools/hook/router scaffolding.
 
@@ -62,8 +62,8 @@ Trivial. The only thing CRE writes prices into. Read by Vault (NAV) and Governan
 ## 3. FundVault  (ERC-4626 base)
 
 ```solidity
-immutable: USDC, oracle, universalRouter;
-set-once:  governance;                          // wiring
+immutable: USDC (via ERC4626), oracle, admin;
+set-once:  governance, executor;                // wiring (the executor is the fund's swap arm)
 
 state:
   mapping(address => bool)    verified;         // World ID gate
@@ -77,7 +77,7 @@ state:
   uint256                     benchAtLock;      // benchmark at cycle lock
 
 // ---- users ----
-verify(bytes proof, ...)                        // World ID -> verified[msg.sender] = true
+verify(address user, bytes proof)               // World ID verified off-chain (REST); admin attests on-chain
 deposit(uint256 assets) returns (uint256 shares)    // require verified; 4626 mint at NAV
 requestWithdraw(uint256 shares)                 // queue to next boundary
 withdraw()                                      // process queued -> USDC
@@ -93,9 +93,14 @@ executeBasket(bytes32[] assets, uint256[] weightsBps)   // swap deployable USDC 
 closePositions()                                        // swap all tokens -> USDC (to cash)
 settle(int256 cycleExcessE4, address[] members, uint256[] creditWeightBps)
     // 1. cumExcessE4 += cycleExcessE4
-    // 2. if cumExcessE4 > hwmExcessE4:
-    //        gainUSDC   = realized excess gain this cycle (from navAtLock + benchmark)
-    //        poolUSDC   = gainUSDC * REWARD_POOL_PCT / 1e4
+    // 2. HWM gate: if cumExcessE4 <= hwmExcessE4, return (no new relative high → no reward)
+    // 3. ABSOLUTE-gain gate: navNow = totalAssets(); if navNow <= navAtLock, return
+    //        (positive excess but the fund still lost money → pay nothing, leave HWM untouched)
+    //        absGainUSDC = navNow - navAtLock
+    //        relGainUSDC = navAtLock * (cumExcessE4 - hwmExcessE4) / 1e4
+    //        gainUSDC    = min(relGainUSDC, absGainUSDC)   // never reward more than real $ made
+    //        poolUSDC    = gainUSDC * REWARD_POOL_PCT / 1e4
+    //        require Σ creditWeightBps == 1e4 (when poolUSDC > 0)
     //        rewardPool += poolUSDC
     //        for i: rewardCredit[members[i]] += poolUSDC * creditWeightBps[i] / 1e4
     //        hwmExcessE4 = cumExcessE4
@@ -129,10 +134,11 @@ state:
   uint256                     totalPowerE4;
 
   // votes (current cycle)
-  address[]                          voters;
-  mapping(address => Alloc[])        allocOf;
+  address[]                          voters;             // read via getVoters()
+  mapping(address => Alloc[])        _allocOf;           // read via allocOf(address) view
   mapping(bytes32 => uint256)        assetWeightE4;
   bytes32[]                          votedAssets;
+  address                            forwarder;          // trusted KeystoneForwarder (CRE path)
 
   // tunable constants (governance-settable)
   uint16 CAPITAL_BPS    = 5000;   // 50%
@@ -140,7 +146,7 @@ state:
   uint16 EWMA_ALPHA_BPS = 2500;   // 0.25
   uint16 CONFIDENCE_CYCLES = 12;
   uint16 POSITION_CAP_BPS  = 3000;// 30%
-  uint16 REWARD_POOL_PCT   = 2500;// 25% of alpha  (read by Vault.settle)
+  uint16 REWARD_POOL_PCT   = 2000;// 20% of alpha  (read by Vault.settle)
   uint256 DUST_FLOOR_USDC;        // min position size
 
 // ---- lifecycle (CRE-triggered; or time-gated) ----
@@ -183,9 +189,14 @@ selectBasket() returns (bytes32[], uint256[]):
     // CASH — consumers must not assume the basket sums to 1e4. (Naive cap-then-renormalize was
     // rejected: renormalizing capped weights pushes them back over the cap — see ISSUES.)
 
-// ---- views (forum + UI read these) ----
-votingPower(address) · accuracyOf(address) · confidenceOf(address)
+// ---- views (forum + UI + keeper read these) ----
+votingPower(address) · accuracyOf(address) · confidenceOf(address) · fundExcessE4()
+getVoters() returns (address[])                  // whole voter set in one call (keeper enumerates at resolve)
+allocOf(address) returns (Alloc[])               // a member's backed allocations, whole array
+memberCount() · members(i)                        // membership enumeration
 ```
+
+Both the lifecycle and `setForwarder`/`onReport` exist on this contract: the lifecycle fns above are the keeper-EOA path; CRE delivers the same actions through `onReport(bytes, bytes)` from the trusted `KeystoneForwarder` (action byte: OPEN=0, LOCK=1, RESOLVE=2). The two paths converge on the same internal logic; only one is wired at a time (see §6).
 
 `selectBasket` is the one heavier on-chain loop, but it's over `votedAssets` (≤ universe size ≈ 20) — cheap.
 
@@ -257,10 +268,11 @@ conf(i)          = min(cyclesParticipated(i) / CONFIDENCE_CYCLES, 1)
 CycleAccuracy(i) = Σ_assets weight(i,a) · (return(a) − sp)                                 [off-chain, CRE]
 newAcc(i)        = α·CycleAccuracy(i) + (1−α)·oldAcc(i)                                    [off-chain, CRE]
 
-basketWeight(a)  = clamp( votes(a)/Σvotes , dust, CAP ) then renormalize                   [on-chain, lock]
-
+basketWeight(a)  = votes(a)/Σvotes, then water-fill CAP (pin over-cap at CAP, redistribute, [on-chain, lock]
+                   iterate) after dropping dust. HARD cap → may sum to < 1e4 (rest stays cash)
 fundExcess       = NAVnow/navAtLock − benchNow/benchAtLock                                 [on-chain, resolve]
-rewardPool$      = realizedExcessGain$ · REWARD_POOL_PCT   (only if new HWM)               [on-chain, settle]
+rewardPool$      = min(relExcessGain$, absDollarGain$) · REWARD_POOL_PCT                    [on-chain, settle]
+                   (only if new HWM AND navNow > navAtLock; else 0)
 reward(i)        = rewardPool$ · creditWeightBps(i)                                        [on-chain, settle]
 creditWeight(i)  = posAlphaCredit(i) / Σ posAlphaCredit(j)                                 [off-chain, CRE]
 ```
@@ -280,4 +292,4 @@ creditWeight(i)  = posAlphaCredit(i) / Σ posAlphaCredit(j)                     
 
 ---
 
-*Next: scaffold the repo (Foundry + v4-template) and start with mock tokens + PriceOracle + Vault deposit/NAV.*
+*Shipped: all four contracts (PriceOracle, FundVault, Governance, KYCHook) plus UniswapExecutor are built, deployed, and verified on Base Sepolia (addresses in `shared/src/addresses.ts`); 31 forge tests pass. This doc is the spec reference for that implementation.*

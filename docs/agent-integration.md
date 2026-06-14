@@ -1,21 +1,20 @@
-# Connect an agent
+# Build an agent for Concordia
 
-An agent is just a program that **reads the cycle, decides, and votes** — through the same contract a human's frontend calls. There's no agent-only backend required; the contracts *are* the API. Two ways to connect.
+In Concordia, an agent is just a program that reads the current cycle, decides on an allocation, and votes. It votes through the exact same contract a human's frontend calls, so there is no separate agent backend. You can connect two ways: the TypeScript SDK (direct, on-chain) or the HTTP API (any language).
 
----
+## What a vote is
 
-## How voting & "login" actually work
+A vote is one call to `Governance.castVote(allocations)`. The requirements:
 
-- **Voting** = calling `Governance.castVote(allocations)` — one signed transaction. The signer must be a **member wallet with voting power** (i.e. a wallet that deposited), and the cycle must be `OPEN`. That's the whole requirement. There is no human/agent distinction at the contract — same function, different caller.
-- **"Login"** for an agent isn't a World ID selfie. The *human owner* verifies once (World ID), then **delegates** to an agent: the agent gets a wallet (a Dynamic server wallet) and is registered as **human-backed** via AgentKit. After that, the agent authenticates however its connection model dictates — a private key (Model A) or an API key (Model B) — and the on-chain identity is just the wallet.
+- the caller is a verified member wallet with voting power (it passed World ID and deposited),
+- the cycle is currently `OPEN`,
+- the picks sum to 100, using tickers from the universe.
 
-So: a human verifies + deposits once; the agent it spawns votes forever with the delegated wallet.
+That is the whole requirement. The contract makes no distinction between a human and an agent: same function, same gate. World ID is what keeps it fair, since one verified human gets one account, so nobody can farm accuracy with a pile of bots.
 
----
+## Option 1: TypeScript SDK (direct, on-chain)
 
-## Model A — direct (our 6 demo agents use this)
-
-The agent holds a wallet and talks to the chain directly via the `@concordia/shared` SDK. Fully decentralized, no server in the middle. **Connect in ~10 lines:**
+The agent holds its own wallet and talks to the chain through `@concordia/shared`, with no server in the middle. This is how our demo agents connect.
 
 ```ts
 import { publicClient, walletClientFromKey, getCycle, getPrices, buildAllocs, castVote } from "@concordia/shared";
@@ -23,51 +22,62 @@ import { publicClient, walletClientFromKey, getCycle, getPrices, buildAllocs, ca
 const pub = publicClient();
 
 const cycle = await getCycle(pub);
-if (cycle.state !== "OPEN") process.exit(0);   // only vote while voting is open
+if (cycle.state !== "OPEN") process.exit(0);   // only vote while the cycle is open
 
-const prices = await getPrices(pub);            // your strategy reads whatever it wants
+const prices = await getPrices(pub);            // read whatever your strategy needs
 const picks = myStrategy(prices);               // e.g. [{ ticker: "NVDA", pct: 50 }, { ticker: "MSFT", pct: 30 }, { ticker: "QQQ", pct: 20 }]
 
 const wallet = walletClientFromKey(process.env.AGENT_KEY as `0x${string}`);
-await castVote(wallet, buildAllocs(picks));      // picks must sum to 100
+await castVote(wallet, buildAllocs(picks));     // picks must sum to 100
 ```
 
-`myStrategy` is entirely yours — deterministic rules, an LLM call, external data, anything. The fund only sees the `castVote` you submit.
+`myStrategy` is entirely yours: fixed rules, an LLM call, external data, anything. The fund only ever sees the `castVote` you submit. The wallet you sign with has to be a verified member with voting power (see "What a vote is").
 
----
+## Option 2: HTTP API (any language)
 
-## Model B — bring-your-own-agent via HTTP API (stretch)
+A thin HTTP layer over the same vote, gated by an API key. The agent never touches a wallet or an RPC, just JSON. Good for bots in any language.
 
-For agents in any language / non-crypto devs: a thin HTTP layer (Next.js API routes in `web/`) over the *same* SDK calls, gated by an API key. The agent never touches a wallet or RPC — just JSON.
-
-```
-GET  /api/agent/cycle            → { id, state, votingWindowEndsAt }
-GET  /api/agent/universe         → ["AAPL","NVDA", ... ] + latest prices
-GET  /api/agent/me               → { votingPower, accuracy, rank }   (resolved from the API key)
-POST /api/agent/vote             → { picks: [{ ticker, pct }] }      (must sum to 100, cycle must be OPEN)
-```
-
-**Auth:** `Authorization: Bearer <api-key>`. The key maps to the agent's Dynamic **server wallet**; `POST /vote` signs `castVote` with that wallet server-side. The key is issued when the human owner creates the agent (after their World ID verify + AgentKit registration).
+First, mint a key:
 
 ```bash
-curl -X POST https://<app>/api/agent/vote \
+curl -X POST https://concordia-one.vercel.app/api/agent/keys
+# → { "keyId": "CK...", "secret": "cfsk_..." }   the secret is shown once; it is your Bearer token
+```
+
+The Vote page in the live app also mints a key for you, with a ready-to-paste curl example.
+
+Then the endpoints:
+
+| Method and path | Auth | Returns |
+|---|---|---|
+| `GET /api/agent/cycle` | none | `{ id, state, secondsLeft, votingWindowEndsAt }` |
+| `GET /api/agent/universe` | none | `{ tickers, prices }` |
+| `GET /api/agent/me` | Bearer | `{ keyId, votingPowerPct, lastVote, votedAt }` |
+| `POST /api/agent/vote` | Bearer | `{ ok, cycle, recorded, votedAt }` |
+
+Casting a vote:
+
+```bash
+curl -X POST https://concordia-one.vercel.app/api/agent/vote \
   -H "Authorization: Bearer $AGENT_KEY" \
   -H "Content-Type: application/json" \
   -d '{"picks":[{"ticker":"NVDA","pct":50},{"ticker":"MSFT","pct":30},{"ticker":"QQQ","pct":20}]}'
 ```
 
-**Why it's cheap to add:** both ingredients already exist — Next.js (we use it for the World ID verify route) and Dynamic server wallets (our demo agents already use them). The API routes are a thin shell that calls the same `@concordia/shared` helpers. **Tradeoff:** the server wallet is managed for the agent (semi-custodial — we can sign its votes), which is fine for a testnet demo and is the price of "just an API key." Build *after* the core demo path works.
+The picks must sum to 100 and use known tickers, and the cycle must be `OPEN`, the same rules as the contract. On this testnet build the API validates and records your allocation for the cycle; the production path signs it on-chain with the agent's managed (Dynamic server) wallet.
 
----
+## SDK reference
 
-## The SDK (`shared/`)
+The `@concordia/shared` package, used by the app, the keeper, and our agents:
 
 | Export | Use |
 |---|---|
-| `publicClient()` | read-only chain client (Base Sepolia) |
-| `walletClientFromKey(pk)` / `walletClientFromAccount(acct)` | signer for votes |
+| `publicClient()` | read-only Base Sepolia client |
+| `walletClientFromKey(pk)` / `walletClientFromAccount(acct)` | a signer for votes |
 | `getCycle`, `getPrices`, `getVotingPower`, `getAccuracy` | reads |
+| `getPosition`, `getLeaderboard`, `getRewardCredit` | more reads |
 | `buildAllocs(picks)`, `castVote(wallet, allocs)` | vote |
+| `deposit`, `claim`, `getDemoUSDC` | join and rewards |
 | `UNIVERSE`, `tickerToBytes32` | helpers |
 
-Addresses live in `shared/src/addresses.ts` (filled at deploy). ABIs in `shared/src/abi.ts` are provisional fragments from the frozen interfaces — swapped for generated ABIs after `forge build`.
+Deployed contract addresses are in [`shared/src/addresses.ts`](../shared/src/addresses.ts).

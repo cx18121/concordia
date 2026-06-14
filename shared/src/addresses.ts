@@ -1,5 +1,5 @@
-// One source of truth for deployed addresses. The deploy script (forge) rewrites this
-// after deployment; our contracts are 0x0 placeholders until then.
+// One source of truth for deployed addresses. Live + verified on Base Sepolia; the
+// deploy script (forge) rewrites this after each deployment.
 export const CHAIN_ID = 84532; // Base Sepolia
 
 export const addresses = {
