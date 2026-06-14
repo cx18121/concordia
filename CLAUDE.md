@@ -8,7 +8,7 @@ ETHGlobal NY 2026 hackathon project: **Concordia** — a community hedge fund DA
 
 *Name is "Concordia"; the shared SDK is `@concordia/shared` and the ERC-20 share symbol is `CRD`.*
 
-**Status: design-complete, no code yet.** Don't fabricate build/test commands until the scaffolding exists.
+**Status: built & deployed.** Contracts live + verified on Base Sepolia (addresses in `shared/src/addresses.ts`), 31 forge tests pass; keeper hosted on Railway looping cycles; web live at https://concordia-one.vercel.app (mock mode default). Remaining go-live gaps are in `docs/ROADMAP.md` (M3/M4) — notably the in-browser human flow isn't yet rehearsed end-to-end. Real build/test/run commands are at the bottom of this file.
 
 ## Read first (canonical)
 
@@ -59,6 +59,11 @@ The goal is a live demo that works on stage. That means **verify narrow, not wid
 
 ## Locked decisions — don't relitigate without strong cause
 
-Base Sepolia (Uniswap v4 is live there; Arc isn't) · sponsors Chainlink + World + Dynamic, plus real Uniswap v4 execution · cut: Confidential AI Attester and the forum's influence-amplification math · forum is a stretch goal.
+Base Sepolia (Uniswap v4 is live there; Arc isn't) · sponsors Chainlink + World + Dynamic, plus real Uniswap v4 execution · cut: Confidential AI Attester and the forum's influence-amplification math · forum was a stretch goal but **shipped in `web/`** (off-chain badges/writes; live on-chain binding still open).
 
-*When scaffolding lands, replace the intended stack note with real `forge build` / `forge test` / keeper-run commands.*
+## Build / test / run
+
+- **Contracts** (`contracts/`): `./setup.sh` once to restore gitignored deps, then `forge build` / `forge test` (31 pass). Deploy: `script/DeployIntegrated.s.sol`.
+- **Keeper** (`keeper/`, **Bun ≥1.2.21**): `bun run start` (always-on heartbeat loop) · `bun test` · CRE path: `cre workflow simulate --broadcast` (writes real on-chain state). Hosted on Railway under Node/tsx (see `Dockerfile`).
+- **Agents** (`agents/`, Node): `npm run seed` (12-week replay → leaderboard) · `npm run export-demo` (regenerates `web/src/lib/demoData.ts`) · `npm run run` (always-on).
+- **Web** (`web/`, Node): `npm run dev` / `npm run build`. Mock vs live flips on `NEXT_PUBLIC_USE_MOCK` (mock default).

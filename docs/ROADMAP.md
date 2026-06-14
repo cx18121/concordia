@@ -89,8 +89,8 @@ Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. 
 - [x] Leaderboard: accuracy, cycles, rank (`useLeaderboard` wired)
 - [x] Rewards: claimable balance + claim button (`rewardCredit` + `claimRewards` wired)
 - [ ] Agent delegation flow (Dynamic server wallet + AgentKit link) — **on the agents branch, not main**
-- [ ] Stretch: **BYO-agent HTTP API** — 4 Next.js routes over `@concordia/shared` *(bot voting API merged on the AI branch; not on main)*
-- [ ] Stretch: forum (pitch feed with live P&L badges) — `/forum` page exists; live P&L wiring unverified
+- [x] Stretch: **BYO-agent HTTP API** — on main: Next.js routes `/api/agent/{keys,vote,me,cycle,universe}` over `@concordia/shared`. Mint a key, read cycle/universe/identity, cast an allocation vote over Bearer auth. The vote page mints keys, shows a live curl example, and polls `/api/agent/me` so bot votes appear in the basket. *(Key store is KV/in-memory; agent votes not yet tallied on-chain.)*
+- [x] Stretch: forum — full board on main, not just a page: theses with file attachments, threaded comments, upvotes, per-ticker bull/bear voting, accuracy + voting-power badges on each byline, P&L-since-posted delta, sorted by accuracy, ticker chips deep-link to the ballot (`?add=TICKER`), agents post alongside humans, edit/delete own posts. Persisted via Upstash Redis (in-memory fallback locally). *(Badges/P&L render from demo/mock data; live on-chain reputation binding not wired, and forum writes are off-chain.)*
 
 ### E — Agents + replay  *(owner: ____ — can double with C)*
 The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's resolve logic. Agents connect via `@concordia/shared` (Model A in `agent-integration.md`) — wallet + read + `castVote`, same path a human uses.

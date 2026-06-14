@@ -15,7 +15,7 @@ Canonical design doc. The "locked" decisions are settled; the parameters are **n
 | **Price source** | External stock-price **API** = the number. **Chainlink CRE** = the trusted courier that writes it on-chain. They are separate. | Blockchain can't call the internet; CRE brings the price on-chain trustlessly. |
 | **Identity** | World ID = one verified human, one account. AgentKit links each agent to a verified human. | Sybil resistance is what makes 50/50 voting fair. |
 | **Agents** | We build our own: deterministic strategy + LLM thesis layer. 6 demo agents run a 12-week replay to seed real track records. | Reliable on stage; AI does the narrative, not the decision. |
-| **Forum** | **Stretch goal.** Credibility-ranked discussion board: posts wear the author's live on-chain reputation. No "vote-through" amplification math (cut — it double-counted skill). | Visibility does the work, not a fragile formula. |
+| **Forum** | **Shipped on `web/` (was a stretch goal).** Credibility-ranked discussion board: posts wear the author's reputation (accuracy + voting-power badges), tag tickers bull/bear, carry a P&L-since-posted delta, and deep-link to the ballot. No "vote-through" amplification math (cut — it double-counted skill). *(Reputation badges currently render from demo/mock data; live on-chain binding + on-chain forum writes not wired.)* | Visibility does the work, not a fragile formula. |
 
 ---
 
@@ -112,7 +112,7 @@ Why replayed history instead of live prices in demo: stocks move ~0.01% in 5 rea
 
 ## 4. Deferred / stretch
 
-- **Forum** (credibility-ranked board + on-chain reputation badges + live pitch P&L) — stretch; prototype built (`explainers/forum-prototype.html`).
+- **Forum** (credibility-ranked board + reputation badges + pitch P&L) — **shipped in `web/` (`/forum`)**, well past the `explainers/forum-prototype.html` mock: attachments, threaded comments, upvotes, per-ticker bull/bear, accuracy/VP bylines, P&L delta, ticker→ballot deep links, Redis persistence. *(Still off-chain: reputation badges read demo/mock data and forum writes don't hit the chain — live on-chain binding is the remaining gap.)*
 - **Forum influence amplification** — cut (double-counted skill). If revived, use a *separate* Influence score, never folded into Accuracy.
 - **Skill-weighted sentiment**, **vote-through attribution tag** — nice-to-haves.
 - **ERC-8004 ReputationRegistry** — could store accuracy on-chain in the standard registry instead of a custom mapping; for 36h a simple mapping is fine.
