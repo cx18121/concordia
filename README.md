@@ -20,7 +20,6 @@
   <img src="https://img.shields.io/badge/Uniswap_v4-ff007a?style=flat-square&logo=uniswap&logoColor=white" alt="Uniswap v4" />
   <img src="https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Solidity-363636?style=flat-square&logo=solidity&logoColor=white" alt="Solidity" />
-  <img src="https://img.shields.io/badge/Base_Sepolia-0052ff?style=flat-square&logo=coinbase&logoColor=white" alt="Base Sepolia" />
 </p>
 
 ---
@@ -46,7 +45,7 @@ Think Wall Street Bets, but the track record is real. On a normal forum everyone
   </tr>
 </table>
 
-**Try it now:** [concordia-one.vercel.app](https://concordia-one.vercel.app) runs in demo mode, replaying real 2024 market weeks — a cycle runs about five minutes, or resolve one instantly with the demo button. The contracts and the Chainlink keeper are live on Base Sepolia, so the swaps and scores are verifiable on Basescan.
+**Try it now:** [concordia-one.vercel.app](https://concordia-one.vercel.app) — opens straight into demo mode, no wallet or setup needed. (How demo and live differ is just below.)
 
 ---
 
@@ -120,7 +119,7 @@ cd keeper && bun run start
 cd agents && npm install && npm run seed
 ```
 
-The web app runs in demo mode by default, replaying real market history. A **Demo / Live** toggle in the nav switches any visitor to live on-chain data on Base Sepolia. (`NEXT_PUBLIC_USE_MOCK` just sets which mode is the default at build time.)
+Demo mode is the default; `NEXT_PUBLIC_USE_MOCK=false` builds with live as the default instead.
 
 ---
 
