@@ -13,7 +13,6 @@ import {
   useLeaderboardRace,
   useVotingPower,
   useAccuracy,
-  useFundStats,
 } from "@/lib/data";
 import "@/styles/leaderboard.css";
 
@@ -41,9 +40,10 @@ export default function LeaderboardPage() {
   const { rows, cycle, total } = useLeaderboardRace();
   const votingPower = useVotingPower();
   const accuracy = useAccuracy();
-  const { members } = useFundStats();
   const top = rows[0];
   const second = rows[1];
+  // Your spot on the board (mock injects a "You" row; live has none).
+  const yourRank = rows.find((r) => r.name === "You")?.rank;
 
   // FLIP: animate rows to their new position whenever the race reorders them. Keyed by name
   // (stable identity) so React keeps the DOM node and we can slide it from old → new spot.
@@ -76,8 +76,8 @@ export default function LeaderboardPage() {
               <span className="absolute inline-flex h-full w-full rounded-full bg-teal opacity-75 animate-ping" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
             </span>
-            Replaying the agents&rsquo; 12 weeks. Cycle{" "}
-            <span className="text-text-primary font-semibold tabular-nums">{cycle}</span> of {total}.{" "}
+            Cycle{" "}
+            <span className="text-text-primary font-semibold tabular-nums">{cycle}</span> of {total} &middot; advances when you resolve a vote.{" "}
             <span className="text-text-subtle">Watch skill out-vote capital.</span>
           </div>
         )}
@@ -93,7 +93,9 @@ export default function LeaderboardPage() {
             <div className="min-w-0">
               <h4 className="text-text-primary font-display text-lg leading-tight">Your standing</h4>
               <p className="text-xs text-text-muted leading-relaxed mt-0.5">
-                Your live voting power and forecast accuracy among {members} members.
+                {yourRank
+                  ? `Ranked #${yourRank} of ${rows.length} by voting power — climbs as your accuracy proves out.`
+                  : "Your live voting power and forecast accuracy."}
               </p>
             </div>
           </div>
@@ -174,7 +176,8 @@ export default function LeaderboardPage() {
         )}
         <div className="divide-y divide-white/5">
           {rows.map((row, i) => {
-            const c = ROW_COLORS[i] ?? ROW_COLORS[ROW_COLORS.length - 1];
+            const isYou = row.name === "You";
+            const c = isYou ? ROW_COLORS[0] : (ROW_COLORS[i] ?? ROW_COLORS[ROW_COLORS.length - 1]);
             const up = row.accuracy >= 0;
             return (
               <div
@@ -183,12 +186,14 @@ export default function LeaderboardPage() {
                   if (el) rowEls.current.set(row.name, el);
                   else rowEls.current.delete(row.name);
                 }}
-                className="grid grid-cols-12 items-center gap-2 px-4 md:px-6 py-6 list-row"
+                className={`grid grid-cols-12 items-center gap-2 px-4 md:px-6 py-6 list-row${
+                  isYou ? " bg-teal/[0.06] rounded-lg" : ""
+                }`}
               >
                 <div className="col-span-1 font-display text-xl text-text-muted tabular-nums">{row.rank}</div>
                 <div className="col-span-5 md:col-span-4 flex items-center gap-3 md:gap-4 min-w-0">
                   <div className={`w-10 h-10 flex-none rounded-full border flex items-center justify-center font-display font-bold ${c.accent}`}>
-                    {initials(row.name)}
+                    {isYou ? <span className="material-symbols-outlined text-lg">person</span> : initials(row.name)}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 min-w-0">

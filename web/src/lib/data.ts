@@ -16,6 +16,7 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -527,8 +528,26 @@ interface MockContextValue {
 
 const MockDataContext = createContext<MockContextValue | null>(null);
 
+// "View demo" lands a visitor on a populated portfolio instead of $0. Sized so the
+// injected "You" row starts mid-pack on the leaderboard and climbs as accuracy proves
+// out (a $1k newcomer would sit last on capital alone — VP is 50% capital).
+const DEMO_DEPOSIT_USDC = 10000;
+
 export function MockDataProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, seedState);
+
+  // Auto-fund the demo position once a visitor enters via "View demo". Reads the
+  // persisted demo flag, so a page reload (which resets the in-memory mock state)
+  // re-funds too. Guarded on shares===0 so it never stacks on a real deposit; the
+  // ref guards against React StrictMode's double-invoke.
+  const demoEntered = useDemoEntered();
+  const demoFunded = useRef(false);
+  useEffect(() => {
+    if (demoEntered && !demoFunded.current && state.position.shares === 0) {
+      demoFunded.current = true;
+      dispatch({ type: "DEPOSIT", amount: DEMO_DEPOSIT_USDC });
+    }
+  }, [demoEntered, state.position.shares]);
 
   // Live-ticking countdown lives here so components just read a number.
   const [secondsLeft, setSecondsLeft] = useState(() =>
@@ -735,38 +754,12 @@ export function useAccuracy(): number | null {
   return live;
 }
 
-// Leaderboard race playback: in Demo mode the board plays through the agents' 12-week
-// replay (LEADERBOARD_FRAMES) so judges watch skill overtake capital — early cycles are
-// capital-ordered (ContrarianBot $10k on top), the final frame is skill-ordered (SectorBot
-// $2k on top). Advances a frame per RACE_FRAME_MS, holds on the final standings, then loops.
-const RACE_FRAME_MS = 1100;
-const RACE_HOLD_MS = 4500;
-
-function useRaceFrame(active: boolean): number {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    let idx = 0;
-    let timer: ReturnType<typeof setTimeout>;
-    timer = setTimeout(() => setI(0), 0);
-    const tick = () => {
-      idx += 1;
-      if (idx < LEADERBOARD_FRAMES.length) {
-        setI(idx);
-        timer = setTimeout(tick, RACE_FRAME_MS);
-      } else {
-        timer = setTimeout(() => {
-          idx = 0;
-          setI(0);
-          timer = setTimeout(tick, RACE_FRAME_MS);
-        }, RACE_HOLD_MS);
-      }
-    };
-    timer = setTimeout(tick, RACE_FRAME_MS);
-    return () => clearTimeout(timer);
-  }, [active]);
-  return Math.min(i, LEADERBOARD_FRAMES.length - 1);
-}
+// Leaderboard standings: in Demo mode the board reflects the agents' 12-week replay
+// (LEADERBOARD_FRAMES) advanced by YOUR play — the frame index tracks cyclesPlayed, so
+// each vote you resolve on the Vote page steps the board one week (early weeks are
+// capital-ordered, the final week skill-ordered). Your own row is injected and ranked
+// among the agents by voting power, so you watch yourself climb as accuracy proves out.
+// Live mode shows the on-chain leaderboard, static.
 
 export interface LeaderboardRace {
   rows: LeaderboardRow[];
@@ -778,7 +771,7 @@ export interface LeaderboardRace {
 
 export function useLeaderboardRace(): LeaderboardRace {
   const USE_MOCK = useIsMock();
-  const frame = useRaceFrame(USE_MOCK);
+  const mock = useContext(MockDataContext);
   const live = useLivePoll<LeaderboardRow[]>([], "leaderboard", async () => {
     const rows = await scGetLeaderboard(livePub());
     return rows.map((r, i) => ({
@@ -792,8 +785,28 @@ export function useLeaderboardRace(): LeaderboardRace {
       kind: "Human" as const,
     }));
   });
-  if (USE_MOCK) {
-    return { rows: LEADERBOARD_FRAMES[frame] ?? LEADERBOARD, cycle: frame + 1, total: LEADERBOARD_FRAMES.length };
+  if (USE_MOCK && mock) {
+    const total = LEADERBOARD_FRAMES.length;
+    const s = mock.state;
+    // Frame tracks cycles you've resolved: 0 played → week-1 standings, climbing to
+    // the final week after 12. Clamp so extra cycles hold on the last week.
+    const frame = Math.min(s.cyclesPlayed, total - 1);
+    const agentRows = LEADERBOARD_FRAMES[frame] ?? LEADERBOARD;
+    // Inject your own row — same VP formula as the "Your standing" card (useVotingPower)
+    // so the card and the table agree — then re-sort + re-rank the whole board.
+    const youRow: LeaderboardRow = {
+      rank: 0,
+      name: "You",
+      strategy: "Your basket",
+      kind: "Human",
+      capital: Math.round(s.position.navUsd),
+      votingPowerPct: yourVotingPowerPct(s.position.navUsd, s.accuracy ?? 0, s.cyclesPlayed),
+      accuracy: s.accuracy ?? 0,
+    };
+    const rows = [...agentRows, youRow]
+      .sort((a, b) => b.votingPowerPct - a.votingPowerPct)
+      .map((r, i) => ({ ...r, rank: i + 1 }));
+    return { rows, cycle: Math.min(s.cyclesPlayed + 1, total), total };
   }
   return { rows: live, cycle: 0, total: 0 };
 }
