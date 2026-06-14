@@ -238,6 +238,54 @@ function navGrowthForCycle(cycle: number): number {
   return fr - REWARD_POOL_PCT * Math.max(fr - marketReturn(cycle), 0);
 }
 
+// Once YOU vote, the fund's basket is a voting-power-weighted blend of the collective's
+// consensus basket (the rest of the fund, weighted by their combined power) and YOUR
+// allocation (weighted by your power share) — then capped + dust-floored + renormalized,
+// mirroring the real Governance.selectBasket. Your picks visibly pull the weights, which
+// is the whole mechanism shown on one screen. Cap any name, drop dust below the floor.
+const BASKET_CAP_PCT = 25;
+const BASKET_DUST_PCT = 1.5;
+function aggregatedBasket(cycle: number, picks: Pick[] | null, userVp: number): Holding[] {
+  const baseline = fundBasket(cycle);
+  const vp = Math.min(Math.max(userVp, 0), 1);
+  if (!picks || picks.length === 0 || vp <= 0) return baseline;
+
+  // Blend: collective baseline scaled by (1 - your power), your allocation by your power.
+  const w = new Map<string, number>();
+  for (const h of baseline) w.set(h.ticker, h.weightPct * (1 - vp));
+  for (const p of picks) w.set(p.ticker, (w.get(p.ticker) ?? 0) + p.pct * vp);
+
+  // Cap + dust-floor, keep the top FUND_SIZE names, renormalize to 100.
+  const kept = [...w.entries()]
+    .map(([t, x]) => [t, Math.min(x, BASKET_CAP_PCT)] as [string, number])
+    .filter(([, x]) => x >= BASKET_DUST_PCT)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, FUND_SIZE);
+  const sum = kept.reduce((s, [, x]) => s + x, 0) || 1;
+  return kept.map(([t, x]) => {
+    const meta = STOCK_META[t] ?? { company: t, accent: "bg-white/10 text-text-primary", blurb: "" };
+    return {
+      ticker: t as Ticker,
+      company: meta.company,
+      weightPct: Math.round((x / sum) * 1000) / 10,
+      perfPct: tickerCycleReturn(cycle, t) * 100,
+      accent: meta.accent,
+      blurb: meta.blurb,
+    };
+  });
+}
+
+// The fund's blended return for a cycle given your vote — the same weight-weighted sum,
+// over the aggregated basket, so your vote moves the fund's performance (not just your
+// own score). Falls back to the baseline basket when you haven't voted.
+function navGrowthWith(cycle: number, picks: Pick[] | null, userVp: number): number {
+  let fr = 0;
+  for (const h of aggregatedBasket(cycle, picks, userVp)) {
+    fr += (h.weightPct / 100) * (h.perfPct / 100);
+  }
+  return fr - REWARD_POOL_PCT * Math.max(fr - marketReturn(cycle), 0);
+}
+
 // The fund has a track record BEFORE you join (the rest of the fund has been
 // running for cycles). Compound the basket's realised returns over the cycles
 // preceding the current one, so NAV/share, the S&P index, and the alpha between
@@ -473,7 +521,14 @@ function reducer(state: MockState, action: Action): MockState {
       // 20% of the fund's positive alpha is skimmed from NAV into the reward pool;
       // the rest grows everyone's shares. spxIndex tracks the same benchmark.
       const market = marketReturn(cycle); // fraction (the "S&P")
-      const navGrowth = navGrowthForCycle(cycle); // fund return minus 20% alpha skim
+      // Your vote folds into the fund's basket by your voting power, so the fund's NAV
+      // growth this cycle reflects your pick — not just the collective's. No vote falls
+      // back to the collective's baseline basket.
+      const vote = state.lastVote ?? [];
+      const voted = vote.length > 0;
+      const userVp =
+        yourVotingPowerPct(state.position.navUsd, state.accuracy ?? 0, state.cyclesPlayed) / 100;
+      const navGrowth = voted ? navGrowthWith(cycle, vote, userVp) : navGrowthForCycle(cycle);
 
       const navPerShare = state.navPerShare * (1 + navGrowth);
       const spxIndex = state.spxIndex * (1 + market);
@@ -488,8 +543,6 @@ function reducer(state: MockState, action: Action): MockState {
       // the benchmark and you earn back more than the NAV skim costs you; sit out
       // (no vote) and you still ride the fund's NAV but earn nothing — accuracy is
       // what's rewarded. Accuracy EWMA only updates on a cycle you actually voted.
-      const vote = state.lastVote ?? [];
-      const voted = vote.length > 0;
       const userAlpha = voted ? scoreVoteReturn(vote, cycle) - market : 0;
       const rewardEarned =
         state.rewardEarned + REWARD_POOL_PCT * Math.max(userAlpha, 0) * navBefore;
@@ -644,7 +697,19 @@ export function useCycle(): Cycle {
 export function useFundBasket(): Holding[] {
   const { id } = useCycle();
   const cycle = Number(id);
-  return useMemo(() => fundBasket(cycle), [cycle]);
+  const isMock = useIsMock();
+  const mock = useContext(MockDataContext);
+  const s = mock?.state;
+  // Once you've voted, the displayed basket folds your allocation in by your voting
+  // power (the same blend resolve scores), so the Fund Composition table visibly shifts
+  // toward your picks. Before you vote, it's the collective's consensus basket.
+  return useMemo(() => {
+    if (isMock && s) {
+      const vp = yourVotingPowerPct(s.position.navUsd, s.accuracy ?? 0, s.cyclesPlayed) / 100;
+      return aggregatedBasket(cycle, s.lastVote, vp);
+    }
+    return fundBasket(cycle);
+  }, [cycle, isMock, s?.lastVote, s?.position.navUsd, s?.accuracy, s?.cyclesPlayed]);
 }
 
 export function usePrices(): Record<string, number> {
@@ -763,15 +828,35 @@ export function useAccuracy(): number | null {
 
 export interface LeaderboardRace {
   rows: LeaderboardRow[];
-  /** 1-based replay cycle being shown (0 in live mode). */
-  cycle: number;
-  /** Total cycles in the replay (0 in live mode). */
+  /** Total weeks in the agents' track-record replay (0 in live mode). */
   total: number;
+  /** True while the "before you joined" history replay is animating. */
+  replaying: boolean;
+  /** 1-based week shown during replay (0 when showing the present). */
+  replayWeek: number;
+  /** Start the 12-week track-record replay (agents only), then settle to present. */
+  startReplay: () => void;
 }
 
 export function useLeaderboardRace(): LeaderboardRace {
   const USE_MOCK = useIsMock();
   const mock = useContext(MockDataContext);
+  // "Replay track record": animate the agents' 12-week climb (#6→#1) as the fund's
+  // history *before you joined*, then settle back to the present standings. null =
+  // present (agents at their mature standings + your live row injected).
+  const [replayWeek, setReplayWeek] = useState<number | null>(null);
+  const startReplay = useCallback(() => setReplayWeek(0), []);
+  useEffect(() => {
+    if (replayWeek === null) return;
+    const last = LEADERBOARD_FRAMES.length - 1;
+    // Step one week ~every 1.1s; hold the final week a beat, then return to present.
+    const t = setTimeout(
+      () => setReplayWeek((w) => (w === null || w >= last ? null : w + 1)),
+      replayWeek >= last ? 1800 : 1100,
+    );
+    return () => clearTimeout(t);
+  }, [replayWeek]);
+
   const live = useLivePoll<LeaderboardRow[]>([], "leaderboard", async () => {
     const rows = await scGetLeaderboard(livePub());
     return rows.map((r, i) => ({
@@ -788,12 +873,15 @@ export function useLeaderboardRace(): LeaderboardRace {
   if (USE_MOCK && mock) {
     const total = LEADERBOARD_FRAMES.length;
     const s = mock.state;
-    // Frame tracks cycles you've resolved: 0 played → week-1 standings, climbing to
-    // the final week after 12. Clamp so extra cycles hold on the last week.
-    const frame = Math.min(s.cyclesPlayed, total - 1);
-    const agentRows = LEADERBOARD_FRAMES[frame] ?? LEADERBOARD;
-    // Inject your own row — same VP formula as the "Your standing" card (useVotingPower)
-    // so the card and the table agree — then re-sort + re-rank the whole board.
+    // History replay: show that week's agents only — you weren't a member yet.
+    if (replayWeek !== null) {
+      const rows = LEADERBOARD_FRAMES[replayWeek].map((r, i) => ({ ...r, rank: i + 1 }));
+      return { rows, total, replaying: true, replayWeek: replayWeek + 1, startReplay };
+    }
+    // Present: agents pinned to their mature, final standings (skill on top — true the
+    // moment you arrive), with your own row injected by live voting power and re-ranked
+    // among them. Your row is the only thing that moves, as your accuracy proves out.
+    const agentRows = LEADERBOARD_FRAMES[total - 1] ?? LEADERBOARD;
     const youRow: LeaderboardRow = {
       rank: 0,
       name: "You",
@@ -806,9 +894,9 @@ export function useLeaderboardRace(): LeaderboardRace {
     const rows = [...agentRows, youRow]
       .sort((a, b) => b.votingPowerPct - a.votingPowerPct)
       .map((r, i) => ({ ...r, rank: i + 1 }));
-    return { rows, cycle: Math.min(s.cyclesPlayed + 1, total), total };
+    return { rows, total, replaying: false, replayWeek: 0, startReplay };
   }
-  return { rows: live, cycle: 0, total: 0 };
+  return { rows: live, total: 0, replaying: false, replayWeek: 0, startReplay };
 }
 
 /**

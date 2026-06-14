@@ -37,7 +37,7 @@ function initials(name: string): string {
 }
 
 export default function LeaderboardPage() {
-  const { rows, cycle, total } = useLeaderboardRace();
+  const { rows, total, replaying, replayWeek, startReplay } = useLeaderboardRace();
   const votingPower = useVotingPower();
   const accuracy = useAccuracy();
   const top = rows[0];
@@ -71,19 +71,42 @@ export default function LeaderboardPage() {
       <header className="mb-12 text-center md:text-left">
         <h1 className="font-display text-5xl md:text-6xl text-text-primary tracking-tight">Leaderboard</h1>
         {total > 0 && (
-          <div className="mt-4 inline-flex items-center gap-2 text-text-muted text-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-teal opacity-75 animate-ping" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
-            </span>
-            Cycle{" "}
-            <span className="text-text-primary font-semibold tabular-nums">{cycle}</span> of {total} &middot; advances when you resolve a vote.{" "}
-            <span className="text-text-subtle">Watch skill out-vote capital.</span>
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-text-muted text-sm">
+            {replaying ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75 animate-ping" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                </span>
+                Replaying week{" "}
+                <span className="text-text-primary font-semibold tabular-nums">{replayWeek}</span> of {total}{" "}
+                <span className="text-text-subtle">&mdash; the fund&rsquo;s track record before you joined.</span>
+              </span>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-teal opacity-75 animate-ping" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
+                  </span>
+                  Live standings{" "}
+                  <span className="text-text-subtle">&mdash; skill out-ranks capital.</span>
+                </span>
+                <button
+                  onClick={startReplay}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs text-text-muted transition hover:border-white/25 hover:text-text-primary"
+                >
+                  <span className="material-symbols-outlined text-base leading-none">replay</span>
+                  Replay 12-week track record
+                </button>
+              </>
+            )}
           </div>
         )}
       </header>
       {/* Your standing — the viewer's own live metrics, integrated into the board.
-          Non-clickable (informational); mirrors the table's Accuracy / Voting Power columns. */}
+          Hidden during the history replay (you weren't a member yet). */}
+      {!replaying && (
       <section className="mb-16">
         <div className="glass glass-border shine rounded-xl px-6 py-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4 min-w-0">
@@ -124,6 +147,7 @@ export default function LeaderboardPage() {
           </div>
         </div>
       </section>
+      )}
       {/* Comparison Block (Free on Background) — bound to top two rows */}
       {top && second && (
         <section className="mb-20 grid grid-cols-1 md:grid-cols-11 items-center gap-8 px-4">
