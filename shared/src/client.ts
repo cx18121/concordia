@@ -2,7 +2,13 @@ import { createPublicClient, createWalletClient, http, type Account } from "viem
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 
-export const RPC_URL = process.env.RPC_URL ?? "https://sepolia.base.org";
+// Server (keeper/API routes) sets RPC_URL (keyed CDP endpoint). In the browser that var
+// isn't exposed, so fall back to the NEXT_PUBLIC one, then a keyless browser-capable node —
+// never sepolia.base.org, which 403s in-browser and silently zeroes out all reads.
+export const RPC_URL =
+  process.env.RPC_URL ??
+  process.env.NEXT_PUBLIC_RPC_URL ??
+  "https://base-sepolia-rpc.publicnode.com";
 
 /** Read-only client — for fetching cycle state, prices, voting power, leaderboard. */
 export const publicClient = () =>

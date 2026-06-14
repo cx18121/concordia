@@ -986,6 +986,27 @@ export interface FundActions {
   lastVote: Pick[] | null;
 }
 
+// A single user click should survive transient RPC/gas/nonce blips — public nodes throttle
+// the burst of calls each write makes, so the first attempt can fail where a retry succeeds.
+// Retry only TRANSIENT failures; real reverts (DepositsLocked, NotVerified, …) and explicit
+// user rejections surface immediately so the UI shows the true reason.
+async function withWriteRetry<T>(fn: () => Promise<T>, tries = 4): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      const transient =
+        /failed to fetch|fetch failed|http request failed|load failed|network|timeout|timed out|429|500|502|503|504|rate.?limit|nonce|replacement transaction underpriced|already known|connection/i;
+      if (!transient.test(msg)) throw e;
+      await new Promise((r) => setTimeout(r, 600 * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
 export function useFundActions(): FundActions {
   // Always call hooks (rules of hooks); the unused branch's values are ignored.
   const USE_MOCK = useIsMock();
@@ -1022,7 +1043,7 @@ export function useFundActions(): FundActions {
         throw new Error(data.error ?? "Could not sponsor gas for your wallet.");
       }
     }
-    await scGetDemoUSDC(w, BigInt(10_000_000_000)); // 10,000 demo USDC
+    await withWriteRetry(() => scGetDemoUSDC(w, BigInt(10_000_000_000))); // 10,000 demo USDC
   }, [USE_MOCK, requireWallet, address]);
 
   const deposit = useCallback(
@@ -1031,7 +1052,8 @@ export function useFundActions(): FundActions {
         ctx?.dispatch({ type: "DEPOSIT", amount });
         return;
       }
-      await scDeposit(await requireWallet(), BigInt(Math.round(amount * 1e6)));
+      const dw = await requireWallet();
+      await withWriteRetry(() => scDeposit(dw, BigInt(Math.round(amount * 1e6))));
     },
     [USE_MOCK, ctx, requireWallet],
   );
@@ -1042,7 +1064,8 @@ export function useFundActions(): FundActions {
         ctx?.dispatch({ type: "VOTE", picks: allocs });
         return;
       }
-      await scCastVote(await requireWallet(), scBuildAllocs(allocs));
+      const vw = await requireWallet();
+      await withWriteRetry(() => scCastVote(vw, scBuildAllocs(allocs)));
       setLastVoteLive(allocs);
     },
     [USE_MOCK, ctx, requireWallet],
@@ -1053,7 +1076,8 @@ export function useFundActions(): FundActions {
       ctx?.dispatch({ type: "CLAIM" });
       return;
     }
-    await scClaim(await requireWallet());
+    const cw = await requireWallet();
+    await withWriteRetry(() => scClaim(cw));
     setClaimedLive(true);
   }, [USE_MOCK, ctx, requireWallet]);
 
