@@ -4,7 +4,10 @@
    bottom are Track B additions: the post-submit confirmation + the
    understated demo-only "resolve cycle now" trigger and its inline note. */
 
-.wrap{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:120px var(--gutter) 90px}
+/* max-width + margin:auto already centers this; horizontal padding is a fixed
+   gutter (NOT var(--gutter), which is a full-bleed centering value and would
+   collapse the content to a skinny column on wide screens). */
+.wrap{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:120px 24px 90px}
 .head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:40px}
 h1{font:700 40px/1 Outfit} .sub{color:var(--muted);font-size:14px;margin-top:10px} .sub b{color:var(--teal);font-weight:600}
 .vp{text-align:right} .vp .k{font:600 11px/1 Inter;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)} .vp .v{font:800 38px/1 Outfit;margin-top:8px}

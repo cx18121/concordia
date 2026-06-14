@@ -535,7 +535,7 @@ export default function VotePage() {
                   font: "500 11px/1.55 ui-monospace,Menlo,monospace",
                   color: "var(--muted)",
                   whiteSpace: "pre-wrap",
-                  wordBreak: "break-all",
+                  overflowWrap: "anywhere",
                 }}
               >
 {`curl -X POST ${origin}/api/agent/vote \\

@@ -15,7 +15,7 @@ const TABS: [string, string, (p: string) => boolean][] = [
   ["Vote", "/vote", (p) => p.startsWith("/vote")],
   ["Forum", "/forum", (p) => p.startsWith("/forum")],
   ["Leaderboard", "/leaderboard", (p) => p.startsWith("/leaderboard")],
-  ["Account", "/account", (p) => p.startsWith("/account")],
+  ["Fund", "/account", (p) => p.startsWith("/account")],
 ];
 
 export default function Nav() {

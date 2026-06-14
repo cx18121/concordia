@@ -123,7 +123,7 @@ export default function PerformanceChart({ endNav = TOTAL_FUND_AUM_USD }: { endN
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-xl font-display font-bold text-text-primary">Performance</h3>
-          <p className="text-sm text-text-subtle">Your Position vs S&amp;P 500</p>
+          <p className="text-sm text-text-subtle">Fund value vs S&amp;P 500</p>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-4">
