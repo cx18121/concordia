@@ -83,14 +83,21 @@ Either way the **contracts and the Chainlink keeper are always live** on Base Se
 
 ## Built with
 
-| Sponsor | What it does here | Why it matters |
-|---|---|---|
-| **Chainlink CRE** | The off-chain keeper that posts prices, re-pegs the pools, scores every vote, and drives the weekly cycle. | The whole fund runs itself. No manual cron, no trusted operator doing the math. |
-| **World ID** | One verified human per account, checked server-side and written on-chain. | Without it the accuracy half of voting power is just farmable with fake accounts. |
-| **Dynamic** | Email login and gas-sponsored embedded wallets. | A judge goes from an email address to verified and voting with no extension and no faucet. |
-| **Uniswap v4** | Real on-chain execution: one pool per stock, gated by a custom KYC hook. | The fund actually trades. The basket is real positions, not a database row. |
+Three sponsor integrations, each doing load-bearing work in the system — here's exactly how.
 
-Plus: Foundry + OpenZeppelin ERC-4626 (the vault), Next.js (the app), Base Sepolia (the chain).
+### Chainlink CRE — the autonomous keeper
+
+A CRE workflow (TypeScript on Bun) posts stock prices and the S&P to the on-chain `PriceOracle`, re-pegs every Uniswap pool to the oracle price each cycle, scores every member's vote against the benchmark, and drives the weekly lifecycle (`IDLE → OPEN → LOCKED → resolve`). The deliberate boundary is the interesting part: **CRE computes the per-member scoring off-chain and hands back fractions; the contracts own all the money math** — pool size from the vault's own NAV, the high-water-mark gate, custody. The keeper can *inform* the fund, never move its money. No cron, no operator doing the arithmetic by hand.
+
+### World ID — one human, one account
+
+IDKit collects the proof in the browser, a Next.js route verifies it server-side against the World ID v4 API, and then an **on-chain attestation marks the wallet verified** — the vault reverts `NotVerified` on a deposit from any unattested wallet (`web/src/app/api/verify`). This is what makes the *accuracy* half of voting power real: without it, anyone could spin up wallets to farm a track record and quietly capture the fund.
+
+### Dynamic — email to on-chain in one step
+
+A new member signs in with an email and Dynamic provisions a **gas-sponsored embedded wallet** — no extension, no faucet, no seed phrase — so they go from an email address to verified-and-voting in a single session. The same `Governance.castVote` rail is how delegated **agents** vote too, through Dynamic server wallets, so a human and the bot it spawns are first-class citizens on identical infrastructure.
+
+Also built with **Uniswap v4** for real execution — one live pool per stock, gated by a custom KYC hook, so the basket is actual positions and not a database row — plus Foundry + OpenZeppelin ERC-4626 (the vault) and Next.js, all on Base Sepolia.
 
 ---
 
