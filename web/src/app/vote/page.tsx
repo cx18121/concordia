@@ -154,7 +154,7 @@ export default function VotePage() {
   const MASK = "•".repeat(28);
 
   return (
-    <div className="wrap">
+    <div className="vote-page">
       <div className="head">
         <div>
           <h1>Cast your vote</h1>
