@@ -7,6 +7,7 @@ import {
   getPosts,
   toggleUpvote,
   voteStock,
+  deletePost,
   subscribe,
   formatTs,
   type Post,
@@ -26,6 +27,7 @@ export default function ForumPage() {
   const { address } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   const reload = useCallback(() => {
     getPosts().then((p) => setPosts([...p]));
@@ -44,6 +46,16 @@ export default function ForumPage() {
   function handleStockVote(e: React.MouseEvent, postId: string, ticker: string, direction: "bullish" | "bearish") {
     e.stopPropagation();
     voteStock(postId, ticker, direction, address ?? "anon");
+  }
+
+  function handleDelete(e: React.MouseEvent, postId: string) {
+    e.stopPropagation();
+    deletePost(postId);
+  }
+
+  function handleEdit(e: React.MouseEvent, post: Post) {
+    e.stopPropagation();
+    setEditingPost(post);
   }
 
   return (
@@ -103,6 +115,25 @@ export default function ForumPage() {
                     <div className="text-xs text-text-subtle/50 mt-1">
                       {formatTs(t.ts)}
                     </div>
+                    {/* Edit / delete — own posts only */}
+                    {t.authorAddress === (address ?? "__none__") && (
+                      <div className="flex items-center gap-2 mt-3">
+                        <button
+                          onClick={(e) => handleEdit(e, t)}
+                          className="flex items-center gap-1 text-text-subtle hover:text-teal transition-colors text-xs font-medium"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">edit</span>
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(e, t.id)}
+                          className="flex items-center gap-1 text-text-subtle hover:text-loss transition-colors text-xs font-medium"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">delete</span>
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Post Body */}
@@ -155,10 +186,20 @@ export default function ForumPage() {
                                 fontWeight: 700,
                               }}
                             >
-                              {/* Ticker label */}
-                              <span style={{ padding: "5px 8px 5px 12px", color: "#f4f7fa", letterSpacing: "0.04em" }}>
-                                {ticker}
-                              </span>
+                              {/* Ticker label — navigates to vote page for non-poster */}
+                              {t.authorAddress !== (address ?? "__none__") ? (
+                                <span
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/vote?add=${ticker}`); }}
+                                  style={{ padding: "5px 8px 5px 12px", color: "#f4f7fa", letterSpacing: "0.04em", cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: "2px" }}
+                                  title={`Vote ${ticker} in your basket`}
+                                >
+                                  {ticker}
+                                </span>
+                              ) : (
+                                <span style={{ padding: "5px 8px 5px 12px", color: "#f4f7fa", letterSpacing: "0.04em" }}>
+                                  {ticker}
+                                </span>
+                              )}
                               {/* Bull vote */}
                               <button
                                 onClick={(e) => handleStockVote(e, t.id, ticker, "bullish")}
@@ -285,6 +326,12 @@ export default function ForumPage() {
       </footer>
 
       {showModal && <NewPostModal onClose={() => setShowModal(false)} />}
+      {editingPost && (
+        <NewPostModal
+          onClose={() => setEditingPost(null)}
+          editPost={editingPost}
+        />
+      )}
     </>
   );
 }

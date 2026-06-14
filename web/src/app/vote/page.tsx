@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import {
   UNIVERSE,
@@ -75,6 +76,7 @@ export default function VotePage() {
   const votingPower = useVotingPower();
   const prices = usePrices(); // bound so the universe reflects live tickers (B7).
   const { castVote, resolveCycle } = useFundActions();
+  const searchParams = useSearchParams();
 
   // --- Allocation form state -------------------------------------------------
   const [alloc, setAlloc] = useState<Pick[]>(SEED_ALLOC);
@@ -108,6 +110,18 @@ export default function VotePage() {
     setAlloc((cur) => [...cur, { ticker, pct: 0 }]);
     setMenuOpen(false);
   }
+
+  // Pre-add a ticker from the ?add= query param (linked from forum stock chips).
+  useEffect(() => {
+    const ticker = searchParams?.get("add")?.toUpperCase().replace(/[^A-Z]/g, "");
+    if (!ticker) return;
+    setAlloc((cur) => {
+      if (cur.some((a) => a.ticker === ticker)) return cur;
+      return [...cur, { ticker, pct: 0 }];
+    });
+  // Only run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Close the "Add stock" menu on any outside click (mirrors the mock).
   useEffect(() => {

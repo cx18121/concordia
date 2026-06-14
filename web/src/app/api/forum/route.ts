@@ -151,6 +151,32 @@ export async function POST(request: Request): Promise<Response> {
       }
       break;
     }
+
+    case "deletePost": {
+      const idx = posts.findIndex((p) => p.id === payload.postId);
+      if (idx >= 0) posts.splice(idx, 1);
+      break;
+    }
+
+    case "updatePost": {
+      const post = posts.find((p) => p.id === payload.postId);
+      if (post) {
+        post.title = payload.title as string;
+        post.body = payload.body as string;
+        post.attachments = (payload.attachments as Attachment[]) ?? post.attachments;
+        const stocks = (payload.stocks as string[]) ?? post.stocks;
+        for (const ticker of stocks) {
+          if (!post.stockVotes[ticker]) {
+            post.stockVotes[ticker] = { bullish: 0, bearish: 0, bullishBy: [], bearishBy: [] };
+          }
+        }
+        for (const ticker of Object.keys(post.stockVotes)) {
+          if (!stocks.includes(ticker)) delete post.stockVotes[ticker];
+        }
+        post.stocks = stocks;
+      }
+      break;
+    }
   }
 
   await save(posts);

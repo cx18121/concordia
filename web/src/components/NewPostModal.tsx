@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createPost, type Attachment } from "@/lib/forum-store";
+import { createPost, updatePost, type Attachment, type Post } from "@/lib/forum-store";
 import { useAuth } from "@/lib/useAuth";
 
 const KNOWN_TICKERS: { ticker: string; name: string }[] = [
@@ -94,12 +94,18 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-export default function NewPostModal({ onClose }: { onClose: () => void }) {
+export default function NewPostModal({
+  onClose,
+  editPost,
+}: {
+  onClose: () => void;
+  editPost?: Post;
+}) {
   const { address } = useAuth();
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [stocks, setStocks] = useState<string[]>([]);
+  const [title, setTitle] = useState(editPost?.title ?? "");
+  const [body, setBody] = useState(editPost?.body ?? "");
+  const [attachments, setAttachments] = useState<Attachment[]>(editPost?.attachments ?? []);
+  const [stocks, setStocks] = useState<string[]>(editPost?.stocks ?? []);
   const [tickerInput, setTickerInput] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [fileError, setFileError] = useState("");
@@ -157,19 +163,28 @@ export default function NewPostModal({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     if (!title.trim() || !body.trim()) return;
     setSubmitting(true);
-    await createPost({
-      author: "You",
-      authorAddress: address ?? "0xAnon",
-      kind: "Human",
-      avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${address ?? "anon"}`,
-      acc: "—",
-      accColor: "text-text-muted",
-      vp: "—",
-      title: title.trim(),
-      body: body.trim(),
-      attachments,
-      stocks,
-    });
+    if (editPost) {
+      await updatePost(editPost.id, {
+        title: title.trim(),
+        body: body.trim(),
+        attachments,
+        stocks,
+      });
+    } else {
+      await createPost({
+        author: "You",
+        authorAddress: address ?? "0xAnon",
+        kind: "Human",
+        avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${address ?? "anon"}`,
+        acc: "—",
+        accColor: "text-text-muted",
+        vp: "—",
+        title: title.trim(),
+        body: body.trim(),
+        attachments,
+        stocks,
+      });
+    }
     onClose();
   }
 
@@ -217,7 +232,7 @@ export default function NewPostModal({ onClose }: { onClose: () => void }) {
           }}
         >
           <h2 style={{ color: "#f4f7fa", fontSize: "17px", fontWeight: 700, fontFamily: "Outfit, sans-serif", margin: 0 }}>
-            New thesis
+            {editPost ? "Edit thesis" : "New thesis"}
           </h2>
           <button
             onClick={onClose}
@@ -508,7 +523,7 @@ export default function NewPostModal({ onClose }: { onClose: () => void }) {
                   letterSpacing: "0.03em",
                 }}
               >
-                Post thesis
+                {editPost ? "Save changes" : "Post thesis"}
               </button>
             </div>
           </div>

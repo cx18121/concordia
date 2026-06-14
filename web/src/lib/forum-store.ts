@@ -291,6 +291,19 @@ export async function voteStock(
   notify();
 }
 
+export async function deletePost(postId: string): Promise<void> {
+  await apiFetch({ action: "deletePost", postId });
+  notify();
+}
+
+export async function updatePost(
+  postId: string,
+  data: { title: string; body: string; attachments: Attachment[]; stocks: string[] },
+): Promise<void> {
+  await apiFetch({ action: "updatePost", postId, ...data });
+  notify();
+}
+
 export async function addComment(
   postId: string,
   data: { author: string; authorAddress: string; body: string },
