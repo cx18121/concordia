@@ -12,6 +12,7 @@ import { AuthContext } from "./auth-context";
 import {
   DynamicContextProvider,
   useDynamicContext,
+  overrideNetworkRpcUrl,
 } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
 import { CHAIN_ID } from "@concordia/shared";
@@ -26,6 +27,12 @@ import WorldIDVerify from "@/components/WorldIDVerify";
 const DEV_BYPASS =
   process.env.NODE_ENV !== "production" &&
   process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
+
+// Dynamic's embedded wallet broadcasts via the network's default RPC; Base Sepolia's
+// public RPC (sepolia.base.org) returns 403 for browser traffic, so override it with a
+// reliable endpoint. publicnode is the keyless fallback when no env RPC is set.
+const WRITE_RPC_URL =
+  process.env.NEXT_PUBLIC_RPC_URL ?? "https://base-sepolia-rpc.publicnode.com";
 
 const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
 if (!environmentId || environmentId === "REPLACE_ME") {
@@ -158,6 +165,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // until a real id is set (see the warning above).
         environmentId: environmentId || "MISSING_DYNAMIC_ENV_ID",
         walletConnectors: [EthereumWalletConnectors],
+        overrides: {
+          // Point Base Sepolia at a working RPC so the embedded wallet can broadcast
+          // (the default sepolia.base.org 403s in-browser).
+          evmNetworks: (networks) =>
+            overrideNetworkRpcUrl(networks, { [String(CHAIN_ID)]: [WRITE_RPC_URL] }),
+        },
         events: {
           // Fires whenever the auth modal closes (success or cancel). Unblocks login().
           onAuthFlowClose: () => {
