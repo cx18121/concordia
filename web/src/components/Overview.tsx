@@ -571,7 +571,12 @@ export default function Overview() {
       const holdReset = $("holdings");
       if (holdReset) holdReset.innerHTML = "";
     };
-  }, []);
+    // Re-run when the viewer's position loads/changes: the hero number + chart are
+    // drawn imperatively from positionRef at effect-run time, so without this they
+    // freeze at the $0 mount value even after the position poll returns. Cleanup above
+    // is exhaustive, so re-running rebinds safely. navUsd is stable between polls, so
+    // this only fires on a real change (deposit, cycle resolve), not every poll tick.
+  }, [position.navUsd, position.costUsd]);
 
   return (
     <>
