@@ -188,10 +188,6 @@ export default function VotePage() {
   const [revealed, setRevealed] = useState(false);
   const [genLabel, setGenLabel] = useState("Generate API key");
   const [apiActive, setApiActive] = useState(false); // true once a real key is minted
-  // origin for the curl example — read once at init (only rendered once apiActive).
-  const [origin] = useState(() =>
-    typeof window !== "undefined" ? window.location.origin : "",
-  );
   const [apiNote, setApiNote] = useState<string | null>(null);
   const lastApiVoteRef = useRef<number | null>(null);
 
@@ -522,27 +518,6 @@ export default function VotePage() {
                 Save it now. The key is shown once and cannot be retrieved later.
               </div>
 
-              <div className="keyl" style={{ marginTop: 16 }}>
-                Place a vote
-              </div>
-              <pre
-                style={{
-                  margin: 0,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: "rgba(0,0,0,.28)",
-                  border: "1px solid var(--hair)",
-                  font: "500 11px/1.55 ui-monospace,Menlo,monospace",
-                  color: "var(--muted)",
-                  whiteSpace: "pre-wrap",
-                  overflowWrap: "anywhere",
-                }}
-              >
-{`curl -X POST ${origin}/api/agent/vote \\
-  -H "Authorization: Bearer ${secret}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"picks":[{"ticker":"NVDA","pct":60},{"ticker":"MSFT","pct":40}]}'`}
-              </pre>
               {apiNote && (
                 <div
                   className="confirm"
