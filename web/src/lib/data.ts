@@ -23,6 +23,7 @@ import { useAuth } from "./useAuth";
 import { useIsMock } from "./mode";
 import {
   publicClient,
+  UNIVERSE,
   getCycle as scGetCycle,
   getPrices as scGetPrices,
   getPosition as scGetPosition,
@@ -80,17 +81,10 @@ export interface LeaderboardRow {
   accuracy: number;
 }
 
-// The votable universe — B5's vote page binds to this. A UI subset of ~8.
-export const UNIVERSE = [
-  "AAPL",
-  "MSFT",
-  "NVDA",
-  "GOOGL",
-  "AMZN",
-  "META",
-  "TSLA",
-  "JPM",
-] as const;
+// The votable universe is the single source of truth in @concordia/shared (18
+// assets) — the same set the keeper re-pegs and the deploy seeds, so the UI never
+// drifts from what's on-chain. Re-exported so pages keep importing it from here.
+export { UNIVERSE };
 
 export type Ticker = (typeof UNIVERSE)[number];
 
@@ -111,6 +105,16 @@ const SEED_PRICES: Record<Ticker, number> = {
   META: 591.08,
   TSLA: 342.19,
   JPM: 248.73,
+  XOM: 114.2,
+  UNH: 492.1,
+  WMT: 67.34,
+  SPY: 543.12,
+  QQQ: 470.55,
+  XLK: 231.4,
+  XLF: 41.2,
+  XLE: 91.85,
+  XLV: 145.3,
+  ARKK: 46.1,
 };
 
 // Resolved prices the dev trigger flips to — drives the NAV bump on resolve.
@@ -123,6 +127,16 @@ const RESOLVED_PRICES: Record<Ticker, number> = {
   META: 604.5,
   TSLA: 333.0,
   JPM: 251.1,
+  XOM: 117.0,
+  UNH: 498.5,
+  WMT: 69.1,
+  SPY: 551.8,
+  QQQ: 478.2,
+  XLK: 236.0,
+  XLF: 41.9,
+  XLE: 94.2,
+  XLV: 147.0,
+  ARKK: 47.8,
 };
 
 // Cycle window: a few minutes out so the countdown is visibly running.

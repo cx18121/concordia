@@ -21,7 +21,10 @@ import { DEMO_TIMING } from "../src/core/cycle.ts";
 const sleep = (sec: number) => new Promise((r) => setTimeout(r, sec * 1000));
 const log = (m: string) => console.log(`[${new Date().toISOString()}] ${m}`);
 
-const DEFAULT_POOLS = ["AAPL", "NVDA", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "JPM"];
+// Re-peg the whole universe by default — the same 18 the deploy seeds + the fixture
+// covers — so every votable asset's pool stays aligned with the oracle. Override with
+// POOL_ASSETS only to trim for speed (see note in run() about per-cycle tx cost).
+const DEFAULT_POOLS = [...UNIVERSE];
 
 async function loadFixture(): Promise<ReplayFixture> {
   const f = Bun.file(new URL("../fixtures/replay.json", import.meta.url));

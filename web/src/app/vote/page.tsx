@@ -36,6 +36,16 @@ const COMPANY: Record<string, string> = {
   META: "Meta",
   TSLA: "Tesla",
   JPM: "JPMorgan",
+  XOM: "ExxonMobil",
+  UNH: "UnitedHealth",
+  WMT: "Walmart",
+  SPY: "S&P 500 ETF",
+  QQQ: "Nasdaq 100 ETF",
+  XLK: "Tech Sector",
+  XLF: "Financials Sector",
+  XLE: "Energy Sector",
+  XLV: "Health Care Sector",
+  ARKK: "ARK Innovation",
 };
 
 // Seed basket mirrors the mock's initial weights, on OUR plain tickers.
