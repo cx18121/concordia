@@ -1,8 +1,16 @@
 import express, { type Request, type Response } from "express";
 import { InMemoryKeyStore } from "./keys.js";
 import { authMiddleware, requireScope } from "./auth.js";
-import { LocalGovernance, toAllocations, VoteValidationError, type GovernanceAdapter } from "./governance.js";
+import {
+  LocalGovernance,
+  OnChainGovernance,
+  toAllocations,
+  VoteValidationError,
+  VoteCycleError,
+  type GovernanceAdapter,
+} from "./governance.js";
 import { clock, universeWithPrices, accountFor } from "./state.js";
+import { ONCHAIN, realCycle, signerAddress } from "./chain.js";
 
 /**
  * Bot voting API (Alpaca-style). A user's bot authenticates with a key+secret issued in the UI
@@ -25,7 +33,8 @@ const PORT = Number(process.env.PORT ?? 8787);
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "dev-admin-token";
 
 const keys = new InMemoryKeyStore();
-const gov: GovernanceAdapter = new LocalGovernance();
+// On-chain when BOT_SIGNER_PK is set (real Governance.castVote txs); in-memory sim otherwise.
+const gov: GovernanceAdapter = ONCHAIN ? new OnChainGovernance() : new LocalGovernance();
 const lastVote = new Map<string, { allocs: { asset: string; weightBps: number }[]; cycle: number; txHash: string; at: string }>();
 
 const app = express();
@@ -72,7 +81,9 @@ app.delete("/v1/keys/:keyId", requireAdmin, (req, res) => {
 });
 
 /* ── Public reads ───────────────────────────────────────── */
-app.get("/v1/clock", (_req, res) => res.json(clock()));
+app.get("/v1/clock", async (_req, res) =>
+  res.json(ONCHAIN ? { ...clock(), ...(await realCycle()), onchain: true } : clock()),
+);
 app.get("/v1/universe", (_req, res) => res.json({ assets: universeWithPrices() }));
 
 /* ── Authenticated bot routes ───────────────────────────── */
@@ -80,19 +91,24 @@ app.use("/v1/account", authMiddleware(keys));
 app.get("/v1/account", (req, res) => res.json(accountFor(req.apiKey!.wallet)));
 
 app.use("/v1/cycle", authMiddleware(keys));
-app.get("/v1/cycle", (req, res) => {
-  const c = clock();
+app.get("/v1/cycle", async (req, res) => {
+  const c = ONCHAIN ? { ...clock(), ...(await realCycle()), onchain: true } : clock();
   const mine = lastVote.get(req.apiKey!.wallet) ?? null;
   res.json({ ...c, myVote: mine });
 });
 
 app.use("/v1/votes", authMiddleware(keys), requireScope("vote"));
 app.post("/v1/votes", async (req, res) => {
-  const c = clock();
-  if (!c.isOpen) {
+  // Gate on the real cycle when on-chain (the sim clock would be wrong); else the in-memory clock.
+  const sim = clock();
+  const cycleNum = ONCHAIN ? (await realCycle()).cycle : sim.cycle;
+  const isOpen = ONCHAIN ? (await realCycle()).isOpen : sim.isOpen;
+  if (!isOpen) {
     return res.status(409).json({
       code: 40910000,
-      message: `voting is closed for cycle ${c.cycle}; next opens in ${Math.ceil(c.nextCycleInMs / 1000)}s`,
+      message: ONCHAIN
+        ? `on-chain cycle ${cycleNum} is not OPEN — wait for the next voting window`
+        : `voting is closed for cycle ${sim.cycle}; next opens in ${Math.ceil(sim.nextCycleInMs / 1000)}s`,
     });
   }
   try {
@@ -100,19 +116,22 @@ app.post("/v1/votes", async (req, res) => {
     const { txHash } = await gov.castVote(req.apiKey!.wallet, allocs);
     const record = {
       allocs: (req.body?.allocations ?? req.body) as { asset: string; weightBps: number }[],
-      cycle: c.cycle,
+      cycle: cycleNum,
       txHash,
       at: new Date().toISOString(),
     };
     lastVote.set(req.apiKey!.wallet, record);
-    console.log(`  vote: ${req.apiKey!.wallet} cycle ${c.cycle} → ${txHash}`);
-    res.status(201).json({ status: "accepted", cycle: c.cycle, txHash, allocations: allocs });
+    console.log(`  vote: ${req.apiKey!.wallet} cycle ${cycleNum} → ${txHash}`);
+    res.status(201).json({ status: "accepted", cycle: cycleNum, txHash, allocations: allocs });
   } catch (e) {
     if (e instanceof VoteValidationError) {
       return res.status(400).json({ code: 40010001, message: e.message });
     }
+    if (e instanceof VoteCycleError) {
+      return res.status(409).json({ code: 40910001, message: e.message });
+    }
     console.error(e);
-    res.status(500).json({ code: 50000000, message: "internal error" });
+    res.status(500).json({ code: 50000000, message: (e as Error)?.message ?? "internal error" });
   }
 });
 
@@ -122,6 +141,12 @@ app.use((_req, res) => res.status(404).json({ code: 40400000, message: "not foun
 app.listen(PORT, () => {
   console.log(`bot-api listening on http://localhost:${PORT}`);
   console.log(`admin token: ${ADMIN_TOKEN}  (set ADMIN_TOKEN to override)`);
+  if (ONCHAIN) {
+    console.log(`mode: ON-CHAIN — votes are real Governance.castVote txs`);
+    console.log(`bot signer: ${signerAddress()}  (must be verified + funded + deposited)`);
+  } else {
+    console.log(`mode: SIM (in-memory) — set BOT_SIGNER_PK to vote on-chain`);
+  }
 });
 
 export { app, keys, gov };

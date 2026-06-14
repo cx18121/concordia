@@ -3,6 +3,7 @@
  * `asset` is the bytes32 key used on-chain by Governance.castVote; the contract uses the same
  * convention. Interfaces stay identical to real Dinari/xStocks tokens for a mainnet drop-in.
  */
+import { tickerToBytes32 } from "@concordia/shared";
 
 export const UNIVERSE = [
   { ticker: "mNVDA", name: "Nvidia" },
@@ -22,8 +23,12 @@ export function isTicker(t: string): t is Ticker {
   return TICKERS.has(t as Ticker);
 }
 
-/** Encode a ticker as bytes32 (right-padded hex) — matches the on-chain key. */
+/**
+ * Encode a ticker as the on-chain asset key. The contracts register assets as
+ * `bytes32(bytes("NVDA"))` (no "m" prefix — that's only the mock-token name), so we strip the
+ * leading "m" and reuse shared's exact encoding. This is the key Governance.castVote expects;
+ * getting it wrong reverts with UnknownAsset.
+ */
 export function toBytes32(ticker: string): `0x${string}` {
-  const hex = Buffer.from(ticker, "utf8").toString("hex");
-  return ("0x" + hex.padEnd(64, "0")) as `0x${string}`;
+  return tickerToBytes32(ticker.replace(/^m/, ""));
 }

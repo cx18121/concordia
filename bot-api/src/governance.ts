@@ -61,23 +61,24 @@ export class LocalGovernance implements GovernanceAdapter {
   }
 }
 
+/** Raised when a vote arrives while the on-chain cycle isn't OPEN (maps to HTTP 409). */
+export class VoteCycleError extends Error {}
+
 /**
- * On-chain adapter — routes to Governance.castVote on Base Sepolia. Flip this on once contracts
- * deploy. The contract requires the caller to be a verified member; for delegated bot votes the
- * server signs with the member's Dynamic server wallet bound to the API key.
- *
- *   await walletClient.writeContract({
- *     address: GOVERNANCE_ADDRESS,
- *     abi: GovernanceAbi,
- *     functionName: "castVote",
- *     args: [allocs],
- *   });
+ * On-chain adapter — routes to the real Governance.castVote on Base Sepolia via the bot's signer
+ * (@concordia/shared, the same SDK the web's Live mode uses). The contract requires the caller to
+ * be a verified, deposited member and the cycle to be OPEN; we pre-check the phase so a closed
+ * cycle returns a clear 409 instead of a raw revert. The signer is owned by the server (set via
+ * BOT_SIGNER_PK) — Alpaca-style custodial: a key can vote, never withdraw.
  */
 export class OnChainGovernance implements GovernanceAdapter {
-  constructor(private governanceAddress: `0x${string}`) {}
   async castVote(_wallet: `0x${string}`, allocs: OnchainAlloc[]): Promise<{ txHash: string }> {
-    throw new Error(
-      `OnChainGovernance not wired yet — would call castVote(${JSON.stringify(allocs)}) on ${this.governanceAddress}.`
-    );
+    const { realCycle, castVoteOnchain } = await import("./chain.js");
+    const c = await realCycle();
+    if (!c.isOpen) {
+      throw new VoteCycleError(`on-chain cycle ${c.cycle} is ${c.phase}, not OPEN — try again when it opens`);
+    }
+    const txHash = await castVoteOnchain(allocs as { asset: `0x${string}`; weightBps: number }[]);
+    return { txHash };
   }
 }
