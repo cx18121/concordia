@@ -103,13 +103,24 @@ export class ViemChainAdapter {
     await this.send("lockCycle", addresses.governance, governanceKeeperAbi, "lockCycle", []);
   }
 
-  /** Re-peg every pool toward the oracle price we just posted (CRE plays the arbitrageur). */
+  /** Re-peg every pool toward the oracle price we just posted (CRE plays the arbitrageur).
+   *  Broadcasts all repegs back-to-back with explicit sequential nonces (each submit is fast),
+   *  then waits for every receipt in parallel — so N pools cost ~one block of wall-time, not N
+   *  receipt-waits. Broadcasting in nonce order means a mid-list failure leaves no nonce gap
+   *  (lower-nonce txs still mine; nothing higher was sent), so the heartbeat can just retry. */
   async repegPools(poolAssets: readonly string[], snap: PriceSnapshot): Promise<void> {
-    for (const t of poolAssets) {
-      const target = snap.pricesE8[t];
-      if (target === undefined) continue;
-      await this.send(`repeg ${t}`, addresses.executor, executorKeeperAbi, "repeg", [tickerToBytes32(t), target]);
+    const items = poolAssets
+      .map((t) => ({ t, target: snap.pricesE8[t] }))
+      .filter((x): x is { t: string; target: bigint } => x.target !== undefined);
+    if (items.length === 0) return;
+
+    let nonce = await this.pub.getTransactionCount({ address: this.keeper, blockTag: "pending" });
+    const pending: { label: string; hash: `0x${string}` }[] = [];
+    for (const { t, target } of items) {
+      const hash = await this.broadcast(addresses.executor, executorKeeperAbi, "repeg", [tickerToBytes32(t), target], nonce++);
+      pending.push({ label: `repeg ${t}`, hash });
     }
+    await Promise.all(pending.map((p) => this.awaitReceipt(p.label, p.hash)));
   }
 
   async resolveCycle(out: ResolveOutput): Promise<void> {
@@ -120,9 +131,19 @@ export class ViemChainAdapter {
   }
 
   private async send(label: string, address: `0x${string}`, abi: any, fn: string, args: any[]): Promise<void> {
-    const hash = await this.wallet.writeContract({
+    await this.awaitReceipt(label, await this.broadcast(address, abi, fn, args));
+  }
+
+  /** Submit a tx and return its hash (does NOT wait for mining). `nonce` lets the caller
+   *  pipeline several txs without per-tx nonce-fetch races. */
+  private broadcast(address: `0x${string}`, abi: any, fn: string, args: any[], nonce?: number): Promise<`0x${string}`> {
+    return this.wallet.writeContract({
       address, abi, functionName: fn, args, account: this.wallet.account!, chain: this.wallet.chain,
+      ...(nonce !== undefined ? { nonce } : {}),
     });
+  }
+
+  private async awaitReceipt(label: string, hash: `0x${string}`): Promise<void> {
     const rcpt = await this.pub.waitForTransactionReceipt({ hash });
     if (rcpt.status !== "success") throw new Error(`${label} reverted (tx ${hash})`);
   }
