@@ -14,6 +14,7 @@ import {
   useDynamicContext,
 } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
+import { CHAIN_ID } from "@concordia/shared";
 import type { WalletClient } from "viem";
 import type { AuthState } from "./auth-types";
 import WorldIDVerify from "@/components/WorldIDVerify";
@@ -113,7 +114,11 @@ function AuthBridge({
   const getWalletClient = useCallback(async (): Promise<WalletClient | null> => {
     if (!primaryWallet || !isEthereumWallet(primaryWallet)) return null;
     try {
-      return await primaryWallet.getWalletClient();
+      // Dynamic's embedded wallet can default to Ethereum mainnet; pin it to Base
+      // Sepolia so writes target our deployed contracts instead of falling back to
+      // the mainnet public RPC. Switch is best-effort; bind the client to the chain.
+      await primaryWallet.switchNetwork(CHAIN_ID).catch(() => {});
+      return await primaryWallet.getWalletClient(String(CHAIN_ID));
     } catch {
       return null;
     }
