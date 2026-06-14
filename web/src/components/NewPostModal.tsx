@@ -4,6 +4,85 @@ import { useRef, useState } from "react";
 import { createPost, type Attachment } from "@/lib/forum-store";
 import { useAuth } from "@/lib/useAuth";
 
+const KNOWN_TICKERS: { ticker: string; name: string }[] = [
+  { ticker: "AAPL", name: "Apple" },
+  { ticker: "MSFT", name: "Microsoft" },
+  { ticker: "NVDA", name: "NVIDIA" },
+  { ticker: "META", name: "Meta Platforms" },
+  { ticker: "GOOGL", name: "Alphabet" },
+  { ticker: "AMZN", name: "Amazon" },
+  { ticker: "TSLA", name: "Tesla" },
+  { ticker: "JPM", name: "JPMorgan Chase" },
+  { ticker: "V", name: "Visa" },
+  { ticker: "MA", name: "Mastercard" },
+  { ticker: "UNH", name: "UnitedHealth" },
+  { ticker: "XOM", name: "ExxonMobil" },
+  { ticker: "JNJ", name: "Johnson & Johnson" },
+  { ticker: "PG", name: "Procter & Gamble" },
+  { ticker: "HD", name: "Home Depot" },
+  { ticker: "AVGO", name: "Broadcom" },
+  { ticker: "LLY", name: "Eli Lilly" },
+  { ticker: "MRK", name: "Merck" },
+  { ticker: "CVX", name: "Chevron" },
+  { ticker: "ABBV", name: "AbbVie" },
+  { ticker: "KO", name: "Coca-Cola" },
+  { ticker: "PEP", name: "PepsiCo" },
+  { ticker: "BAC", name: "Bank of America" },
+  { ticker: "MCD", name: "McDonald's" },
+  { ticker: "COST", name: "Costco" },
+  { ticker: "WMT", name: "Walmart" },
+  { ticker: "DIS", name: "Disney" },
+  { ticker: "NFLX", name: "Netflix" },
+  { ticker: "ADBE", name: "Adobe" },
+  { ticker: "CRM", name: "Salesforce" },
+  { ticker: "INTC", name: "Intel" },
+  { ticker: "AMD", name: "AMD" },
+  { ticker: "QCOM", name: "Qualcomm" },
+  { ticker: "TXN", name: "Texas Instruments" },
+  { ticker: "ORCL", name: "Oracle" },
+  { ticker: "IBM", name: "IBM" },
+  { ticker: "GS", name: "Goldman Sachs" },
+  { ticker: "MS", name: "Morgan Stanley" },
+  { ticker: "WFC", name: "Wells Fargo" },
+  { ticker: "C", name: "Citigroup" },
+  { ticker: "BLK", name: "BlackRock" },
+  { ticker: "PYPL", name: "PayPal" },
+  { ticker: "SQ", name: "Block" },
+  { ticker: "COIN", name: "Coinbase" },
+  { ticker: "HOOD", name: "Robinhood" },
+  { ticker: "PLTR", name: "Palantir" },
+  { ticker: "SNOW", name: "Snowflake" },
+  { ticker: "DDOG", name: "Datadog" },
+  { ticker: "CRWD", name: "CrowdStrike" },
+  { ticker: "NET", name: "Cloudflare" },
+  { ticker: "ZS", name: "Zscaler" },
+  { ticker: "UBER", name: "Uber" },
+  { ticker: "ABNB", name: "Airbnb" },
+  { ticker: "SHOP", name: "Shopify" },
+  { ticker: "MELI", name: "MercadoLibre" },
+  { ticker: "SPOT", name: "Spotify" },
+  { ticker: "NKE", name: "Nike" },
+  { ticker: "SBUX", name: "Starbucks" },
+  { ticker: "TGT", name: "Target" },
+  { ticker: "AMGN", name: "Amgen" },
+  { ticker: "GILD", name: "Gilead" },
+  { ticker: "VRTX", name: "Vertex" },
+  { ticker: "REGN", name: "Regeneron" },
+  { ticker: "PFE", name: "Pfizer" },
+  { ticker: "F", name: "Ford" },
+  { ticker: "GM", name: "General Motors" },
+  { ticker: "GE", name: "GE Aerospace" },
+  { ticker: "BA", name: "Boeing" },
+  { ticker: "CAT", name: "Caterpillar" },
+  { ticker: "LMT", name: "Lockheed Martin" },
+  { ticker: "RTX", name: "RTX Corp" },
+  { ticker: "SPY", name: "S&P 500 ETF" },
+  { ticker: "QQQ", name: "Nasdaq ETF" },
+  { ticker: "GLD", name: "Gold ETF" },
+  { ticker: "BTC", name: "Bitcoin" },
+  { ticker: "ETH", name: "Ethereum" },
+];
+
 const MAX_FILE_BYTES = 3 * 1024 * 1024;
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -22,19 +101,37 @@ export default function NewPostModal({ onClose }: { onClose: () => void }) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [stocks, setStocks] = useState<string[]>([]);
   const [tickerInput, setTickerInput] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [fileError, setFileError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const tickerRef = useRef<HTMLInputElement>(null);
 
-  function addTicker() {
-    const t = tickerInput.trim().toUpperCase().replace(/[^A-Z]/g, "");
+  const suggestions = tickerInput.trim().length > 0
+    ? KNOWN_TICKERS.filter(
+        (k) =>
+          (k.ticker.startsWith(tickerInput.trim().toUpperCase()) ||
+            k.name.toLowerCase().includes(tickerInput.trim().toLowerCase())) &&
+          !stocks.includes(k.ticker),
+      ).slice(0, 8)
+    : [];
+
+  function addTicker(ticker?: string) {
+    const t = (ticker ?? tickerInput).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (!t || stocks.includes(t) || stocks.length >= 6) return;
     setStocks((prev) => [...prev, t]);
     setTickerInput("");
+    setDropdownOpen(false);
+    tickerRef.current?.focus();
   }
 
   function removeTicker(ticker: string) {
     setStocks((prev) => prev.filter((s) => s !== ticker));
+  }
+
+  function handleTickerKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") { e.preventDefault(); addTicker(); }
+    if (e.key === "Escape") setDropdownOpen(false);
   }
 
   async function handleFiles(files: FileList | null) {
@@ -182,56 +279,82 @@ export default function NewPostModal({ onClose }: { onClose: () => void }) {
               onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
             />
 
-            {/* Stock picker */}
+            {/* Stock picker with autocomplete */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <div style={{ position: "relative", flex: 1 }}>
-                  <span className="material-symbols-outlined" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9aa7b4", fontSize: "18px", pointerEvents: "none" }}>
-                    show_chart
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Add stock ticker (e.g. NVDA)"
-                    value={tickerInput}
-                    onChange={(e) => setTickerInput(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTicker())}
-                    maxLength={6}
-                    style={{
-                      width: "100%",
-                      background: "rgba(255,255,255,0.06)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      borderRadius: "12px",
-                      padding: "10px 12px 10px 38px",
-                      color: "#f4f7fa",
-                      fontSize: "13px",
-                      fontFamily: "Inter, sans-serif",
-                      outline: "none",
-                      boxSizing: "border-box",
-                    }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(45,212,191,0.5)")}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={addTicker}
-                  disabled={!tickerInput.trim() || stocks.length >= 6}
+              <div style={{ position: "relative" }}>
+                <span className="material-symbols-outlined" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9aa7b4", fontSize: "18px", pointerEvents: "none", zIndex: 1 }}>
+                  show_chart
+                </span>
+                <input
+                  ref={tickerRef}
+                  type="text"
+                  placeholder="Add stock ticker — type to search (e.g. NVDA, Apple…)"
+                  value={tickerInput}
+                  onChange={(e) => { setTickerInput(e.target.value.toUpperCase()); setDropdownOpen(true); }}
+                  onKeyDown={handleTickerKeyDown}
+                  onFocus={() => setDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setDropdownOpen(false), 120)}
+                  maxLength={10}
+                  disabled={stocks.length >= 6}
                   style={{
-                    background: "rgba(45,212,191,0.15)",
-                    border: "1px solid rgba(45,212,191,0.3)",
-                    borderRadius: "10px",
-                    padding: "10px 16px",
-                    color: "#2dd4bf",
+                    width: "100%",
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: dropdownOpen && suggestions.length > 0 ? "12px 12px 0 0" : "12px",
+                    padding: "10px 12px 10px 38px",
+                    color: "#f4f7fa",
                     fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: !tickerInput.trim() || stocks.length >= 6 ? "not-allowed" : "pointer",
-                    opacity: !tickerInput.trim() || stocks.length >= 6 ? 0.4 : 1,
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
+                    fontFamily: "Inter, sans-serif",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    opacity: stocks.length >= 6 ? 0.4 : 1,
                   }}
-                >
-                  Add
-                </button>
+                  onFocusCapture={(e) => (e.currentTarget.style.borderColor = "rgba(45,212,191,0.5)")}
+                  onBlurCapture={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
+                />
+                {/* Dropdown */}
+                {dropdownOpen && suggestions.length > 0 && (
+                  <div style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    right: 0,
+                    background: "#0f1923",
+                    border: "1px solid rgba(45,212,191,0.3)",
+                    borderTop: "none",
+                    borderRadius: "0 0 12px 12px",
+                    overflow: "hidden",
+                    zIndex: 10,
+                    boxShadow: "0 12px 32px rgba(0,0,0,0.6)",
+                  }}>
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={s.ticker}
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); addTicker(s.ticker); }}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "9px 14px",
+                          background: "none",
+                          border: "none",
+                          borderTop: i > 0 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                          cursor: "pointer",
+                          textAlign: "left",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(45,212,191,0.08)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                      >
+                        <span style={{ color: "#2dd4bf", fontSize: "12px", fontWeight: 700, fontFamily: "Inter, monospace", minWidth: "48px", letterSpacing: "0.04em" }}>
+                          {s.ticker}
+                        </span>
+                        <span style={{ color: "#9aa7b4", fontSize: "12px" }}>{s.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               {stocks.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>

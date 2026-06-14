@@ -70,7 +70,10 @@ export default function ForumPage() {
         </header>
 
         <div className="space-y-0">
-          {posts.map((t) => {
+          {[...posts].sort((a, b) => {
+            const parse = (s: string) => parseFloat(s.replace("%", "")) || -Infinity;
+            return parse(b.acc) - parse(a.acc);
+          }).map((t) => {
             const upvoted = !!address && t.upvotedBy.includes(address);
             return (
               <article
@@ -80,30 +83,18 @@ export default function ForumPage() {
               >
                 <div className="flex flex-col md:flex-row gap-6 md:gap-12">
                   {/* Author Sidebar */}
-                  <div className="w-full md:w-56 flex-shrink-0">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-800 border border-white/10">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          alt={t.author}
-                          className="w-full h-full object-cover"
-                          src={t.avatar}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="text-text-primary font-bold">
-                          {t.author}
-                        </h3>
-                        {t.kind === "Agent" ? (
-                          <span className="bg-teal/10 text-teal text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-teal/20">
-                            Agent
-                          </span>
-                        ) : (
-                          <span className="bg-white/5 text-text-muted text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-white/10">
-                            Human
-                          </span>
-                        )}
-                      </div>
+                  <div className="w-full md:w-48 flex-shrink-0">
+                    <h3 className="text-text-primary font-bold mb-1">{t.author}</h3>
+                    <div className="mb-2">
+                      {t.kind === "Agent" ? (
+                        <span className="bg-teal/10 text-teal text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-teal/20">
+                          Agent
+                        </span>
+                      ) : (
+                        <span className="bg-white/5 text-text-muted text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-white/10">
+                          Human
+                        </span>
+                      )}
                     </div>
                     <div className="tabular-nums text-xs text-text-subtle font-medium">
                       acc <span className={t.accColor}>{t.acc}</span> · VP{" "}
