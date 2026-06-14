@@ -23,14 +23,14 @@ These unblock everything else. Do them first, together.
 
 - [x] Monorepo scaffolded: `contracts/` (Foundry v4-template, compiles), `keeper/` + `agents/` (stubs), `web/` (Next.js), `shared/` (@concordia/shared SDK)
 - [x] **Solidity interfaces frozen** (`IPriceOracle`, `IFundVault`, `IGovernance`, `IUniswapExecutor` in `contracts/src/interfaces/`) — the contract between workstreams; change only by team agreement + note in ISSUES.md. *(ABIs generate at `forge build` after init.)*
-- [ ] Accounts & keys:
-  - [ ] Chainlink CRE account + **request deployment access NOW** (lead time; local simulation is the fallback)
-  - [ ] World developer portal: `app_id` + action created (one for verify, one for agent linking)
-  - [ ] Dynamic environment ID created, test login works
-  - [ ] Install **Bun ≥1.2.21** (the CRE TS SDK runs on Bun, not Node) + the CRE CLI
-  - [ ] Price API needs **no key** — Yahoo Finance v8 (ISSUES #1). Pull the 12-week historical fixture once and commit it (one URL/ticker, S&P = `%5EGSPC`).
-  - [ ] **Contract deploy creds** (unblocks deploying B's execution stack + all contracts, ISSUES #17): `BASE_SEPOLIA_RPC_URL` (Alchemy/Coinbase), a funded deployer private key, `ETHERSCAN_API_KEY` (Basescan, for `--verify`). `foundry.toml` already reads these; then `forge script script/04_DeployExecution.s.sol --tc DeployExecutionScript --rpc-url base_sepolia --private-key $PK --broadcast --verify` and paste the logged addresses into `shared/src/addresses.ts`.
-- [ ] Base Sepolia ETH in every dev wallet (Coinbase/Alchemy faucets) + a funded backend "drip" wallet for judge onboarding (ISSUES #11)
+- [x] Accounts & keys:
+  - [x] Chainlink CRE account + `cre login` — local `simulate --broadcast` is the sanctioned path (writes real testnet txs); DON deploy optional (ISSUES #5)
+  - [x] World developer portal: `app_id` + action created
+  - [x] Dynamic environment ID created
+  - [x] Install **Bun ≥1.2.21** (the CRE TS SDK runs on Bun, not Node) + the CRE CLI
+  - [x] Price API needs **no key** — Yahoo Finance v8 (ISSUES #1). 18-ticker historical fixture pulled + committed (`keeper/fixtures/replay.json`).
+  - [x] **Contract deploy creds** — deployed to Base Sepolia; addresses in `shared/src/addresses.ts`.
+- [ ] Base Sepolia ETH funding: the admin/keeper wallet (`0x07bEd…`) needs ~0.05–0.1 ETH for keeper gas + user-gas drips. New-user gas is auto-handled (CDP faucet via `/api/verify`, or admin-transfer fallback). *(Wallet currently runs low — top up once via the CDP faucet UI.)*
 - [x] Deploy **mock USDC** with a public `mint()` (decided, ISSUES #2) — doubles as the "get demo USDC" button (`src/mocks/MockERC20.sol`, configurable decimals)
 
 ---
@@ -56,41 +56,41 @@ Standalone `UniswapExecutor` module + the pools. Test against a stub vault; A in
 
 - [x] Mock stock ERC-20s (~8 tickers is plenty for the demo) with mint rights — `MockStock` (configurable decimals; also serves as mock USDC at 6dp)
 - [x] **KYCHook (`beforeSwap` allowlist) deployed via HookMiner/CREATE2 — do this first, it blocks everything** — mined `BEFORE_SWAP_FLAG`; allowlists the executor
-- [x] Create v4 pools (mockX/USDC) with hook attached, seed liquidity at realistic prices — deploy script stands up 18 pools seeded ~100k each at oracle prices (verified in sim)
+- [x] Create v4 pools (mockX/USDC) with hook attached, seed liquidity at realistic prices — deploy script stands up 18 pools seeded ~100k each at oracle prices
 - [x] `UniswapExecutor`: swap USDC→token and token→USDC — **direct** `PoolManager.unlock`→`swap` (not Universal Router; see ISSUES #16), tests pass
-- [x] Re-peg helper: small swap to move pool price to a target (keeper calls this) — `repeg()`, price-limited; lands within 0.1% of target in tests
-- [ ] Deployed + verified on Base Sepolia, addresses committed to `shared/src/addresses.ts` — script ready + sim-verified; **blocked on RPC/key creds** (ISSUES #17)
+- [x] Re-peg helper: small swap to move pool price to a target (keeper calls this) — `repeg()`, price-limited; lands within 0.1% of target. Keeper re-pegs all 18 in parallel (~7s).
+- [x] Deployed + verified on Base Sepolia, addresses committed to `shared/src/addresses.ts`
 
 ### C — Keeper (Chainlink CRE)  *(owner: ____)*
 The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A finished. **Runs on Bun ≥1.2.21** (CRE TS SDK requirement) — keep it its own package, separate from the Node toolchain.
 
-- [x] CRE workflow scaffold from `cre-templates` (cron trigger) — `keeper/cre/`, **compiles to WASM** (`cre workflow build`, CLI v1.20). `simulate` now needs `cre login` (ISSUES #5a).
+- [x] CRE workflow scaffold from `cre-templates` (cron trigger) — `keeper/cre/`, **compiles to WASM**; `simulate --broadcast` writes real on-chain state (ISSUES #5).
 - [x] **Price source behind an interface** — `ReplayFixtureSource` (real 2024 weeks, loops) + `LiveAPISource` (Yahoo), selected by config. Demo vs production is a config flag.
 - [x] Job 1: fetch stock + S&P prices from price source → `Oracle.setPrices`
-- [x] Job 2: pool re-peg toward the posted oracle price (heartbeat: direct `executor.repeg`; workflow: report). Needs B's executor deployed to exercise on testnet.
-- [x] Job 3: resolve compute — read votes + prices on-chain, compute per-member EWMA accuracy + creditWeightBps → `Governance.resolveCycle` (uses Governance vote-readback views `getVoters()`/`allocOf(address)`, ISSUES #C1 — DONE)
+- [x] Job 2: pool re-peg toward the posted oracle price (heartbeat: direct `executor.repeg`; workflow: report).
+- [x] Job 3: resolve compute — read votes + prices on-chain, compute per-member EWMA accuracy + creditWeightBps → `Governance.resolveCycle` (uses `getVoters()`/`allocOf(address)`, ISSUES #C1)
 - [x] Lifecycle triggers: open → lock → resolve on the cycle schedule
-- [x] **Always-on mode:** `scripts/run.ts` loops cycles continuously, stepping the historical series on repeat — the live app's heartbeat. On-chain `state()` is the source of truth, so it resumes at the right *phase* after a restart (a mid-phase restart advances immediately rather than waiting out the remaining window — fine for the supervised demo).
-- [x] Same logic exposed as a plain script too — the heartbeat *is* that script (shared `src/core/`); Railway hosting fallback (ISSUES #13)
-- [ ] Keeper deployed somewhere persistent (Railway/Fly/CRE — see ISSUES #13) and survives restarts
+- [x] **Always-on mode:** `scripts/run.ts` loops cycles continuously (~90s: 60s vote + 30s hold), stepping the historical series on repeat. On-chain `state()` is the source of truth, so it resumes at the right *phase* after a restart. Auto-tops-up its own gas from the CDP faucet when low (opt-in via CDP creds).
+- [x] Same logic exposed as a plain script too — the heartbeat *is* that script (shared `src/core/`); runs on Bun (local) + Node/tsx (Railway image).
+- [ ] Keeper deployed somewhere persistent (Railway/Fly — see ISSUES #13) and survives restarts — **in progress; not yet confirmed running continuously**
 
 ### D — Frontend + identity  *(owner: ____)*
 Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. `explainers/forum-prototype.html` is the visual reference for the leaderboard/feed look.
 
-- [ ] Dynamic login → embedded wallet, Base Sepolia network config
-- [ ] **Judge onboarding, zero friction:** gas sponsorship or auto-drip on signup (ISSUES #11) + "get demo USDC" mint button — no faucet hunting
-- [ ] **Public read-only landing:** live leaderboard, portfolio, current cycle state, agent theses — visible without login
-- [ ] **Cycle countdown UI:** "voting closes in 1:32 / next cycle opens in 3:10" — a judge always knows what's happening and what to do next
-- [ ] **Demo-mode badge:** "🕐 DEMO — replaying week of Feb 12, 2024 at ~2000× speed" — honesty as a feature; the simulation is displayed, never hidden
-- [ ] World ID: IDKit widget (request `selfieCheckLegacy`, `allow_legacy_proofs: true` — NOT the default `orb` level) → **REST verify** at `POST developer.world.org/api/v4/verify/{rp_id}` in a Next.js API route → backend marks wallet verified in Vault (ISSUES #3, #10)
-- [ ] Deposit / withdraw flow (incl. "queued until next cycle" state)
-- [ ] Vote screen: allocation sliders across the universe, power display, submit
-- [ ] Portfolio page: current basket, NAV, performance vs S&P
-- [ ] Leaderboard: accuracy, cycles, rank (reads Reputation views)
-- [ ] Rewards: claimable balance + claim button
-- [ ] Agent delegation flow (Dynamic server wallet + AgentKit link) — thin version is fine
-- [ ] Stretch: **BYO-agent HTTP API** — 4 Next.js routes (`/api/agent/cycle|universe|me|vote`) over `@concordia/shared`, Bearer-key auth mapping to a Dynamic server wallet (see `agent-integration.md` Model B). Cheap because Next.js + server wallets already exist; build after the core human flow works.
-- [ ] Stretch: forum (pitch feed with live P&L badges — see prototype). P&L is measured vs oracle prices, so it works identically in replay mode. Display **market-time**, not wall-time ("posted 2 cycles ago ≈ 2 market-weeks"), and agents' theses auto-populate the feed each cycle.
+- [x] Dynamic login → embedded wallet, Base Sepolia network config — `lib/auth.tsx` (live browser flow not yet rehearsed — see M3)
+- [x] **Judge onboarding, zero friction:** auto gas (CDP faucet drip via `/api/verify`, admin-transfer fallback) + "get demo USDC" mint button — no faucet hunting
+- [x] **Public read-only landing:** `/welcome` shows whole-fund value + stats + cycle state without login *(full leaderboard/agent-theses still behind the membership gate)*
+- [ ] **Cycle countdown UI:** "voting closes in 1:32 / next cycle opens in 3:10" — works in mock; **live has no on-chain phase-end timestamp, so `secondsLeft` is 0 in live mode** (needs a `phaseStartedAt` on Governance or a keeper-published estimate)
+- [ ] **Demo-mode badge:** "🕐 DEMO — replaying week of ... at ~Nx speed" honesty banner — *(the nav has a Demo/Live toggle pill, but not the replay-context banner)*
+- [x] World ID: IDKit widget (`selfieCheckLegacy`, `allow_legacy_proofs: true`) → **REST verify** in a Next.js API route → **backend marks wallet verified in Vault** (`/api/verify` admin-writes `Vault.verify`; on-chain bridge verified live, ISSUES #3/#10)
+- [x] Deposit flow — verified live end-to-end on testnet *(withdraw/"queued until next cycle" UI not built — off the demo path)*
+- [x] Vote screen: allocation sliders across the 18-asset universe, power display, submit — verified live (castVote landed on-chain)
+- [x] Portfolio page: current basket, NAV, performance vs S&P (`usePosition` wired live)
+- [x] Leaderboard: accuracy, cycles, rank (`useLeaderboard` wired)
+- [x] Rewards: claimable balance + claim button (`rewardCredit` + `claimRewards` wired)
+- [ ] Agent delegation flow (Dynamic server wallet + AgentKit link) — **on the agents branch, not main**
+- [ ] Stretch: **BYO-agent HTTP API** — 4 Next.js routes over `@concordia/shared` *(bot voting API merged on the AI branch; not on main)*
+- [ ] Stretch: forum (pitch feed with live P&L badges) — `/forum` page exists; live P&L wiring unverified
 
 ### E — Agents + replay  *(owner: ____ — can double with C)*
 The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's resolve logic. Agents connect via `@concordia/shared` (Model A in `agent-integration.md`) — wallet + read + `castVote`, same path a human uses.
@@ -107,8 +107,8 @@ The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's 
 ## Phase 2 — Integration milestones (in order)
 
 - [x] **M1 — Full cycle on local fork**, scripted: deposit → open → vote → lock (real swaps) → price move → resolve → claim. No UI. — `test/Integration.t.sol` runs it through the real `UniswapExecutor`+KYCHook+v4 pools; `script/DeployIntegrated.s.sol` is the unified A↔B deploy (shared USDC + tokens).
-- [ ] **M2 — Same on Base Sepolia** with the CRE workflow (simulated or deployed) driving it.
-- [ ] **M3 — Frontend drives the human flow** end-to-end on testnet: login → verify → deposit → vote → see resolution.
+- [x] **M2 — Same on Base Sepolia** with the CRE workflow driving it — keeper heartbeat drives full cycles live on Base Sepolia; CRE `simulate --broadcast` writes real on-chain state (lock/resolve verified).
+- [ ] **M3 — Frontend drives the human flow** end-to-end on testnet: login → verify → deposit → vote → see resolution. **On-chain path verified headlessly (fresh wallet → verify → drip → deposit → vote landed live); the in-browser flow (Dynamic login + World IDKit modal + UI) has NOT been run end-to-end yet — this is the key remaining risk.**
 - [ ] **M4 — Always-on:** web app deployed (Vercel), keeper hosted + looping cycles continuously, agents voting every cycle, leaderboard differentiated and moving on its own.
 
 ## Phase 3 — Demo & submission
@@ -118,8 +118,8 @@ The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's 
 - [ ] Rehearse the pitch ≥3 times on top of the live app, including one cold run
 - [ ] Record demo video (≤3 min) + architecture diagram (we have the flowchart HTML)
 - [ ] Sponsor submission checks:
-  - [ ] Chainlink: CRE workflow simulation/deployment shown; Chainlink causes an on-chain state change ✓ (prices + resolve)
-  - [ ] World: proof verification happens in backend or contract (not just widget); clear "what breaks without it" answer (sybil-resistant voting)
+  - [x] Chainlink: CRE workflow simulation shown; Chainlink causes an on-chain state change (prices + resolve, verified live)
+  - [x] World: proof verification happens in backend + contract (REST verify → `Vault.verify`, not just the widget); "what breaks without it" = sybil-resistant voting
   - [ ] Dynamic: app deployed + usable by judges; server-wallet agent flow shown
   - [ ] Uniswap (if submitting): tx IDs of real swaps, public repo, feedback form
 - [ ] ETHGlobal project page + public repo + demo link submitted **before the deadline**
