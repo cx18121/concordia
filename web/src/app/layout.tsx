@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 // globals.css imports shell.css into Tailwind's `base` layer (see globals.css),
 // so the dark theme applies and Tailwind utilities still win on the ported pages.
 import "./globals.css";
-import { AppShell } from "./app-shell";
-import Nav from "@/components/Nav";
+import { AppProviders } from "@/lib/providers";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Concordia",
@@ -46,15 +46,14 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <AppShell>
+        <AppProviders>
           {/* Global ambient background — layout owns it; pages must not duplicate .amb. */}
           <div className="amb">
             <i className="a" />
             <i className="b" />
           </div>
-          <Nav />
-          {children}
-        </AppShell>
+          <AppShell>{children}</AppShell>
+        </AppProviders>
       </body>
     </html>
   );
