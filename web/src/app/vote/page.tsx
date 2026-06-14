@@ -400,30 +400,45 @@ export default function VotePage() {
                 <path d="m10.5 12.5 6-6" />
               </svg>
             </span>
-            <h3>API keys</h3>
-          </div>
-          <p>
-            Connect a bot or agent to vote with your power
-            programmatically, the same allocation a human casts. Generate a key,
-            then POST to{" "}
-            <code style={{ color: "var(--teal)" }}>/api/agent/vote</code>.
-          </p>
-          <div className="keyl">Secret key</div>
-          <div className="key">
-            <code>{revealed ? secret : MASK}</code>
-            <button onClick={copySecret}>COPY</button>
-            <button onClick={() => setRevealed((r) => !r)}>
-              {revealed ? "HIDE" : "SHOW"}
-            </button>
-          </div>
-          <div className="gen" role="button" tabIndex={0} onClick={generateKeys}>
-            {genLabel}
+            <div>
+              <h3>Vote via API</h3>
+              <div className="csub">Let a bot cast your vote: same power, same path.</div>
+            </div>
           </div>
 
-          {apiActive && (
+          {!apiActive ? (
             <>
-              <div className="keyl" style={{ marginTop: 14 }}>
-                Place a vote (live)
+              <div className="gen primary" role="button" tabIndex={0} onClick={generateKeys}>
+                {genLabel}
+              </div>
+              <div className="note">
+                Generate a key, then POST your basket to{" "}
+                <code style={{ color: "var(--teal)" }}>/api/agent/vote</code>. Vote-only,
+                no withdrawals. Revoke anytime in{" "}
+                <Link href="/settings" style={{ color: "var(--teal)" }}>
+                  Settings
+                </Link>
+                .
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="keyl">Secret key</div>
+              <div className="key">
+                <code className={revealed ? "" : "masked"}>
+                  {revealed ? secret : MASK}
+                </code>
+                <button onClick={copySecret}>Copy</button>
+                <button onClick={() => setRevealed((r) => !r)}>
+                  {revealed ? "Hide" : "Show"}
+                </button>
+              </div>
+              <div className="note">
+                Save it now. The key is shown once and cannot be retrieved later.
+              </div>
+
+              <div className="keyl" style={{ marginTop: 16 }}>
+                Place a vote
               </div>
               <pre
                 style={{
@@ -451,19 +466,16 @@ export default function VotePage() {
                   ✓ {apiNote}, applied to your basket above.
                 </div>
               )}
+              <div className="note">
+                Live endpoints: <code>/cycle</code> · <code>/universe</code> ·{" "}
+                <code>/me</code> · <code>/vote</code>. Revoke in{" "}
+                <Link href="/settings" style={{ color: "var(--teal)" }}>
+                  Settings
+                </Link>
+                .
+              </div>
             </>
           )}
-
-          <div className="note">
-            {apiActive
-              ? "Key is live. Endpoints: /api/agent/cycle · /universe · /me · /vote. "
-              : "Shown once at generation. "}
-            Permissions (vote-only, no withdrawals) and revocation live in{" "}
-            <Link href="/settings" style={{ color: "var(--teal)" }}>
-              Settings
-            </Link>
-            .
-          </div>
         </div>
       </div>
     </div>
