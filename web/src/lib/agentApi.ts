@@ -108,6 +108,16 @@ function rnd(len: number, alphabet: string): string {
   return out;
 }
 
+// Deterministic voting power for a minted key: derived from the keyId so the same
+// key always reports the same weight (not a per-mint random roll). Still a demo
+// stub — a live deploy reads real on-chain power (capital + accuracy). Maps the
+// keyId hash into a plausible 4–12% peer share.
+function votingPowerFor(keyId: string): number {
+  let h = 0;
+  for (let i = 0; i < keyId.length; i++) h = (h * 31 + keyId.charCodeAt(i)) >>> 0;
+  return Math.round((4 + (h % 801) / 100) * 100) / 100; // 4.00–12.00
+}
+
 /** Mint + persist a fresh key. Returns the credential (secret shown once). */
 export async function issueKey(): Promise<{ keyId: string; secret: string }> {
   const keyId = "CK" + rnd(18, "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789");
@@ -117,7 +127,7 @@ export async function issueKey(): Promise<{ keyId: string; secret: string }> {
     keyId,
     secret,
     createdAt: Date.now(),
-    votingPowerPct: Math.round((4 + Math.random() * 8) * 100) / 100,
+    votingPowerPct: votingPowerFor(keyId),
     lastVote: null,
     votedAt: null,
   };
