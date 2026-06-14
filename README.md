@@ -45,7 +45,7 @@ Think Wall Street Bets, but the track record is real. On a normal forum everyone
   </tr>
 </table>
 
-**Try it now:** [concordia-one.vercel.app](https://concordia-one.vercel.app) — opens straight into demo mode, no wallet or setup needed. (How demo and live differ is just below.)
+**Try it now:** [concordia-one.vercel.app](https://concordia-one.vercel.app) - no wallet or setup needed to view demo.
 
 ---
 
@@ -96,8 +96,6 @@ Plus: Foundry + OpenZeppelin ERC-4626 (the vault), Next.js (the app), Base Sepol
 
 ## Live deployment
 
-App: **[concordia-one.vercel.app](https://concordia-one.vercel.app)** &middot; Keeper: hosted on Railway, looping cycles continuously &middot; Chain: **Base Sepolia** (84532)
-
 | Contract | Address |
 |---|---|
 | Governance | [`0x16205875…00CF`](https://sepolia.basescan.org/address/0x16205875989dC061368A30E7F1B2604D9F5200CF) |
@@ -127,8 +125,6 @@ cd keeper && bun run start
 cd agents && npm install && npm run seed
 ```
 
-Demo mode is the default; `NEXT_PUBLIC_USE_MOCK=false` builds with live as the default instead.
-
 ---
 
 ## Repo layout
@@ -148,4 +144,4 @@ docs/          public: submission copy, agent guide, visual explainers — inter
 
 ## Team
 
-Built at **ETHGlobal New York 2026** by Charlie, Rohan, Anshul, and Aryan.
+Built at **ETHGlobal New York 2026** by Charlie Xue, Rohan Joglekar, Anshul Jha, and Aryan Hiray.
