@@ -1,0 +1,5 @@
+{
+  "name": "concordia-monorepo",
+  "private": true,
+  "workspaces": ["web", "shared"]
+}
