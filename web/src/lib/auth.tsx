@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  createContext,
   useCallback,
   useContext,
   useMemo,
@@ -9,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { AuthContext } from "./auth-context";
 import {
   DynamicContextProvider,
   useDynamicContext,
@@ -20,17 +20,12 @@ import WorldIDVerify from "@/components/WorldIDVerify";
 
 const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
-// Base Sepolia + "create embedded wallet on login" are enabled in the Dynamic
-// dashboard (Embedded Wallet → "Create on Sign up"), not as provider props.
-// Plain EOA embedded wallet — gas sponsorship / account abstraction is deferred.
 const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
 if (!environmentId || environmentId === "REPLACE_ME") {
   console.warn(
     "[AuthProvider] NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID is not set — Dynamic login will not work.",
   );
 }
-
-const AuthContext = createContext<AuthState | null>(null);
 
 /** Maps Dynamic's context to the frozen AuthState and layers verification state on top. */
 function AuthBridge({ children }: { children: ReactNode }) {
@@ -141,14 +136,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth(): AuthState {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
-  return ctx;
-}
-
-/** Non-throwing read — null outside AuthProvider. The mode-aware seam (useAuth.ts)
- *  calls this unconditionally so it can pick mock vs live without breaking hook rules. */
-export function useAuthRaw(): AuthState | null {
-  return useContext(AuthContext);
-}
