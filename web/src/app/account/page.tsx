@@ -1,26 +1,23 @@
-// Account / Portfolio — static mock port (Track B, Task B6).
-//
-// Markup + helper CSS are ported from redesign/mockups/account.html. This page
-// is off the demo path and renders static mock content (the mockup's own
-// seeded values). The performance chart is an inline SVG with hardcoded paths,
-// so it's pre-rendered statically in JSX (the mockup's tiny random-pulse script
-// is dropped — non-essential animation). No hooks → a plain server component.
-// The mockup's *.html links become Next routes.
-
 import Link from "next/link";
 import PerformanceChart from "@/components/PerformanceChart";
 import "@/styles/account.css";
 
-// Single source of truth for the demo starting deposit.
-// Change this one number and position value + AUM both update.
 const DEMO_DEPOSIT = 1_000;
-const NAV_PER_SHARE = 1.188; // fund's current NAV (18.8% gain)
+const NAV_PER_SHARE = 1.188;
 const DEMO_VALUE = Math.round(DEMO_DEPOSIT * NAV_PER_SHARE * 100) / 100;
 const DEMO_GAIN = DEMO_VALUE - DEMO_DEPOSIT;
 
 function fmtUsd(v: number) {
   return "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+// Fund basket — weights must sum to 1 (remaining ~42.5% is cash/other).
+// perf is 1-month return for each stock.
+const BASKET = [
+  { ticker: "NVDA", name: "Nvidia",    token: "mNVDA", weight: 0.241, perf: 0.184,  bgCls: "bg-teal/20",       textCls: "text-teal"      },
+  { ticker: "MSFT", name: "Microsoft", token: "mMSFT", weight: 0.184, perf: 0.072,  bgCls: "bg-cyan-500/20",   textCls: "text-cyan-400"  },
+  { ticker: "AAPL", name: "Apple",     token: "mAAPL", weight: 0.150, perf: -0.026, bgCls: "bg-blue-500/20",   textCls: "text-blue-400"  },
+];
 
 export default function AccountPage() {
   return (
@@ -51,7 +48,7 @@ export default function AccountPage() {
             <h2 className="font-display text-4xl font-extrabold text-teal">+16.0%</h2>
           </div>
         </section>
-        <PerformanceChart />
+        <PerformanceChart endNav={DEMO_VALUE} />
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Your Stake */}
@@ -174,75 +171,51 @@ export default function AccountPage() {
           <div className="space-y-0">
             {/* Header */}
             <div className="grid grid-cols-12 gap-4 px-4 py-2 border-b border-white/5">
-              <div className="col-span-5 text-[10px] font-bold text-text-subtle uppercase tracking-widest">Asset</div>
-              <div className="col-span-2 text-[10px] font-bold text-text-subtle uppercase tracking-widest text-right">Weight</div>
-              <div className="col-span-3 text-[10px] font-bold text-text-subtle uppercase tracking-widest text-right">Performance (1M)</div>
-              <div className="col-span-2" />
+              <div className="col-span-4 text-[10px] font-bold text-text-subtle uppercase tracking-widest">Asset</div>
+              <div className="col-span-1 text-[10px] font-bold text-text-subtle uppercase tracking-widest text-right">Wt</div>
+              <div className="col-span-2 text-[10px] font-bold text-text-subtle uppercase tracking-widest text-right">Invested</div>
+              <div className="col-span-2 text-[10px] font-bold text-text-subtle uppercase tracking-widest text-right">Value Now</div>
+              <div className="col-span-2 text-[10px] font-bold text-text-subtle uppercase tracking-widest text-right">Gain (1M)</div>
+              <div className="col-span-1" />
             </div>
-            {/* Asset Rows */}
-            <div className="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
-              <div className="col-span-5 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-teal/20 flex items-center justify-center font-bold text-[11px] text-teal">NVDA</div>
-                <div>
-                  <p className="text-sm font-bold text-text-primary">Nvidia</p>
-                  <p className="text-xs text-text-subtle">mNVDA</p>
+            {/* Asset Rows — driven by BASKET + DEMO_DEPOSIT */}
+            {BASKET.map((s) => {
+              const initial = Math.round(DEMO_DEPOSIT * s.weight * 100) / 100;
+              const current = Math.round(initial * (1 + s.perf) * 100) / 100;
+              const dGain   = Math.round((current - initial) * 100) / 100;
+              const up = s.perf >= 0;
+              return (
+                <div key={s.ticker} className="grid grid-cols-12 gap-4 px-4 py-5 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
+                  <div className="col-span-4 flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full ${s.bgCls} flex items-center justify-center font-bold text-[11px] ${s.textCls}`}>{s.ticker}</div>
+                    <div>
+                      <p className="text-sm font-bold text-text-primary">{s.name}</p>
+                      <p className="text-xs text-text-subtle">{s.token}</p>
+                    </div>
+                  </div>
+                  <div className="col-span-1 text-right">
+                    <p className="text-sm font-semibold text-text-primary">{(s.weight * 100).toFixed(1)}%</p>
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <p className="text-sm font-semibold text-text-subtle">{fmtUsd(initial)}</p>
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <p className={`text-sm font-semibold ${up ? "text-gain" : "text-loss"}`}>{fmtUsd(current)}</p>
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <p className={`text-sm font-bold ${up ? "text-gain" : "text-loss"}`}>
+                      {up ? "+" : ""}{(s.perf * 100).toFixed(1)}%
+                    </p>
+                    <p className={`text-[10px] ${up ? "text-gain" : "text-loss"}`}>
+                      {dGain >= 0 ? "+" : "-"}${Math.abs(dGain).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="col-span-1 text-right">
+                    <span className="material-symbols-outlined text-text-subtle group-hover:text-text-primary opacity-0 group-hover:opacity-100 transition-all">chevron_right</span>
+                  </div>
                 </div>
-              </div>
-              <div className="col-span-2 text-right">
-                <p className="text-sm font-semibold text-text-primary">24.1%</p>
-              </div>
-              <div className="col-span-3 text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-sm font-bold text-gain">+18.4%</span>
-                  <span className="material-symbols-outlined text-gain text-sm">trending_up</span>
-                </div>
-              </div>
-              <div className="col-span-2 text-right">
-                <span className="material-symbols-outlined text-text-subtle group-hover:text-text-primary opacity-0 group-hover:opacity-100 transition-all">chevron_right</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
-              <div className="col-span-5 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center font-bold text-[11px] text-cyan-400">MSFT</div>
-                <div>
-                  <p className="text-sm font-bold text-text-primary">Microsoft</p>
-                  <p className="text-xs text-text-subtle">mMSFT</p>
-                </div>
-              </div>
-              <div className="col-span-2 text-right">
-                <p className="text-sm font-semibold text-text-primary">18.4%</p>
-              </div>
-              <div className="col-span-3 text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-sm font-bold text-gain">+7.2%</span>
-                  <span className="material-symbols-outlined text-gain text-sm">trending_up</span>
-                </div>
-              </div>
-              <div className="col-span-2 text-right">
-                <span className="material-symbols-outlined text-text-subtle group-hover:text-text-primary opacity-0 group-hover:opacity-100 transition-all">chevron_right</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-12 gap-4 px-4 py-6 border-b border-white/5 items-center hover:bg-white/5 transition-colors group cursor-pointer">
-              <div className="col-span-5 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center font-bold text-[11px] text-blue-400">AAPL</div>
-                <div>
-                  <p className="text-sm font-bold text-text-primary">Apple</p>
-                  <p className="text-xs text-text-subtle">mAAPL</p>
-                </div>
-              </div>
-              <div className="col-span-2 text-right">
-                <p className="text-sm font-semibold text-text-primary">15.0%</p>
-              </div>
-              <div className="col-span-3 text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-sm font-bold text-loss">-2.6%</span>
-                  <span className="material-symbols-outlined text-loss text-sm">trending_down</span>
-                </div>
-              </div>
-              <div className="col-span-2 text-right">
-                <span className="material-symbols-outlined text-text-subtle group-hover:text-text-primary opacity-0 group-hover:opacity-100 transition-all">chevron_right</span>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </section>
       </main>
