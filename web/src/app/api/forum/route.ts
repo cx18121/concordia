@@ -3,30 +3,55 @@ import { type Post, type Comment, type Attachment, type StockVote, SEED, cloneDe
 
 const KV_KEY = "concordia:forum:v2";
 
-// In-memory fallback when KV env vars aren't present (local dev without KV).
-// Module-level so it persists for the dev-server session.
+// Direct Upstash Redis REST calls — no SDK, just fetch.
+// Set KV_REST_API_URL + KV_REST_API_TOKEN in Vercel env vars (copy from
+// console.upstash.com → your database → REST API tab).
+const KV_URL = process.env.KV_REST_API_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+
+async function kvGet(key: string): Promise<Post[] | null> {
+  if (!KV_URL || !KV_TOKEN) return null;
+  try {
+    const res = await fetch(`${KV_URL}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${KV_TOKEN}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const { result } = await res.json() as { result: string | null };
+    return result ? (JSON.parse(result) as Post[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function kvSet(key: string, posts: Post[]): Promise<void> {
+  if (!KV_URL || !KV_TOKEN) return;
+  try {
+    await fetch(`${KV_URL}/set/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${KV_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(JSON.stringify(posts)),
+    });
+  } catch {}
+}
+
+// In-memory fallback for local dev (no KV configured).
+// Module-level — persists across requests in the same dev-server process.
 let _mem: Post[] | null = null;
 
 async function load(): Promise<Post[]> {
-  if (process.env.KV_REST_API_URL) {
-    try {
-      const { kv } = await import("@vercel/kv");
-      const posts = await kv.get<Post[]>(KV_KEY);
-      return posts ?? cloneDeep(SEED);
-    } catch {
-      return cloneDeep(SEED);
-    }
-  }
+  const remote = await kvGet(KV_KEY);
+  if (remote !== null) return remote;
   if (_mem === null) _mem = cloneDeep(SEED);
   return _mem;
 }
 
 async function save(posts: Post[]): Promise<void> {
-  if (process.env.KV_REST_API_URL) {
-    try {
-      const { kv } = await import("@vercel/kv");
-      await kv.set(KV_KEY, posts);
-    } catch {}
+  if (KV_URL && KV_TOKEN) {
+    await kvSet(KV_KEY, posts);
   } else {
     _mem = posts;
   }

@@ -8,7 +8,19 @@
 // The mockup's *.html links become Next routes.
 
 import Link from "next/link";
+import PerformanceChart from "@/components/PerformanceChart";
 import "@/styles/account.css";
+
+// Single source of truth for the demo starting deposit.
+// Change this one number and position value + AUM both update.
+const DEMO_DEPOSIT = 1_000;
+const NAV_PER_SHARE = 1.188; // fund's current NAV (18.8% gain)
+const DEMO_VALUE = Math.round(DEMO_DEPOSIT * NAV_PER_SHARE * 100) / 100;
+const DEMO_GAIN = DEMO_VALUE - DEMO_DEPOSIT;
+
+function fmtUsd(v: number) {
+  return "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 export default function AccountPage() {
   return (
@@ -39,64 +51,7 @@ export default function AccountPage() {
             <h2 className="font-display text-4xl font-extrabold text-teal">+16.0%</h2>
           </div>
         </section>
-        {/* Performance Chart Section */}
-        <section className="mb-16">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-xl font-display font-bold text-text-primary">Performance</h3>
-              <p className="text-sm text-text-subtle">Fund Performance vs Market Index</p>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-1 bg-teal rounded-full" />
-                  <span className="text-xs text-text-muted">Concordia</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-0 border-t border-dashed border-text-subtle" />
-                  <span className="text-xs text-text-muted">S&amp;P 500</span>
-                </div>
-              </div>
-              <div className="flex bg-white/5 rounded-full p-1 border border-white/5">
-                <button className="px-3 py-1 text-xs font-semibold text-teal rounded-full bg-white/10 shadow-sm">1M</button>
-                <button className="px-3 py-1 text-xs font-medium text-text-muted hover:text-text-primary">3M</button>
-                <button className="px-3 py-1 text-xs font-medium text-text-muted hover:text-text-primary">6M</button>
-                <button className="px-3 py-1 text-xs font-medium text-text-muted hover:text-text-primary">YTD</button>
-                <button className="px-3 py-1 text-xs font-medium text-text-muted hover:text-text-primary">ALL</button>
-              </div>
-            </div>
-          </div>
-          {/* Robinhood-style Chart (static) */}
-          <div className="relative w-full h-[400px]">
-            <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 1000 400">
-              <defs>
-                <linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              {/* Benchmark (S&P 500) */}
-              <path d="M0,320 L100,310 L200,315 L300,290 L400,295 L500,280 L600,285 L700,270 L800,275 L900,265 L1000,260" fill="none" opacity="0.5" stroke="#7E8A98" strokeDasharray="6,4" strokeWidth="1.5" />
-              {/* Area Fill */}
-              <path className="chart-gradient" d="M0,350 L100,320 L200,280 L300,295 L400,220 L500,180 L600,210 L700,140 L800,110 L900,125 L1000,80 L1000,400 L0,400 Z" />
-              {/* Fund Line */}
-              <path className="drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]" d="M0,350 L100,320 L200,280 L300,295 L400,220 L500,180 L600,210 L700,140 L800,110 L900,125 L1000,80" fill="none" stroke="#2DD4BF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
-              {/* Pulse Point */}
-              <circle className="animate-pulse" cx="1000" cy="80" fill="#5FF0DC" r="4">
-                <animate attributeName="r" dur="2s" repeatCount="indefinite" values="4;6;4" />
-              </circle>
-            </svg>
-            {/* Chart Labels (Time Axis) */}
-            <div className="absolute bottom-[-24px] left-0 right-0 flex justify-between px-2 text-[10px] uppercase font-semibold text-text-subtle tracking-wider">
-              <span>Oct 24</span>
-              <span>Oct 31</span>
-              <span>Nov 07</span>
-              <span>Nov 14</span>
-              <span>Nov 21</span>
-              <span>Nov 28</span>
-            </div>
-          </div>
-        </section>
+        <PerformanceChart />
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Your Stake */}
@@ -106,8 +61,8 @@ export default function AccountPage() {
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.08em] text-text-subtle mb-1">Your Position Value</p>
                   <div className="flex items-baseline gap-3">
-                    <h1 className="text-5xl font-display font-extrabold text-text-primary tracking-tight">$5,942.50</h1>
-                    <span className="px-2 py-0.5 rounded bg-teal/10 text-teal text-[10px] font-bold uppercase tracking-wide border border-teal/20">11.4% of fund</span>
+                    <h1 className="text-5xl font-display font-extrabold text-text-primary tracking-tight">{fmtUsd(DEMO_VALUE)}</h1>
+                    <span className="px-2 py-0.5 rounded bg-teal/10 text-teal text-[10px] font-bold uppercase tracking-wide border border-teal/20">100% of fund</span>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-text-subtle cursor-pointer hover:text-text-primary transition-colors">north_east</span>
@@ -115,7 +70,7 @@ export default function AccountPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
                 <div>
                   <p className="text-[10px] text-text-subtle uppercase mb-1">Deposited</p>
-                  <p className="text-sm font-semibold">$5,000.00</p>
+                  <p className="text-sm font-semibold">{fmtUsd(DEMO_DEPOSIT)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] text-text-subtle uppercase mb-1">Accuracy</p>
@@ -127,7 +82,7 @@ export default function AccountPage() {
                 </div>
                 <div>
                   <p className="text-[10px] text-text-subtle uppercase mb-1">Claimable</p>
-                  <p className="text-sm font-semibold text-teal">$8.05</p>
+                  <p className="text-sm font-semibold text-teal">{fmtUsd(Math.round(DEMO_GAIN * 0.085 * 100) / 100)}</p>
                 </div>
               </div>
               <div className="h-px w-full bg-white/10 mb-10" />
