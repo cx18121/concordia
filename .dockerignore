@@ -1,0 +1,5 @@
+# Keep secrets and installed deps out of the keeper image (Railway sets env vars itself).
+**/node_modules
+**/.env
+**/.env.*
+!**/.env.example

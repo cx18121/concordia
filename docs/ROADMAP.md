@@ -72,7 +72,7 @@ The off-chain brain. Develop against an anvil fork + frozen ABIs; doesn't need A
 - [x] Lifecycle triggers: open → lock → resolve on the cycle schedule
 - [x] **Always-on mode:** `scripts/run.ts` loops cycles continuously (~90s: 60s vote + 30s hold), stepping the historical series on repeat. On-chain `state()` is the source of truth, so it resumes at the right *phase* after a restart. Auto-tops-up its own gas from the CDP faucet when low (opt-in via CDP creds).
 - [x] Same logic exposed as a plain script too — the heartbeat *is* that script (shared `src/core/`); runs on Bun (local) + Node/tsx (Railway image).
-- [ ] Keeper deployed somewhere persistent (Railway/Fly — see ISSUES #13) and survives restarts — **in progress; not yet confirmed running continuously**
+- [x] Keeper deployed persistent on **Railway** (`concordia-keeper`, Node/tsx Dockerfile) — looping cycles continuously, resumes from on-chain `state()` after restart, CDP auto-top-up live. Web also deployed → **https://concordia-one.vercel.app** (mock default). Not yet git-auto-deploy (manual `railway up` / `vercel deploy --prebuilt`).
 
 ### D — Frontend + identity  *(owner: ____)*
 Next.js + Dynamic + World ID. Start on mocked data; wire real ABIs as A/B land. `explainers/forum-prototype.html` is the visual reference for the leaderboard/feed look.
