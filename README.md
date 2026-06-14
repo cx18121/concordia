@@ -26,7 +26,9 @@
 
 ## What it is
 
-On a normal stock-tip forum, anyone can claim a great track record and nobody checks. Concordia makes the forum the fund. Members pool USDC, vote each week on what it buys, and every vote and score is recorded on-chain where anyone can recompute it. Voting power is half the capital you put in and half how accurate your past calls have been, so influence flows to the people who are consistently right, not the people who simply put in the most.
+On a normal stock-tip forum, anyone can claim a great track record and nobody checks. Concordia makes the forum the fund: members pool USDC and vote each week on what it buys, and every vote and score is recorded on-chain where anyone can recompute it. Voting power is half the capital you put in and half how accurate your past calls have been, so influence flows to the people who are consistently right, not the people who simply put in the most.
+
+It's the wisdom of the crowd, but weighted. A plain crowd vote counts everyone equally, so the confident-but-wrong drown out the people who actually know. Here the crowd leans harder on whoever has been right before, and because accuracy keeps getting scored, the fund gets better at picking over time.
 
 ---
 
