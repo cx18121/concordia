@@ -1,0 +1,291 @@
+/* Welcome — the public pre-join page (whole-fund value + statistics, no graph).
+   Shown only to non-members; the nav is hidden for them (see AppShell). Uses the
+   same design tokens as the rest of the app (shell.css) + the global .amb
+   background that layout.tsx owns. Class prefix .wl- avoids collisions. */
+
+.wl-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 72px max(24px, 5vw) 56px;
+  text-align: center;
+}
+/* Keep the hero, stat grid and CTA in front of the neural-net canvas. */
+.wl-hero,
+.wl-grid,
+.wl-actions {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Entrance: a soft staggered rise (matches Overview's .reveal feel) ── */
+@keyframes wlrise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.wl-rise {
+  opacity: 0;
+  animation: wlrise 0.7s var(--ease) forwards;
+}
+
+/* ── Hero: total fund value (no chart) ── */
+.wl-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+/* Brand lockup — gradient mark + wordmark. */
+.wl-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 4px;
+}
+.wl-brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: #04201c;
+  background: linear-gradient(150deg, #4ff0db, #0fa896);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 10px 26px -8px rgba(45, 212, 191, 0.6);
+}
+.wl-brand-mark svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wl-brand-name {
+  font: 700 29px/1 Outfit, sans-serif;
+  letter-spacing: 0.01em;
+  background: linear-gradient(180deg, #ffffff, #cdeee7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.wl-brand-name b {
+  font-weight: 700;
+  color: var(--teal);
+  -webkit-text-fill-color: var(--teal);
+}
+.wl-label {
+  font: 500 13.5px/1 Inter, sans-serif;
+  letter-spacing: 0.02em;
+  color: var(--subtle);
+}
+.wl-value {
+  font: 800 clamp(56px, 9.2vw, 128px) / 1 Outfit, sans-serif;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #fff, #bfeee6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.wl-chg {
+  font: 600 20px/1 Inter, sans-serif;
+  color: var(--green);
+}
+.wl-chg .muted {
+  color: var(--subtle);
+  font-weight: 500;
+}
+
+/* ── Stat grid: glass cards, no graph ── */
+.wl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: min(960px, 100%);
+}
+@media (max-width: 760px) {
+  .wl-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .wl-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wl-card {
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  padding: 22px 22px 24px;
+  border-radius: 18px;
+  background: var(--glass);
+  border: 1px solid var(--glassbd);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 40px -30px rgba(0, 0, 0, 0.9);
+  transition: transform 0.28s var(--ease), border-color 0.28s var(--ease),
+    box-shadow 0.28s var(--ease);
+}
+.wl-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(45, 212, 191, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 26px 50px -28px rgba(0, 0, 0, 0.95);
+}
+/* hover glint — same sweep as the nav sheen / .shine */
+.wl-card::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -40%;
+  width: 42%;
+  height: 200%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    rgba(45, 212, 191, 0.06),
+    transparent
+  );
+  transform: skewX(-18deg);
+  opacity: 0;
+  pointer-events: none;
+}
+.wl-card:hover::after {
+  animation: sweep 1s var(--ease);
+}
+
+.wl-card .wl-k {
+  font: 700 clamp(28px, 3.4vw, 38px) / 1 Outfit, sans-serif;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.wl-card .wl-k.accent {
+  color: var(--teal);
+}
+.wl-card .wl-l {
+  margin-top: 10px;
+  font: 600 12px/1 Inter, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+.wl-card .wl-s {
+  margin-top: 6px;
+  font: 400 12.5px/1.3 Inter, sans-serif;
+  color: var(--muted);
+}
+.wl-card .wl-ico {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--teal);
+  background: rgba(45, 212, 191, 0.08);
+  border: 1px solid rgba(45, 212, 191, 0.18);
+}
+.wl-card .wl-ico svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* live cycle dot on the cycle card */
+.wl-card .wl-livedot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 7px;
+  background: var(--teal);
+  box-shadow: 0 0 8px var(--teal);
+  vertical-align: middle;
+  animation: wlpulse 1.8s ease-in-out infinite;
+}
+@keyframes wlpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ── CTA ── */
+.wl-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.wl-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 14.5px/1 Inter, sans-serif;
+  color: #04201c;
+  padding: 15px 30px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(150deg, #3fe9d2, #0fa896);
+  box-shadow: 0 16px 36px -14px rgba(45, 212, 191, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.wl-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 44px -14px rgba(45, 212, 191, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.wl-cta svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wl-sub {
+  font: 500 12.5px/1.4 Inter, sans-serif;
+  color: var(--subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-rise {
+    opacity: 1;
+    animation: none;
+  }
+  .wl-card,
+  .wl-card::after,
+  .wl-livedot {
+    transition: none !important;
+    animation: none !important;
+  }
+}

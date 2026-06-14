@@ -30,11 +30,27 @@ export default function Nav() {
       <Link className="brand" href="/">
         <div className="mark">
           <svg viewBox="0 0 24 24">
-            <path d="M3 17l6-6 4 4 8-8" />
-            <path d="M21 7v5" />
+            <g style={{ strokeWidth: 1.4 }}>
+              <line x1="12" y1="12" x2="12" y2="4.5" />
+              <line x1="12" y1="12" x2="18.5" y2="8.25" />
+              <line x1="12" y1="12" x2="18.5" y2="15.75" />
+              <line x1="12" y1="12" x2="12" y2="19.5" />
+              <line x1="12" y1="12" x2="5.5" y2="15.75" />
+              <line x1="12" y1="12" x2="5.5" y2="8.25" />
+              <polyline points="18.5,8.25 12,4.5 5.5,8.25 5.5,15.75 12,19.5 18.5,15.75" fill="none" />
+            </g>
+            <g style={{ fill: "#04201C", stroke: "none" }}>
+              <circle cx="12" cy="4.5" r="2.3" />
+              <circle cx="18.5" cy="8.25" r="2.3" />
+              <circle cx="18.5" cy="15.75" r="2.3" />
+              <circle cx="12" cy="19.5" r="2.3" />
+              <circle cx="5.5" cy="15.75" r="2.3" />
+              <circle cx="5.5" cy="8.25" r="2.3" />
+              <circle cx="12" cy="12" r="3.4" />
+            </g>
           </svg>
         </div>
-        <b>Community Fund</b>
+        <b>Concordia</b>
       </Link>
       <div className="tabs">
         {TABS.map(([label, href, isActive]) => (

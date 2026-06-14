@@ -98,6 +98,25 @@ export interface LeaderboardRow {
 // drifts from what's on-chain. Re-exported so pages keep importing it from here.
 export { UNIVERSE };
 
+/**
+ * Fund-wide, display-ready statistics for the public pre-join page.
+ * These are aggregate (whole-fund) numbers, not the viewer's own position —
+ * a non-member can see them before joining. B7 swaps to on-chain reads
+ * (totalAssets, member count, cycles resolved, EWMA accuracy aggregate).
+ */
+export interface FundStats {
+  aumUsd: number; // total fund value (assets under management)
+  allTimeReturnPct: number; // fund return since inception, %
+  spReturnPct: number; // S&P 500 return over the same window, %
+  members: number;
+  humans: number;
+  agents: number;
+  cyclesResolved: number;
+  avgAccuracy: number; // mean member accuracy, %
+  topName: string; // best performer's handle
+  topAccuracy: number; // their accuracy, %
+}
+
 export type Ticker = (typeof UNIVERSE)[number];
 
 // ===========================================================================
@@ -176,6 +195,20 @@ function yourVotingPowerPct(capital: number, accuracyPct: number, cycles: number
   const vp = 0.5 * (capital / capTotal) + 0.5 * (Math.max(accuracy, 0) / accTotal) * conf;
   return vp * 100;
 }
+
+// Whole-fund aggregate shown on the public /welcome page (no per-user data).
+const SEED_FUND_STATS: FundStats = {
+  aumUsd: 1_284_932,
+  allTimeReturnPct: 25.94,
+  spReturnPct: 14.6,
+  members: 47,
+  humans: 41,
+  agents: 6,
+  cyclesResolved: 128,
+  avgAccuracy: 64.8,
+  topName: "satoshi.eth",
+  topAccuracy: 81.5,
+};
 
 interface MockState {
   cycleId: bigint;
@@ -428,6 +461,25 @@ export function useLeaderboard(): LeaderboardRow[] {
   });
   if (USE_MOCK) return mock!.state.leaderboard;
   return live;
+}
+
+/**
+ * Whole-fund aggregate stats for the public pre-join page (no per-user data).
+ * No live source yet (B7 swaps to an on-chain aggregate), so the seed serves
+ * both mock and live modes — it never touches the data provider.
+ */
+export function useFundStats(): FundStats {
+  return SEED_FUND_STATS;
+}
+
+/**
+ * True once the viewer has a position in the fund (deposited via /join).
+ * Drives the membership gate: non-members see /welcome with no nav; members
+ * get the full app and /welcome becomes inaccessible. Delegates to
+ * usePosition() so it's correct in both mock and live modes.
+ */
+export function useHasJoined(): boolean {
+  return usePosition().shares > 0;
 }
 
 export interface FundActions {

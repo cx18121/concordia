@@ -143,7 +143,7 @@ export default function SettingsPage() {
           Disconnect wallet
         </button>
         <div className="mt-12 text-[10px] text-[#7E8A98] uppercase tracking-[0.2em] font-medium">
-          Community Fund v2.4.0-Stable
+          Concordia v2.4.0-Stable
         </div>
       </footer>
     </main>

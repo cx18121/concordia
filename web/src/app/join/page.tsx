@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import { useFundActions } from "@/lib/data";
+import NeuralBackground from "@/components/NeuralBackground";
 import "@/styles/join.css";
 
 const DEMO_USDC = 1000;
@@ -135,6 +136,7 @@ export default function JoinPage() {
 
   return (
     <div className="page">
+      <NeuralBackground />
       <div className="card">
         {/* Back: to Overview from step 1, else one step back. Hidden when done. */}
         {step !== "done" && (
@@ -150,13 +152,30 @@ export default function JoinPage() {
         {/* Logo */}
         <div className="logo-row">
           <div className="logo-mark">
-            <svg viewBox="0 0 16 16">
-              <polyline points="2,12 6,7 9,10 14,4" />
+            <svg viewBox="0 0 24 24">
+              <g style={{ strokeWidth: 1.4 }}>
+                <line x1="12" y1="12" x2="12" y2="4.5" />
+                <line x1="12" y1="12" x2="18.5" y2="8.25" />
+                <line x1="12" y1="12" x2="18.5" y2="15.75" />
+                <line x1="12" y1="12" x2="12" y2="19.5" />
+                <line x1="12" y1="12" x2="5.5" y2="15.75" />
+                <line x1="12" y1="12" x2="5.5" y2="8.25" />
+                <polyline points="18.5,8.25 12,4.5 5.5,8.25 5.5,15.75 12,19.5 18.5,15.75" fill="none" />
+              </g>
+              <g style={{ fill: "#04201C", stroke: "none" }}>
+                <circle cx="12" cy="4.5" r="2.3" />
+                <circle cx="18.5" cy="8.25" r="2.3" />
+                <circle cx="18.5" cy="15.75" r="2.3" />
+                <circle cx="12" cy="19.5" r="2.3" />
+                <circle cx="5.5" cy="15.75" r="2.3" />
+                <circle cx="5.5" cy="8.25" r="2.3" />
+                <circle cx="12" cy="12" r="3.4" />
+              </g>
             </svg>
           </div>
           <div className="logo-text">
-            <h1>Community Fund</h1>
-            <p>Community Hedge Fund · Base Sepolia</p>
+            <h1>Concordia</h1>
+            <p>Hedge Fund DAO</p>
           </div>
         </div>
 
@@ -183,7 +202,7 @@ export default function JoinPage() {
         {/* ── STEP 1: CONNECT ── */}
         {step === 1 && (
           <div>
-            <div className="section-title">Sign in to Community Fund</div>
+            <div className="section-title">Sign in to Concordia</div>
             <div className="section-sub">
               Use email for a gas-free embedded wallet, or connect an existing
               wallet.
@@ -411,7 +430,7 @@ export default function JoinPage() {
               )}
             </button>
             <div className="foot-note">
-              Gas is sponsored · Base Sepolia testnet · tokens have no real value
+              Gas is sponsored · tokens have no real value
             </div>
           </div>
         )}

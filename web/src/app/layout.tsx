@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 // so the dark theme applies and Tailwind utilities still win on the ported pages.
 import "./globals.css";
 import { AppProviders } from "@/lib/providers";
-import Nav from "@/components/Nav";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Concordia",
@@ -51,8 +51,9 @@ export default function RootLayout({
             <i className="a" />
             <i className="b" />
           </div>
-          <Nav />
-          {children}
+          {/* AppShell owns the membership gate: it renders the nav only for
+              members and routes non-members to /welcome. */}
+          <AppShell>{children}</AppShell>
         </AppProviders>
       </body>
     </html>

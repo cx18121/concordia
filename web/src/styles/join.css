@@ -6,10 +6,14 @@
 /* ── Page layout ──────────────────────────────────────────── */
 .page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:100px 24px 48px;position:relative;z-index:1}
 
+/* The rotating neural-net background (.neural-bg) is styled in neural.css and
+   mounted as the first child of .page. Keep the onboarding card in front. */
+.page > .card{z-index:1}
+
 /* ── Card ─────────────────────────────────────────────────── */
 .card{
   width:min(460px,100%);
-  background:rgba(255,255,255,.05);
+  background:rgba(18,23,31,.5);
   border:1px solid rgba(255,255,255,.1);
   border-radius:22px;
   padding:36px 32px;

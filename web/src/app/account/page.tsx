@@ -50,7 +50,7 @@ export default function AccountPage() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-1 bg-teal rounded-full" />
-                  <span className="text-xs text-text-muted">Community Fund</span>
+                  <span className="text-xs text-text-muted">Concordia</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-0 border-t border-dashed border-text-subtle" />
@@ -305,7 +305,7 @@ export default function AccountPage() {
             <span className="text-[10px] font-bold text-text-subtle uppercase tracking-widest hover:text-teal transition-colors cursor-pointer">Governance</span>
             <span className="text-[10px] font-bold text-text-subtle uppercase tracking-widest hover:text-teal transition-colors cursor-pointer">Risk Disclaimer</span>
           </div>
-          <p className="text-[10px] text-text-subtle">© 2024 Community Fund DAO. Precision yields for the collective.</p>
+          <p className="text-[10px] text-text-subtle">© 2024 Concordia DAO. Precision yields for the collective.</p>
         </div>
       </footer>
     </>

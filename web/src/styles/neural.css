@@ -1,0 +1,16 @@
+/* Shared styling for the animated neural-net canvas (NeuralBackground.tsx).
+   Full-bleed within its positioned parent; page content sits in front via a
+   higher z-index. No edge mask — the web covers the whole page. */
+.neural-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* width/height:100% (not inset:0) because <canvas> is a replaced element —
+     inset alone leaves it at its intrinsic size. 100% fills the parent exactly,
+     so it can never overflow and force scroll. */
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.72;
+}

@@ -40,6 +40,13 @@ export default function Overview() {
     routerRef.current = router;
   }, [router]);
 
+  // Same trick for the position — the hero number + chart scale to the
+  // viewer's own holdings, read once when the animation effect mounts.
+  const positionRef = useRef(position);
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
   useEffect(() => {
     const RM =
       window.matchMedia &&
@@ -74,7 +81,7 @@ export default function Overview() {
       const r = SPY[i] / SPY[i - 1] - 1;
       FUND.push(FUND[i - 1] * (1 + (r * 1.12 + 0.0011)));
     }
-    const END = 43820.5;
+    const END = positionRef.current.navUsd || 43820.5;
     const fsc = END / FUND[N - 1];
     const FUSD = FUND.map((v) => v * fsc);
     const DATES: string[] = [];
@@ -552,8 +559,6 @@ export default function Overview() {
     };
   }, []);
 
-  const invested = position.shares > 0;
-
   return (
     <>
       <section id="stage" data-s="0">
@@ -616,31 +621,13 @@ export default function Overview() {
           </a>
         </div>
 
-        {/* Live bindings — countdown ticks from useCycle(), position from usePosition(). */}
+        {/* Live binding — countdown ticks from useCycle(). The hero number
+            above is the viewer's own position value (END = position.navUsd). */}
         <div className="ovl-live">
           <span className="ovl-pill">
             <span className="dot" />
             <span className="lbl">Cycle closes in</span>
             <span className="clk tnum">{fmtClock(secondsLeft)}</span>
-          </span>
-          <span className="ovl-pos">
-            {invested ? (
-              <>
-                Your position{" "}
-                <b className="tnum">
-                  $
-                  {position.navUsd.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </b>
-                <span className="muted">
-                  · {position.shares.toLocaleString()} shares
-                </span>
-              </>
-            ) : (
-              <span className="muted">Not invested yet — Join to deposit</span>
-            )}
           </span>
         </div>
 
@@ -700,14 +687,6 @@ export default function Overview() {
           <svg className="i" viewBox="0 0 24 24">
             <path d="m6 9 6 6 6-6" />
           </svg>
-        </button>
-
-        {/* Public Join CTA — routes to the /join onboarding page. */}
-        <button className="ovl-join" onClick={() => router.push("/join")}>
-          <svg viewBox="0 0 24 24">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Join the fund
         </button>
       </section>
 
