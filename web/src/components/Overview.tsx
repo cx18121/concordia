@@ -102,9 +102,15 @@ export default function Overview() {
     const FUSD = FUND.map((v) =>
       fN === f0 ? END : START + (END - START) * ((v - f0) / (fN - f0)),
     );
-    // S&P normalized to start alongside the fund, so the gap between them IS the
-    // fund's alpha (matches the Account chart).
-    const SPY_NORM = SPY.map((v) => (v / SPY[0]) * FUSD[0]);
+    // S&P mapped through the SAME affine transform as the fund (both start at
+    // START), so the benchmark is compressed into the viewer's return frame too
+    // and ends BELOW the fund — the gap is the fund's alpha, matching the Account
+    // chart. Previously the S&P kept its full multi-year growth while the fund was
+    // squashed to the viewer's small return, so the benchmark wrongly towered over it.
+    const spyIdx = SPY.map((v) => (v / SPY[0]) * f0); // S&P on the fund's index scale (shared f0 start)
+    const SPY_NORM = spyIdx.map((v) =>
+      fN === f0 ? FUSD[0] : START + (END - START) * ((v - f0) / (fN - f0)),
+    );
     const DATES: string[] = [];
     const d0 = new Date(2024, 1, 26);
     for (let k = 0; k < N; k++) {

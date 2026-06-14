@@ -585,6 +585,17 @@ const MockDataContext = createContext<MockContextValue | null>(null);
 // injected "You" row starts mid-pack on the leaderboard and climbs as accuracy proves
 // out (a $1k newcomer would sit last on capital alone — VP is 50% capital).
 const DEMO_DEPOSIT_USDC = 10000;
+// Pre-play a couple cycles on entry so the demo opens on a MOVING chart (a real gain,
+// not a flat 0%-return line), a scored accuracy, and a leaderboard placement — instead
+// of a brand-new position. The fund's NAV grows each resolved cycle regardless of the
+// vote; the basket only sets the accuracy/leaderboard story.
+const DEMO_SEED_CYCLES = 2;
+const DEMO_SEED_BASKET: Pick[] = [
+  { ticker: "NVDA", pct: 40 },
+  { ticker: "MSFT", pct: 25 },
+  { ticker: "AAPL", pct: 20 },
+  { ticker: "TSLA", pct: 15 },
+];
 
 export function MockDataProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, seedState);
@@ -599,6 +610,13 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
     if (demoEntered && !demoFunded.current && state.position.shares === 0) {
       demoFunded.current = true;
       dispatch({ type: "DEPOSIT", amount: DEMO_DEPOSIT_USDC });
+      // Replayed sequentially by the reducer: each vote→resolve grows the position
+      // and scores a cycle; new_cycle re-opens voting. Lands on an OPEN cycle.
+      for (let i = 0; i < DEMO_SEED_CYCLES; i++) {
+        dispatch({ type: "VOTE", picks: DEMO_SEED_BASKET });
+        dispatch({ type: "RESOLVE" });
+        dispatch({ type: "NEW_CYCLE" });
+      }
     }
   }, [demoEntered, state.position.shares]);
 
