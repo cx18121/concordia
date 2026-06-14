@@ -61,6 +61,17 @@ For the product mechanics and the engineering details, see the **Description** a
 
 ---
 
+## Demo vs live
+
+The app ships in **demo mode** so anyone can try the whole flow in seconds, with a **Demo / Live** toggle in the nav to switch to the real chain.
+
+- **Demo** — the UI binds to an in-browser simulation that replays real 2024 market weeks fast (a cycle resolves in ~90s). "View demo" drops you straight into a funded portfolio with a few weeks already played, so you can vote, resolve, and watch the leaderboard with no wallet, login, or testnet funds. No money moves.
+- **Live** — the real thing on Base Sepolia: email login + a gas-sponsored wallet (Dynamic), World ID verification, a real USDC deposit into the ERC-4626 vault, real Uniswap v4 swaps, and Chainlink scoring every vote. The leaderboard and your position read straight from chain.
+
+Either way the **contracts and the Chainlink keeper are always live** on Base Sepolia — demo mode just swaps which data the UI reads (a local simulation instead of the chain) so you can explore without funds; it doesn't fake the backend.
+
+---
+
 ## Built with
 
 | Sponsor | What it does here | Why it matters |
