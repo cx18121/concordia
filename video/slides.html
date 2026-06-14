@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concordia - demo intro slides</title>
+<style>
+  :root {
+    --bg: #0d1320;
+    --ink: #f2f5fb;
+    --muted: #8b97ad;
+    --rule: rgba(255,255,255,.10);
+    --mint: #4cd28f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { size: 13.333in 7.5in; margin: 0; }
+  html, body { background: #05070f; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .slide {
+    position: relative;
+    width: 1280px; height: 720px;
+    margin: 0 auto; overflow: hidden;
+    background: var(--bg);
+  }
+  @media print { .slide { page-break-after: always; } }
+
+  .pad { position: absolute; inset: 0; padding: 88px 96px; display: flex; flex-direction: column; }
+
+  .eyebrow { font-size: 16px; font-weight: 600; letter-spacing: .04em; color: var(--muted); }
+
+  /* ---------- slide 1 ---------- */
+  .wordmark { margin-top: 96px; font-size: 104px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+  .lede { margin-top: 28px; font-size: 32px; line-height: 1.35; color: #d6deec; max-width: 760px; font-weight: 400; }
+  .lede b { color: #fff; font-weight: 700; }
+
+  .stat { margin-top: 52px; }
+  .stat .lbl { font-size: 15px; color: var(--muted); margin-bottom: 14px; }
+  .stat .line {
+    display: flex; align-items: baseline; gap: 16px;
+    font-size: 20px; padding: 10px 0; border-top: 1px solid var(--rule); max-width: 560px;
+  }
+  .stat .line:last-child { border-bottom: 1px solid var(--rule); }
+  .stat .nm { font-weight: 600; width: 168px; }
+  .stat .amt { color: var(--muted); width: 132px; }
+  .stat .rk { margin-left: auto; font-weight: 700; }
+  .stat .rk.win { color: var(--mint); }
+
+  .name { margin-top: auto; font-size: 18px; color: var(--muted); }
+  .name b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- slide 2 ---------- */
+  .s2-title { margin-top: 84px; font-size: 58px; font-weight: 800; line-height: 1.06; letter-spacing: -.02em; }
+  .points { margin-top: 56px; display: flex; flex-direction: column; gap: 30px; }
+  .pt { display: flex; gap: 22px; font-size: 25px; line-height: 1.3; }
+  .pt .n { color: var(--muted); font-weight: 700; width: 26px; flex: none; }
+  .pt .t { color: #d6deec; }
+  .pt .t b { color: #fff; font-weight: 700; }
+  .pt .t .g { color: var(--mint); font-weight: 700; }
+
+  /* slide 2 comparison */
+  .cmp { margin-top: 54px; display: grid; grid-template-columns: 1fr 70px 1fr; row-gap: 26px; max-width: 1010px; align-items: baseline; }
+  .cmp .h { font-size: 15px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; padding-bottom: 16px; border-bottom: 1px solid var(--rule); }
+  .cmp .h.l { text-align: right; color: var(--muted); }
+  .cmp .h.r { text-align: left; color: var(--mint); }
+  .cmp .lc { text-align: right; color: var(--muted); font-size: 25px; }
+  .cmp .ar { text-align: center; color: #4a5670; font-size: 22px; }
+  .cmp .rc { text-align: left; color: #eef2f9; font-size: 25px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ===================== SLIDE 1 ===================== -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">ETHGlobal NY 2026</div>
+
+    <div class="wordmark">Concordia</div>
+    <div class="lede">A community hedge fund where <b>skill, not capital,</b> steers the money.</div>
+
+    <div class="name">Charlie Xue · Rohan Joglekar · Anshul Jha · Aryan Hiray</div>
+  </div>
+</section>
+
+<!-- ===================== SLIDE 2 ===================== -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">Why Concordia</div>
+
+    <div class="s2-title">Wall Street Bets, but real.</div>
+
+    <div class="cmp">
+      <div class="h l">Forums today</div>
+      <div class="h"></div>
+      <div class="h r">Concordia</div>
+
+      <div class="lc">losses get buried</div><div class="ar">&rarr;</div><div class="rc">every call is tracked</div>
+      <div class="lc">loudest voice wins</div><div class="ar">&rarr;</div><div class="rc">the most accurate wins</div>
+      <div class="lc">no real track record</div><div class="ar">&rarr;</div><div class="rc">accuracy provable on-chain</div>
+      <div class="lc">play money</div><div class="ar">&rarr;</div><div class="rc">a real pooled fund</div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
