@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type RefObject,
   type ReactNode,
 } from "react";
 import { AuthContext } from "./auth-context";
@@ -27,7 +28,16 @@ if (!environmentId || environmentId === "REPLACE_ME") {
 }
 
 /** Maps Dynamic's context to the frozen AuthState and layers verification state on top. */
-function AuthBridge({ children }: { children: ReactNode }) {
+function AuthBridge({
+  children,
+  loginResolve,
+}: {
+  children: ReactNode;
+  // Resolved by the provider's onAuthFlowClose when the Dynamic modal closes
+  // (success or cancel), so login() can await the modal instead of returning
+  // the instant it opens.
+  loginResolve: RefObject<(() => void) | null>;
+}) {
   const { primaryWallet, setShowAuthFlow, handleLogOut } = useDynamicContext();
 
   // World ID verification flips this. logout() resets it.
@@ -45,8 +55,15 @@ function AuthBridge({ children }: { children: ReactNode }) {
       : null;
 
   const login = useCallback(async () => {
+    if (address) return; // already connected — nothing to wait for
     setShowAuthFlow(true);
-  }, [setShowAuthFlow]);
+    // Resolve only when the modal closes (onAuthFlowClose), so the caller can't
+    // advance its UI just because the modal opened. Cancel resolves it too — the
+    // caller then sees isConnected is still false and stays put.
+    await new Promise<void>((resolve) => {
+      loginResolve.current = resolve;
+    });
+  }, [address, setShowAuthFlow, loginResolve]);
 
   const logout = useCallback(async () => {
     await handleLogOut();
@@ -120,6 +137,8 @@ function AuthBridge({ children }: { children: ReactNode }) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Bridges Dynamic's onAuthFlowClose back to the login() promise in AuthBridge.
+  const loginResolve = useRef<(() => void) | null>(null);
   return (
     <DynamicContextProvider
       settings={{
@@ -128,9 +147,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // until a real id is set (see the warning above).
         environmentId: environmentId || "MISSING_DYNAMIC_ENV_ID",
         walletConnectors: [EthereumWalletConnectors],
+        events: {
+          // Fires whenever the auth modal closes (success or cancel). Unblocks login().
+          onAuthFlowClose: () => {
+            loginResolve.current?.();
+            loginResolve.current = null;
+          },
+        },
       }}
     >
-      <AuthBridge>{children}</AuthBridge>
+      <AuthBridge loginResolve={loginResolve}>{children}</AuthBridge>
     </DynamicContextProvider>
   );
 }

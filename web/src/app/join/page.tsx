@@ -16,10 +16,11 @@
 // Global chrome (nav, .amb background) lives in layout.tsx, so this renders
 // only the .page > .card.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
+import { useIsMock } from "@/lib/mode";
 import { useFundActions } from "@/lib/data";
 import NeuralBackground from "@/components/NeuralBackground";
 import "@/styles/join.css";
@@ -41,12 +42,14 @@ function shortAddr(addr: string | null): string {
 export default function JoinPage() {
   const router = useRouter();
   const auth = useAuth();
+  const isMock = useIsMock();
   const { getDemoUSDC, deposit } = useFundActions();
 
   const [step, setStep] = useState<Step>(1);
   const [mode, setMode] = useState<Mode>("email");
   const [email, setEmail] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [loginStarted, setLoginStarted] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false); // drives the success tick
   const [funding, setFunding] = useState(false);
@@ -62,13 +65,22 @@ export default function JoinPage() {
   }
 
   // ── Step 1: Connect (email or wallet) ──────────────────────────────
+  // Advance to Verify only once we're really connected — not on a timer. login()
+  // resolves when Dynamic's modal closes; if the user cancels, isConnected stays
+  // false and we hold on step 1. (Mock is always connected, so a click advances.)
+  useEffect(() => {
+    if (loginStarted && auth.isConnected && step === 1) {
+      setLoginStarted(false);
+      setStep(2);
+    }
+  }, [loginStarted, auth.isConnected, step]);
+
   async function connect() {
     if (connecting) return;
     setConnecting(true);
+    setLoginStarted(true);
     try {
       await auth.login();
-      await sleep(PAUSE);
-      setStep(2);
     } finally {
       setConnecting(false);
     }
@@ -233,35 +245,53 @@ export default function JoinPage() {
               </button>
             </div>
 
-            {/* Email mode */}
+            {/* Email mode. Live mode hands email entry to Dynamic's own modal
+                (it collects the email + sends the code) so there's no second
+                prompt; mock keeps the inline input for the demo. */}
             {mode === "email" && (
               <div>
-                <label className="lbl">Email address</label>
-                <div className="input-row">
-                  <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleEmail();
-                    }}
-                  />
+                {isMock ? (
+                  <>
+                    <label className="lbl">Email address</label>
+                    <div className="input-row">
+                      <input
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleEmail();
+                        }}
+                      />
+                      <button
+                        className="btn btn-teal"
+                        onClick={handleEmail}
+                        disabled={connecting}
+                      >
+                        {connecting ? (
+                          spinner
+                        ) : (
+                          <svg viewBox="0 0 16 16">
+                            <line x1="3" y1="8" x2="13" y2="8" />
+                            <polyline points="9,4 13,8 9,12" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
                   <button
-                    className="btn btn-teal"
-                    onClick={handleEmail}
+                    className="btn btn-teal btn-full"
+                    onClick={connect}
                     disabled={connecting}
                   >
                     {connecting ? (
-                      spinner
+                      <>{spinner} Connecting…</>
                     ) : (
-                      <svg viewBox="0 0 16 16">
-                        <line x1="3" y1="8" x2="13" y2="8" />
-                        <polyline points="9,4 13,8 9,12" />
-                      </svg>
+                      "Continue with email"
                     )}
                   </button>
-                </div>
+                )}
                 <div className="hint">
                   Powered by Dynamic: an embedded wallet, no browser extension
                   needed.

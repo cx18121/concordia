@@ -92,8 +92,9 @@ export default function WorldIDVerify({ onVerified, onCancel, signal, autoStart 
     succeededRef.current = true;
     setVerified(true);
     setOpen(false);
+    // Notify the parent (e.g. the join flow) so it can advance. Navigation is the
+    // caller's job — this component must not redirect, or it hijacks the flow.
     onVerified?.();
-    window.location.href = "/mockups/stitch-overview.html";
   }
 
   // Dismissed (or closed after a failed proof) without a success → notify parent once.
