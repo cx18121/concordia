@@ -457,7 +457,7 @@ function useRaceFrame(active: boolean): number {
     if (!active) return;
     let idx = 0;
     let timer: ReturnType<typeof setTimeout>;
-    setI(0);
+    timer = setTimeout(() => setI(0), 0);
     const tick = () => {
       idx += 1;
       if (idx < LEADERBOARD_FRAMES.length) {

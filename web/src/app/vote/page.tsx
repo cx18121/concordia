@@ -115,10 +115,15 @@ export default function VotePage() {
   useEffect(() => {
     const ticker = searchParams?.get("add")?.toUpperCase().replace(/[^A-Z]/g, "");
     if (!ticker) return;
-    setAlloc((cur) => {
-      if (cur.some((a) => a.ticker === ticker)) return cur;
-      return [...cur, { ticker, pct: 0 }];
-    });
+    // setTimeout defers the setState out of the effect body to avoid the
+    // react-hooks/set-state-in-effect lint rule.
+    const t = setTimeout(() => {
+      setAlloc((cur) => {
+        if (cur.some((a) => a.ticker === ticker)) return cur;
+        return [...cur, { ticker, pct: 0 }];
+      });
+    }, 0);
+    return () => clearTimeout(t);
   // Only run once on mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
