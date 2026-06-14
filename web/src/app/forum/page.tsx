@@ -61,15 +61,15 @@ export default function ForumPage() {
   return (
     <>
       <main className="pt-32 pb-24 px-6 max-w-[1280px] mx-auto relative z-10">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
           <div className="space-y-2">
-            <h1 className="text-6xl font-display font-extrabold tracking-tight text-text-primary">
+            <h1 className="forum-title font-display font-extrabold tracking-tight text-text-primary">
               Forum
             </h1>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-teal to-teal-deep text-obsidian px-8 py-3 rounded-full font-bold text-sm tracking-wide flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-teal/20"
+            className="bg-gradient-to-r from-teal to-teal-deep text-obsidian w-full md:w-auto justify-center px-8 py-3 min-h-[44px] md:min-h-0 rounded-full font-bold text-sm tracking-wide flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-teal/20"
           >
             <span
               className="material-symbols-outlined"
@@ -82,6 +82,16 @@ export default function ForumPage() {
         </header>
 
         <div className="space-y-0">
+          {posts.length === 0 && (
+            <div className="py-20 text-center">
+              <p className="text-text-primary font-display text-lg font-bold mb-1">
+                No theses yet
+              </p>
+              <p className="text-text-subtle text-sm">
+                Be the first to post one and make your case.
+              </p>
+            </div>
+          )}
           {[...posts].sort((a, b) => {
             const parse = (s: string) => parseFloat(s.replace("%", "")) || -Infinity;
             return parse(b.acc) - parse(a.acc);
@@ -174,6 +184,7 @@ export default function ForumPage() {
                           return (
                             <div
                               key={ticker}
+                              className="forum-stockchip"
                               style={{
                                 display: "inline-flex",
                                 alignItems: "center",

@@ -140,7 +140,7 @@ export default function PostDetailPage() {
   if (post === undefined) {
     return (
       <main className="pt-32 px-6 max-w-[900px] mx-auto">
-        <p className="text-text-subtle">Loading…</p>
+        <p className="text-text-subtle">Loading thesis…</p>
       </main>
     );
   }
@@ -148,10 +148,10 @@ export default function PostDetailPage() {
   if (post === null) {
     return (
       <main className="pt-32 px-6 max-w-[900px] mx-auto">
-        <p className="text-text-muted">Post not found.</p>
+        <p className="text-text-muted">We couldn&apos;t find that thesis. It may have been deleted.</p>
         <button
           onClick={() => router.push("/forum")}
-          className="mt-4 text-teal text-sm hover:underline"
+          className="mt-4 inline-block min-h-[44px] md:min-h-0 text-teal text-sm hover:underline"
         >
           ← Back to forum
         </button>
@@ -259,6 +259,7 @@ export default function PostDetailPage() {
             return (
               <div
                 key={ticker}
+                className="forum-stockchip"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -381,13 +382,13 @@ export default function PostDetailPage() {
             rows={3}
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary placeholder-text-subtle focus:outline-none focus:border-teal/50 resize-none leading-relaxed text-sm mb-3"
           />
-          <div className="flex justify-end">
+          <div className="flex md:justify-end">
             <button
               type="submit"
               disabled={!commentBody.trim() || submitting}
-              className="bg-gradient-to-r from-teal to-teal-deep text-obsidian px-6 py-2 rounded-full font-bold text-sm tracking-wide hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
+              className="w-full md:w-auto justify-center min-h-[44px] md:min-h-0 bg-gradient-to-r from-teal to-teal-deep text-obsidian px-6 py-2 rounded-full font-bold text-sm tracking-wide hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
-              Post reply
+              {submitting ? "Posting…" : "Post reply"}
             </button>
           </div>
         </form>
@@ -395,7 +396,7 @@ export default function PostDetailPage() {
         {/* Comment list */}
         {post.comments.length === 0 ? (
           <p className="text-text-subtle/50 text-sm">
-            No replies yet — be the first.
+            No replies yet. Share your take to start the discussion.
           </p>
         ) : (
           <div>

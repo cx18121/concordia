@@ -263,7 +263,7 @@ export default function JoinPage() {
                   </button>
                 </div>
                 <div className="hint">
-                  Powered by Dynamic — embedded wallet, no browser extension
+                  Powered by Dynamic: an embedded wallet, no browser extension
                   needed.
                 </div>
               </div>

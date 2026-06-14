@@ -27,3 +27,41 @@
   direction: ltr;
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
+
+/* --- Mobile (<=640px): single-column, fluid numbers, no overflow.
+   Desktop layout is untouched. --- */
+@media (max-width: 640px) {
+  /* Stats: 2x2 grid. Replace the desktop vertical dividers with a tidy
+     bottom/right hairline so cells read as a grid, not a stacked list. */
+  .stat-cell {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .stats-row .stat-cell:nth-child(odd) {
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  /* Bottom row needs no underline. */
+  .stats-row .stat-cell:nth-last-child(-n + 2) {
+    border-bottom: none;
+  }
+
+  /* Big fixed numbers scale with viewport so they never clip. */
+  .stat-num {
+    font-size: clamp(1.5rem, 7vw, 2.25rem);
+  }
+  .position-num {
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+
+  /* Fund composition: keep the columns aligned by scrolling the table
+     itself horizontally instead of crushing 6 columns onto a phone. */
+  .basket-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .basket-row {
+    min-width: 560px;
+  }
+}

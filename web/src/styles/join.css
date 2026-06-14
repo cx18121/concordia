@@ -161,3 +161,20 @@ input[type="email"]:focus{border-color:var(--teal);background:rgba(45,212,191,.0
 .done-panel h2{font:700 22px/1 Outfit;color:var(--ink);margin-bottom:8px}
 .done-panel p{font:400 14px/1.5 Inter;color:var(--muted);margin-bottom:24px}
 .done-links{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* ── Mobile (≤640px) ──────────────────────────────────────── */
+@media (max-width:640px){
+  .page{padding:84px 14px 40px}
+  .card{padding:26px 20px;border-radius:18px}
+  .usdc-card{padding:22px}
+  .usdc-amount{font:800 clamp(40px,13vw,52px)/1 Outfit;letter-spacing:-.03em}
+  /* Drop the step labels on a phone so the three dots fit without crowding. */
+  .step-label{display:none}
+  .step-line{margin:0 6px}
+  /* Full-width actions with comfortable touch targets. */
+  .btn{min-height:44px}
+  .toggle-btn{padding:12px 0}
+  .wallet-opt{padding:14px 16px}
+  .done-links{flex-direction:column}
+  .done-links .btn{width:100%}
+}

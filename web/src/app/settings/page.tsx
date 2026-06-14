@@ -48,7 +48,7 @@ export default function SettingsPage() {
     <main className="max-w-[800px] mx-auto pt-32 pb-24 px-6 relative z-10">
       {/* Page Header */}
       <header className="mb-12">
-        <h1 className="text-5xl font-display text-[#F4F7FA] tracking-tight">Settings</h1>
+        <h1 className="settings-title font-display text-[#F4F7FA] tracking-tight">Settings</h1>
       </header>
       {/* ACCOUNT SECTION */}
       <section className="mb-16">
@@ -71,29 +71,29 @@ export default function SettingsPage() {
               <span className="block text-base font-medium text-[#F4F7FA]">Dynamic wallet</span>
               <span className="text-sm text-[#9AA7B4] tabular-nums tracking-wide">0x7a3f…b21 · Connected</span>
             </div>
-            <button className="px-4 py-1.5 rounded-full border border-white/10 text-sm font-medium text-[#F4F7FA] hover:bg-white/5 transition-all active:scale-95">Switch</button>
+            <button className="px-4 py-1.5 min-h-[44px] md:min-h-0 rounded-full border border-white/10 text-sm font-medium text-[#F4F7FA] hover:bg-white/5 transition-all active:scale-95">Switch</button>
           </div>
         </div>
       </section>
       {/* AGENT API ACCESS SECTION */}
       <section className="mb-16">
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] shine">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] shine">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-display font-bold text-[#F4F7FA]">Agent API access</h2>
             <span className="material-symbols-outlined filled text-[#2DD4BF] text-[20px]">bolt</span>
           </div>
           <p className="text-[#9AA7B4] text-sm leading-relaxed mb-8 max-w-[480px]">
-            Connect an AI agent to vote through your account — the same on-chain path you use.
+            Connect an AI agent to vote through your account, using the same on-chain path you use.
           </p>
           {/* API Key Input */}
           <div className="mb-8">
             <label className="text-[10px] font-bold text-[#7E8A98] uppercase tracking-[0.05em] mb-2 block">Your API Key</label>
             <div className="flex items-center gap-4">
-              <div className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-[#F4F7FA] text-sm flex items-center justify-between">
+              <div className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-[#F4F7FA] text-sm flex flex-wrap items-center justify-between gap-y-2 gap-x-4">
                 <span className="tracking-widest">cf_live_••••••••••3f9a</span>
                 <div className="flex gap-4">
-                  <button className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all">Copy</button>
-                  <button className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all">Regenerate</button>
+                  <button className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all py-1">Copy</button>
+                  <button className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all py-1">Regenerate</button>
                 </div>
               </div>
             </div>
@@ -126,13 +126,16 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between py-6 border-b border-white/10">
             <div>
               <span className="block text-base font-medium text-[#F4F7FA]">Demo mode</span>
-              <span className="text-sm text-[#7E8A98]">replaying 2024 at ~2000x</span>
+              <span className="text-sm text-[#7E8A98]">Replay 2024 market data at roughly 2000x speed</span>
             </div>
             <Toggle on={demoMode} onToggle={() => setDemoMode((v) => !v)} label="Demo mode" />
           </div>
           {/* Notifications Row */}
           <div className="flex items-center justify-between py-6 border-b border-white/10">
-            <span className="text-base font-medium text-[#F4F7FA]">Notifications</span>
+            <div>
+              <span className="block text-base font-medium text-[#F4F7FA]">Notifications</span>
+              <span className="text-sm text-[#7E8A98]">Alert me when a voting cycle opens or closes</span>
+            </div>
             <Toggle on={notifications} onToggle={() => setNotifications((v) => !v)} label="Notifications" />
           </div>
         </div>

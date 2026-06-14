@@ -23,3 +23,58 @@
   direction: ltr;
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
+
+/* Forum page title — fixed text-6xl (3.75rem) is too wide for a phone, so scale
+   it fluidly. Desktop keeps the original size (clamp tops out at 3.75rem). */
+.forum-title {
+  font-size: clamp(2.5rem, 9vw, 3.75rem);
+  line-height: 1.05;
+}
+
+/* Mobile (<=640px): the page already stacks (Tailwind flex-col), but the inline
+   stock-vote chips have small tap targets. Give the chip and its buttons more
+   height so each is comfortably touchable, and let the chip row wrap freely. */
+@media (max-width: 640px) {
+  .forum-stockchip {
+    font-size: 13px;
+  }
+  .forum-stockchip > * {
+    min-height: 44px;
+  }
+  .forum-stockchip button {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* NewPostModal — desktop is a fixed 680px card; on a phone let it use the
+     full width (minus the backdrop's 16px padding) and grow taller. Stack the
+     footer so "Attach file" and the action buttons don't collide, and make the
+     buttons full-width, comfortable touch targets. */
+  .newpost-card {
+    max-width: 100% !important;
+    max-height: 92vh !important;
+  }
+  .newpost-close {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .newpost-footer {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 12px;
+  }
+  .newpost-attach {
+    justify-content: center;
+    min-height: 44px;
+  }
+  .newpost-actions {
+    flex-direction: column-reverse;
+  }
+  .newpost-btn {
+    width: 100%;
+    min-height: 44px;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+}

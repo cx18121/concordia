@@ -185,7 +185,7 @@ export default function VotePage() {
   }, [secret]);
 
   async function generateKeys() {
-    setGenLabel("Minting…");
+    setGenLabel("Generating key…");
     try {
       const res = await fetch("/api/agent/keys", { method: "POST" });
       const data = (await res.json()) as { keyId: string; secret: string };
@@ -195,7 +195,7 @@ export default function VotePage() {
       lastApiVoteRef.current = null;
       setGenLabel("Key generated ✓");
     } catch {
-      setGenLabel("Generation failed — retry");
+      setGenLabel("Could not generate key, try again");
     }
     window.setTimeout(() => setGenLabel("Generate API key"), 1800);
   }
@@ -380,7 +380,7 @@ export default function VotePage() {
           {resolved && (
             <>
               <div className="resolved">
-                Cycle resolved — accuracy posted, claim available on Overview.
+                Cycle resolved. Accuracy posted, claim available on Overview.
               </div>
               <div className="demobar">
                 <button className="demobtn" onClick={onNewCycle}>
@@ -403,9 +403,10 @@ export default function VotePage() {
             <h3>API keys</h3>
           </div>
           <p>
-            Connect a bot or agent to vote with your power programmatically
-            &mdash; the same allocation a human casts. Generate a key, then POST
-            to <code style={{ color: "var(--teal)" }}>/api/agent/vote</code>.
+            Connect a bot or agent to vote with your power
+            programmatically, the same allocation a human casts. Generate a key,
+            then POST to{" "}
+            <code style={{ color: "var(--teal)" }}>/api/agent/vote</code>.
           </p>
           <div className="keyl">Secret key</div>
           <div className="key">
@@ -447,7 +448,7 @@ export default function VotePage() {
                   className="confirm"
                   style={{ marginTop: 10 }}
                 >
-                  ✓ {apiNote} — applied to your basket above.
+                  ✓ {apiNote}, applied to your basket above.
                 </div>
               )}
             </>
@@ -455,7 +456,7 @@ export default function VotePage() {
 
           <div className="note">
             {apiActive
-              ? "Key is live — endpoints: /api/agent/cycle · /universe · /me · /vote. "
+              ? "Key is live. Endpoints: /api/agent/cycle · /universe · /me · /vote. "
               : "Shown once at generation. "}
             Permissions (vote-only, no withdrawals) and revocation live in{" "}
             <Link href="/settings" style={{ color: "var(--teal)" }}>

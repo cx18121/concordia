@@ -24,7 +24,7 @@ const ROW_COLORS = [
   { accent: "bg-sky-500/20 border-sky-500/40 text-sky-400", bar: "bg-white/40" },
 ] as const;
 
-const fmtCapital = (c: number) => (c > 0 ? `$${c.toLocaleString()}` : "—");
+const fmtCapital = (c: number) => (c > 0 ? `$${c.toLocaleString()}` : "$0");
 
 function initials(name: string): string {
   const clean = name.replace(/[^a-zA-Z0-9. ]/g, "");
@@ -59,7 +59,7 @@ export default function LeaderboardPage() {
   }, [rows]);
 
   return (
-    <main className="max-w-[1140px] mx-auto pt-32 pb-20 px-6 relative z-10">
+    <main className="lb-main max-w-[1140px] mx-auto pt-24 md:pt-32 pb-20 px-6 relative z-10">
       {/* Header Section */}
       <header className="mb-12 text-center md:text-left">
         <h1 className="font-display text-5xl md:text-6xl text-text-primary tracking-tight">Leaderboard</h1>
@@ -69,8 +69,8 @@ export default function LeaderboardPage() {
               <span className="absolute inline-flex h-full w-full rounded-full bg-teal opacity-75 animate-ping" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
             </span>
-            Replaying the agents&rsquo; 12 weeks — cycle{" "}
-            <span className="text-text-primary font-semibold tabular-nums">{cycle}</span>/{total}.{" "}
+            Replaying the agents&rsquo; 12 weeks. Cycle{" "}
+            <span className="text-text-primary font-semibold tabular-nums">{cycle}</span> of {total}.{" "}
             <span className="text-text-subtle">Watch skill out-vote capital.</span>
           </div>
         )}
@@ -130,7 +130,7 @@ export default function LeaderboardPage() {
       {/* Ranked List (Open) */}
       <section className="w-full">
         {/* Table Header */}
-        <div className="grid grid-cols-12 px-6 py-4 border-b border-white/10 text-text-subtle text-[11px] uppercase tracking-widest font-bold">
+        <div className="grid grid-cols-12 gap-2 px-4 md:px-6 py-4 border-b border-white/10 text-text-subtle text-[11px] uppercase tracking-widest font-bold">
           <div className="col-span-1">#</div>
           <div className="col-span-5 md:col-span-4">Member</div>
           <div className="col-span-2 text-right">Accuracy</div>
@@ -138,6 +138,11 @@ export default function LeaderboardPage() {
           <div className="col-span-4 md:col-span-3 text-right">Voting Power</div>
         </div>
         {/* List Rows — bound to useLeaderboard() */}
+        {rows.length === 0 && (
+          <div className="py-16 text-center text-text-muted text-sm">
+            No members ranked yet. Cast a vote to claim a spot on the board.
+          </div>
+        )}
         <div className="divide-y divide-white/5">
           {rows.map((row, i) => {
             const c = ROW_COLORS[i] ?? ROW_COLORS[ROW_COLORS.length - 1];
@@ -149,21 +154,21 @@ export default function LeaderboardPage() {
                   if (el) rowEls.current.set(row.name, el);
                   else rowEls.current.delete(row.name);
                 }}
-                className="grid grid-cols-12 items-center px-6 py-6 list-row"
+                className="grid grid-cols-12 items-center gap-2 px-4 md:px-6 py-6 list-row"
               >
                 <div className="col-span-1 font-display text-xl text-text-muted tabular-nums">{row.rank}</div>
-                <div className="col-span-5 md:col-span-4 flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full border flex items-center justify-center font-display font-bold ${c.accent}`}>
+                <div className="col-span-5 md:col-span-4 flex items-center gap-3 md:gap-4 min-w-0">
+                  <div className={`w-10 h-10 flex-none rounded-full border flex items-center justify-center font-display font-bold ${c.accent}`}>
                     {initials(row.name)}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-body font-semibold text-text-primary">{row.name}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] uppercase tracking-tighter text-text-muted">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-body font-semibold text-text-primary truncate">{row.name}</span>
+                      <span className="flex-none px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] uppercase tracking-tighter text-text-muted">
                         {row.kind}
                       </span>
                     </div>
-                    <span className="text-[11px] text-text-subtle">{row.strategy}</span>
+                    <span className="block text-[11px] text-text-subtle truncate">{row.strategy}</span>
                   </div>
                 </div>
                 <div className="col-span-2 text-right">
@@ -179,7 +184,7 @@ export default function LeaderboardPage() {
                   <span className={`font-display text-xl tabular-nums ${i === 0 ? "text-teal" : "text-text-primary"}`}>
                     {row.votingPowerPct.toFixed(1)}%
                   </span>
-                  <div className="w-24 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
+                  <div className="vp-bar w-24 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
                     <div
                       className={`h-full ${c.bar} transition-[width] duration-500`}
                       style={{ width: `${Math.min(row.votingPowerPct * 3, 100)}%` }}

@@ -146,7 +146,7 @@ export default function NewPostModal({
     const incoming: Attachment[] = [];
     for (const f of Array.from(files)) {
       if (f.size > MAX_FILE_BYTES) {
-        setFileError(`${f.name} exceeds 3 MB limit — skipped.`);
+        setFileError(`${f.name} is over the 3 MB limit, so it was skipped.`);
         continue;
       }
       const dataUrl = await fileToDataUrl(f);
@@ -207,6 +207,7 @@ export default function NewPostModal({
     >
       {/* Modal card */}
       <div
+        className="newpost-card"
         style={{
           background: "#111827",
           border: "1px solid rgba(255,255,255,0.12)",
@@ -236,6 +237,8 @@ export default function NewPostModal({
           </h2>
           <button
             onClick={onClose}
+            aria-label="Close"
+            className="newpost-close"
             style={{ background: "none", border: "none", cursor: "pointer", color: "#9aa7b4", fontSize: "22px", lineHeight: 1, padding: "2px 4px", display: "flex", alignItems: "center" }}
           >
             <span className="material-symbols-outlined">close</span>
@@ -271,7 +274,7 @@ export default function NewPostModal({
 
             {/* Body textarea */}
             <textarea
-              placeholder="Write your thesis — include your rationale, price targets, risk factors, and position sizing…"
+              placeholder="Make your case. Cover your rationale, price targets, risk factors, and position sizing."
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={8}
@@ -303,7 +306,7 @@ export default function NewPostModal({
                 <input
                   ref={tickerRef}
                   type="text"
-                  placeholder="Add stock ticker — type to search (e.g. NVDA, Apple…)"
+                  placeholder="Add a ticker. Type to search (e.g. NVDA, Apple)"
                   value={tickerInput}
                   onChange={(e) => { setTickerInput(e.target.value.toUpperCase()); setDropdownOpen(true); }}
                   onKeyDown={handleTickerKeyDown}
@@ -455,6 +458,7 @@ export default function NewPostModal({
 
           {/* Footer */}
           <div
+            className="newpost-footer"
             style={{
               display: "flex",
               alignItems: "center",
@@ -467,6 +471,7 @@ export default function NewPostModal({
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
+              className="newpost-attach"
               style={{
                 background: "none",
                 border: "none",
@@ -490,10 +495,11 @@ export default function NewPostModal({
               onChange={(e) => handleFiles(e.target.files)}
             />
 
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div className="newpost-actions" style={{ display: "flex", gap: "10px" }}>
               <button
                 type="button"
                 onClick={onClose}
+                className="newpost-btn"
                 style={{
                   background: "none",
                   border: "1px solid rgba(255,255,255,0.12)",
@@ -510,6 +516,7 @@ export default function NewPostModal({
               <button
                 type="submit"
                 disabled={!title.trim() || !body.trim() || submitting}
+                className="newpost-btn"
                 style={{
                   background: "linear-gradient(135deg, #2dd4bf, #14b8a6)",
                   border: "none",
@@ -523,7 +530,7 @@ export default function NewPostModal({
                   letterSpacing: "0.03em",
                 }}
               >
-                {editPost ? "Save changes" : "Post thesis"}
+                {submitting ? "Posting…" : editPost ? "Save changes" : "Post thesis"}
               </button>
             </div>
           </div>

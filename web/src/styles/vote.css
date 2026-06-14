@@ -57,3 +57,22 @@ h1{font:700 40px/1 Outfit} .sub{color:var(--muted);font-size:14px;margin-top:10p
 .demobtn{font:600 11.5px/1 Inter;letter-spacing:.03em;color:var(--subtle);background:none;border:1px dashed var(--glassbd);border-radius:9px;padding:8px 12px;cursor:pointer;transition:color .2s var(--ease),border-color .2s var(--ease)}
 .demobtn:hover{color:var(--teal);border-color:rgba(45,212,191,.4)}
 .resolved{margin-top:12px;text-align:center;font:500 12px/1.5 Inter;color:var(--teal)}
+
+/* ── Mobile (≤640px) ──────────────────────────────────────── */
+@media (max-width:640px){
+  .wrap{padding:88px 18px 56px}
+  .head{flex-direction:column;align-items:flex-start;gap:18px;margin-bottom:28px}
+  h1{font:700 clamp(28px,8vw,40px)/1.05 Outfit}
+  .vp{text-align:left}
+  .vp .v{font:800 clamp(28px,8vw,38px)/1 Outfit}
+  .vote-grid{grid-template-columns:1fr;gap:32px}
+  /* Wrap the row so the slider gets a full line and stays usable on a phone. */
+  .vrow{flex-wrap:wrap;gap:10px 12px;padding:16px 0}
+  .tk{width:auto;flex:1;order:1}
+  .pct{width:auto;order:2}
+  .del{order:3;width:44px;height:44px}
+  .slider{flex:1 1 100%;order:4;height:8px}
+  .add{padding:13px 16px}
+  .menu{min-width:0;width:100%;left:0;right:0}
+  .submit{padding:16px;font-size:16px}
+}

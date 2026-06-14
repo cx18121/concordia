@@ -69,3 +69,29 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Settings title — fixed text-5xl (3rem) is fine on desktop but tight on a
+   phone; scale it fluidly. Desktop unchanged (clamp tops out at 3rem). */
+.settings-title {
+  font-size: clamp(2.25rem, 8vw, 3rem);
+  line-height: 1.05;
+}
+
+/* Mobile (<=640px): the 20px-tall toggle is below the 44px touch minimum.
+   Add an invisible expanded hit area around it without resizing the visual
+   switch. The rows already have generous vertical padding, so this just makes
+   the tap forgiving. */
+@media (max-width: 640px) {
+  .toggle-switch:not(.disabled) {
+    position: relative;
+  }
+  .toggle-switch:not(.disabled)::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+  }
+}
