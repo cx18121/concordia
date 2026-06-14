@@ -5,6 +5,7 @@
   "description": "6 demo agents: deterministic strategies + LLM thesis layer, voting via Dynamic server wallets.",
   "scripts": {
     "seed": "tsx src/seed.ts",
+    "export-demo": "tsx src/export-demo.ts",
     "run": "tsx src/run.ts",
     "typecheck": "tsc --noEmit"
   },

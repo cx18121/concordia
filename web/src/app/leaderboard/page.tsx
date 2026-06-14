@@ -16,15 +16,18 @@ import Link from "next/link";
 import { useLeaderboard } from "@/lib/data";
 import "@/styles/leaderboard.css";
 
-// Per-row cosmetic detail the mockup carried but our data model doesn't. Rows
-// align 1:1 with useLeaderboard()'s 5 seeded rows by index.
-const ROW_COSMETIC = [
-  { kind: "Agent", strategy: "Aggressive Trend Following", capital: "$2,000", accent: "bg-teal/20 border-teal/40 text-teal", bar: "bg-teal shadow-[0_0_8px_rgba(45,212,191,0.5)]" },
-  { kind: "Human", strategy: "Core Genesis Member", capital: "$12,000", accent: "bg-indigo-500/20 border-indigo-500/40 text-indigo-400", bar: "bg-white/40" },
-  { kind: "Human", strategy: "DeFi Arbitrageur", capital: "$800", accent: "bg-orange-500/20 border-orange-500/40 text-orange-400", bar: "bg-white/40" },
-  { kind: "Agent", strategy: "Contrarian Strategy", capital: "$10,000", accent: "bg-red-500/20 border-red-500/40 text-red-400", bar: "bg-white/40" },
-  { kind: "Agent", strategy: "Deep Value Investing", capital: "$3,000", accent: "bg-emerald-500/20 border-emerald-500/40 text-emerald-400", bar: "bg-white/40" },
+// Purely cosmetic per-rank avatar/bar colors. kind / strategy / capital now come from
+// useLeaderboard() (the agent engine's replay), not from here.
+const ROW_COLORS = [
+  { accent: "bg-teal/20 border-teal/40 text-teal", bar: "bg-teal shadow-[0_0_8px_rgba(45,212,191,0.5)]" },
+  { accent: "bg-indigo-500/20 border-indigo-500/40 text-indigo-400", bar: "bg-white/40" },
+  { accent: "bg-orange-500/20 border-orange-500/40 text-orange-400", bar: "bg-white/40" },
+  { accent: "bg-red-500/20 border-red-500/40 text-red-400", bar: "bg-white/40" },
+  { accent: "bg-emerald-500/20 border-emerald-500/40 text-emerald-400", bar: "bg-white/40" },
+  { accent: "bg-sky-500/20 border-sky-500/40 text-sky-400", bar: "bg-white/40" },
 ] as const;
+
+const fmtCapital = (c: number) => (c > 0 ? `$${c.toLocaleString()}` : "—");
 
 function initials(name: string): string {
   const clean = name.replace(/[^a-zA-Z0-9. ]/g, "");
@@ -62,10 +65,10 @@ export default function LeaderboardPage() {
             <p className="text-text-subtle text-[11px] uppercase tracking-[0.1em] mb-2">Top Ranked</p>
             <h3 className="font-display text-2xl text-text-primary mb-1">{top.name}</h3>
             <p className="text-text-muted text-sm font-body">
-              {ROW_COSMETIC[0].kind} ·{" "}
-              <span className="text-gain">acc {top.accuracy.toFixed(1)}%</span> · VP{" "}
+              {top.kind} ·{" "}
+              <span className={top.accuracy >= 0 ? "text-gain" : "text-loss"}>acc {top.accuracy.toFixed(1)}%</span> · VP{" "}
               {top.votingPowerPct.toFixed(1)}% ·{" "}
-              <span className="tabular-nums">{ROW_COSMETIC[0].capital}</span>
+              <span className="tabular-nums">{fmtCapital(top.capital)}</span>
             </p>
           </div>
           <div className="md:col-span-3 flex flex-col items-center">
@@ -81,10 +84,10 @@ export default function LeaderboardPage() {
             <p className="text-text-subtle text-[11px] uppercase tracking-[0.1em] mb-2">Runner-up</p>
             <h3 className="font-display text-2xl text-text-primary mb-1">{second.name}</h3>
             <p className="text-text-muted text-sm font-body">
-              {ROW_COSMETIC[1].kind} ·{" "}
-              <span className="text-gain">acc {second.accuracy.toFixed(1)}%</span> · VP{" "}
+              {second.kind} ·{" "}
+              <span className={second.accuracy >= 0 ? "text-gain" : "text-loss"}>acc {second.accuracy.toFixed(1)}%</span> · VP{" "}
               {second.votingPowerPct.toFixed(1)}% ·{" "}
-              <span className="tabular-nums">{ROW_COSMETIC[1].capital}</span>
+              <span className="tabular-nums">{fmtCapital(second.capital)}</span>
             </p>
           </div>
           <div className="md:col-span-11 text-center mt-6">
@@ -108,7 +111,7 @@ export default function LeaderboardPage() {
         {/* List Rows — bound to useLeaderboard() */}
         <div className="divide-y divide-white/5">
           {rows.map((row, i) => {
-            const c = ROW_COSMETIC[i] ?? ROW_COSMETIC[ROW_COSMETIC.length - 1];
+            const c = ROW_COLORS[i] ?? ROW_COLORS[ROW_COLORS.length - 1];
             const up = row.accuracy >= 0;
             return (
               <div
@@ -124,10 +127,10 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-body font-semibold text-text-primary">{row.name}</span>
                       <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] uppercase tracking-tighter text-text-muted">
-                        {c.kind}
+                        {row.kind}
                       </span>
                     </div>
-                    <span className="text-[11px] text-text-subtle">{c.strategy}</span>
+                    <span className="text-[11px] text-text-subtle">{row.strategy}</span>
                   </div>
                 </div>
                 <div className="col-span-2 text-right">
@@ -137,7 +140,7 @@ export default function LeaderboardPage() {
                   </span>
                 </div>
                 <div className="hidden md:block col-span-2 text-right font-display text-lg text-text-primary tabular-nums">
-                  {c.capital}
+                  {fmtCapital(row.capital)}
                 </div>
                 <div className="col-span-4 md:col-span-3 flex flex-col items-end">
                   <span className={`font-display text-xl tabular-nums ${i === 0 ? "text-teal" : "text-text-primary"}`}>

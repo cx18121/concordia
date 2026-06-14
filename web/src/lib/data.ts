@@ -38,6 +38,13 @@ import {
   buildAllocs as scBuildAllocs,
   castVote as scCastVote,
 } from "@concordia/shared";
+import {
+  LEADERBOARD,
+  DEMO_CYCLE_ID,
+  DEMO_CYCLE_RETURNS,
+  DEMO_SPX_RETURN,
+  AGENT_MEMBERS,
+} from "./demoData";
 
 // ---------------------------------------------------------------------------
 // Types (mirror @concordia/shared locally — web/ can't resolve the workspace
@@ -79,6 +86,11 @@ export interface LeaderboardRow {
   name: string;
   votingPowerPct: number;
   accuracy: number;
+  /** Strategy label (agents) / "Member" (humans on-chain). */
+  strategy: string;
+  /** Deposited capital in USD. 0 when not derivable (live ERC-4626 reads). */
+  capital: number;
+  kind: "Agent" | "Human";
 }
 
 // The votable universe is the single source of truth in @concordia/shared (18
@@ -117,40 +129,53 @@ const SEED_PRICES: Record<Ticker, number> = {
   ARKK: 46.1,
 };
 
-// Resolved prices the dev trigger flips to — drives the NAV bump on resolve.
-const RESOLVED_PRICES: Record<Ticker, number> = {
-  AAPL: 236.4,
-  MSFT: 479.9,
-  NVDA: 142.1,
-  GOOGL: 181.2,
-  AMZN: 207.3,
-  META: 604.5,
-  TSLA: 333.0,
-  JPM: 251.1,
-  XOM: 117.0,
-  UNH: 498.5,
-  WMT: 69.1,
-  SPY: 551.8,
-  QQQ: 478.2,
-  XLK: 236.0,
-  XLF: 41.9,
-  XLE: 94.2,
-  XLV: 147.0,
-  ARKK: 47.8,
-};
-
 // Cycle window: a few minutes out so the countdown is visibly running.
 const CYCLE_SECONDS = 5 * 60;
 
-const SAMPLE_ACCURACY = 72.4; // % shown after resolve.
+// The leaderboard IS the agent engine's 12-week replay output (agents/src/export-demo.ts) —
+// the small-capital, high-skill agent out-ranks the big-capital, mediocre one.
+const SEED_LEADERBOARD: LeaderboardRow[] = LEADERBOARD;
 
-const SEED_LEADERBOARD: LeaderboardRow[] = [
-  { rank: 1, name: "satoshi.eth", votingPowerPct: 18.2, accuracy: 81.5 },
-  { rank: 2, name: "vitalik.eth", votingPowerPct: 14.7, accuracy: 77.9 },
-  { rank: 3, name: "you", votingPowerPct: 9.3, accuracy: 72.4 },
-  { rank: 4, name: "0xCafe…91Bd", votingPowerPct: 7.1, accuracy: 68.0 },
-  { rank: 5, name: "degenfund.eth", votingPowerPct: 5.4, accuracy: 61.2 },
-];
+// Apply the demo cycle's real weekly returns to a price map; tickers outside the agent
+// fixture move with the S&P. Same per-ticker moves the user's vote is scored against.
+function applyDemoReturns(prices: Record<Ticker, number>): Record<Ticker, number> {
+  const out = { ...prices };
+  for (const t of Object.keys(out) as Ticker[]) {
+    const r = DEMO_CYCLE_RETURNS[t] ?? DEMO_SPX_RETURN;
+    out[t] = Number((out[t] * (1 + r)).toFixed(2));
+  }
+  return out;
+}
+
+// Vote-weighted excess return vs the S&P for the user's own basket — the exact accuracy
+// formula the agents are scored by (agents/src/resolve.ts cycleAccuracy). Returns a percent.
+function scoreVoteAccuracy(picks: Pick[]): number {
+  let acc = 0;
+  for (const p of picks) {
+    const r = DEMO_CYCLE_RETURNS[p.ticker] ?? 0;
+    acc += (p.pct / 100) * (r - DEMO_SPX_RETURN);
+  }
+  return acc * 100;
+}
+
+// Raw (gross) weekly return of the user's basket — drives the NAV bump on resolve.
+function scoreVoteReturn(picks: Pick[]): number {
+  let raw = 0;
+  for (const p of picks) raw += (p.pct / 100) * (DEMO_CYCLE_RETURNS[p.ticker] ?? 0);
+  return raw;
+}
+
+// The user's voting power as a peer-relative share against the agents — same formula as
+// agents/src/resolve.ts votingPower (50% capital share + 50% confidence-scaled accuracy share).
+function yourVotingPowerPct(capital: number, accuracyPct: number, cycles: number): number {
+  const accuracy = accuracyPct / 100;
+  const members = [...AGENT_MEMBERS, { capital, accuracy, cycles }];
+  const capTotal = members.reduce((s, m) => s + m.capital, 0) || 1;
+  const accTotal = members.reduce((s, m) => s + Math.max(m.accuracy, 0), 0) || 1;
+  const conf = Math.min(cycles / 12, 1);
+  const vp = 0.5 * (capital / capTotal) + 0.5 * (Math.max(accuracy, 0) / accTotal) * conf;
+  return vp * 100;
+}
 
 interface MockState {
   cycleId: bigint;
@@ -158,7 +183,6 @@ interface MockState {
   endsAt: number; // epoch ms
   prices: Record<Ticker, number>;
   position: Position;
-  votingPowerPct: number; // display-ready percent
   accuracy: number | null; // null until resolveCycle() runs
   lastVote: Pick[] | null; // recorded vote, so UI can confirm
   claimed: boolean;
@@ -168,12 +192,11 @@ interface MockState {
 
 function seedState(): MockState {
   return {
-    cycleId: BigInt(7),
+    cycleId: BigInt(DEMO_CYCLE_ID),
     cycleState: "OPEN",
     endsAt: Date.now() + CYCLE_SECONDS * 1000,
     prices: { ...SEED_PRICES },
     position: { shares: 0, navUsd: 0, costUsd: 0, returnPct: 0 },
-    votingPowerPct: 9.3,
     accuracy: null,
     lastVote: null,
     claimed: false,
@@ -213,17 +236,19 @@ function reducer(state: MockState, action: Action): MockState {
       return state.resolved ? { ...state, claimed: true } : state;
     case "RESOLVE": {
       if (state.resolved) return state;
-      // Flip OPEN -> LOCKED, bump NAV from the new (resolved) prices, and
-      // surface a sample accuracy so useAccuracy() returns a real number.
-      const NAV_GAIN = 0.061; // +6.1% from the resolved-price move.
-      const navUsd = state.position.costUsd * (1 + NAV_GAIN);
-      const returnPct = state.position.costUsd > 0 ? NAV_GAIN * 100 : 0;
+      // Flip OPEN -> LOCKED and score the user's ACTUAL vote against the demo cycle's real
+      // weekly returns — same math the agents are scored by. NAV bumps by the basket's gross
+      // return; accuracy is its excess vs the S&P; prices move by the same per-ticker amounts.
+      const vote = state.lastVote ?? [];
+      const navGain = scoreVoteReturn(vote);
+      const navUsd = state.position.costUsd * (1 + navGain);
+      const returnPct = state.position.costUsd > 0 ? navGain * 100 : 0;
       return {
         ...state,
         cycleState: "LOCKED",
         resolved: true,
-        prices: { ...RESOLVED_PRICES },
-        accuracy: SAMPLE_ACCURACY,
+        prices: applyDemoReturns(state.prices),
+        accuracy: scoreVoteAccuracy(vote),
         position: { ...state.position, navUsd, returnPct },
       };
     }
@@ -362,7 +387,11 @@ export function useVotingPower(): number {
     if (!address) return 0;
     return Number(await scGetVotingPower(livePub(), address)) / 100;
   });
-  if (USE_MOCK) return mock!.state.votingPowerPct;
+  if (USE_MOCK) {
+    // Reactive: 0 before any deposit, a capital share after, and a jump once accuracy posts.
+    const s = mock!.state;
+    return yourVotingPowerPct(s.position.costUsd, s.accuracy ?? 0, s.resolved ? 1 : 0);
+  }
   return live;
 }
 
@@ -391,6 +420,10 @@ export function useLeaderboard(): LeaderboardRow[] {
       name: shortAddr(r.member),
       votingPowerPct: Number(r.votingPowerBps) / 100,
       accuracy: Number(r.accuracyE4) / 100,
+      // Strategy/capital/kind aren't derivable from on-chain reads — humans by default.
+      strategy: "Member",
+      capital: 0,
+      kind: "Human" as const,
     }));
   });
   if (USE_MOCK) return mock!.state.leaderboard;
