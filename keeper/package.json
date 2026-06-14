@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.51.0",
     "@concordia/shared": "file:../shared",
     "viem": "^2.45.3"
   },

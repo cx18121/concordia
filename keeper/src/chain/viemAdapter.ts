@@ -48,6 +48,11 @@ export class ViemChainAdapter {
     return Number(id);
   }
 
+  /** The keeper EOA's native ETH balance (wei) — used by the auto-top-up check. */
+  async getBalance(): Promise<bigint> {
+    return this.pub.getBalance({ address: this.keeper });
+  }
+
   /** Read the currently-posted oracle prices for `tickers` + benchmark as a snapshot.
    *  Used to recover live-mode lock prices after a restart: when the cycle is LOCKED the oracle
    *  still holds the lock-time prices — read them BEFORE overwriting with the resolve prices. */

@@ -11,6 +11,9 @@
 //
 // Env: KEEPER_KEY (0x…, the onlyKeeper EOA) · MODE=replay|live (default replay) ·
 //      POOL_ASSETS=AAPL,NVDA,… (pools to re-peg; default demo set) · RPC_URL (see @concordia/shared).
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { formatEther, parseEther } from "viem";
 import { addresses, UNIVERSE } from "@concordia/shared";
 import { ViemChainAdapter } from "../src/chain/viemAdapter.ts";
 import { ReplayFixtureSource, LiveAPISource, type PriceSource, type PriceSnapshot } from "../src/core/priceSource.ts";
@@ -27,9 +30,56 @@ const log = (m: string) => console.log(`[${new Date().toISOString()}] ${m}`);
 const DEFAULT_POOLS = [...UNIVERSE];
 
 async function loadFixture(): Promise<ReplayFixture> {
-  const f = Bun.file(new URL("../fixtures/replay.json", import.meta.url));
-  if (!(await f.exists())) throw new Error("fixtures/replay.json missing — run `bun run build-fixture` first");
-  return (await f.json()) as ReplayFixture;
+  // node:fs (not Bun.file) so this runs under both Bun (local) and Node/tsx (the Railway image).
+  const path = fileURLToPath(new URL("../fixtures/replay.json", import.meta.url));
+  try {
+    return JSON.parse(await readFile(path, "utf8")) as ReplayFixture;
+  } catch {
+    throw new Error("fixtures/replay.json missing — run `bun run build-fixture` first");
+  }
+}
+
+// Auto-top-up: the keeper EOA pays gas every cycle, so keep it alive from the CDP faucet
+// (0.0001 ETH/claim, 1000/day). Claims only when below MIN; bounded per event. Needs
+// CDP_API_KEY_ID + CDP_API_KEY_SECRET + CDP_WALLET_SECRET — otherwise it just warns.
+const TOPUP_MIN = parseEther("0.0005");
+const MAX_CLAIMS_PER_TOPUP = 8;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let cdpClient: any = null;
+
+async function topUpIfLow(adapter: ViemChainAdapter, log: (m: string) => void): Promise<void> {
+  let bal: bigint;
+  try {
+    bal = await adapter.getBalance();
+  } catch {
+    return; // a transient RPC error here must never stall the heartbeat
+  }
+  if (bal >= TOPUP_MIN) return;
+
+  if (!(process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET && process.env.CDP_WALLET_SECRET)) {
+    log(`keeper balance low (${formatEther(bal)} ETH) — set CDP_API_KEY_ID/SECRET + CDP_WALLET_SECRET to auto-top-up`);
+    return;
+  }
+  try {
+    if (!cdpClient) {
+      const { CdpClient } = await import("@coinbase/cdp-sdk");
+      cdpClient = new CdpClient();
+    }
+    let claims = 0;
+    while (bal < TOPUP_MIN && claims < MAX_CLAIMS_PER_TOPUP) {
+      await cdpClient.evm.requestFaucet({ address: adapter.keeper, network: "base-sepolia", token: "eth" });
+      claims++;
+      // The faucet tx isn't ours, so just poll the balance until it reflects the claim.
+      for (let i = 0; i < 6; i++) {
+        await sleep(2);
+        const b = await adapter.getBalance();
+        if (b > bal) { bal = b; break; }
+      }
+    }
+    log(`CDP faucet top-up: ${claims} claim(s) -> ${formatEther(bal)} ETH`);
+  } catch (e) {
+    log(`CDP top-up failed (non-fatal): ${(e as Error).message}`);
+  }
 }
 
 /** Per-ticker + S&P fractional return between the lock snapshot and the resolve snapshot. */
@@ -60,6 +110,7 @@ async function main() {
 
   for (;;) {
     try {
+      await topUpIfLow(adapter, log);
       const state = await adapter.getState();
       const cycleId = await adapter.getCycleId();
 
