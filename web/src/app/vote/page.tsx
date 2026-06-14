@@ -178,7 +178,7 @@ export default function VotePage() {
   const [apiNote, setApiNote] = useState<string | null>(null);
   const lastApiVoteRef = useRef<number | null>(null);
 
-  useEffect(() => setOrigin(window.location.origin), []);
+  useEffect(() => { const t = setTimeout(() => setOrigin(window.location.origin), 0); return () => clearTimeout(t); }, []);
 
   const copySecret = useCallback(() => {
     if (navigator.clipboard) navigator.clipboard.writeText(secret);

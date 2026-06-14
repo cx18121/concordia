@@ -307,13 +307,16 @@ export default function Overview() {
     ringEl.addEventListener("click", onRingClick);
     legEl.addEventListener("click", onLegClick);
 
+    const FUND_AUM = END; // same value driving the chart ($43,820.50 default)
     const HOLD = [
-      { n: "mNVDA", c: "Nvidia", u: 1 },
-      { n: "mMSFT", c: "Microsoft", u: 1 },
-      { n: "mAAPL", c: "Apple", u: 0 },
-      { n: "mTSLA", c: "Tesla", u: 1 },
-      { n: "mAMZN", c: "Amazon", u: 0 },
+      { n: "mNVDA", co: "Nvidia",     u: 1, wt: 0.241, perf:  0.184 },
+      { n: "mMSFT", co: "Microsoft",  u: 1, wt: 0.184, perf:  0.072 },
+      { n: "mAAPL", co: "Apple",      u: 0, wt: 0.150, perf: -0.026 },
+      { n: "mTSLA", co: "Tesla",      u: 1, wt: 0.122, perf:  0.122 },
+      { n: "mAMZN", co: "Amazon",     u: 0, wt: 0.101, perf: -0.041 },
     ];
+    const fmtK = (v: number) =>
+      "$" + v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     const spark = (up: number) => {
       const pts = up
         ? "0,30 60,20 120,24 180,11 240,15 300,3"
@@ -326,18 +329,28 @@ export default function Overview() {
         '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       );
     };
-    $("holdings")!.innerHTML = HOLD.map(
-      (h) =>
-        '<a class="holdrow" data-href="account.html"><span class="tk">' +
-        h.n +
-        '</span><div class="hn"><b>' +
-        h.c +
-        "</b><s>" +
-        h.n +
-        "</s></div>" +
+    $("holdings")!.innerHTML = HOLD.map((h) => {
+      const alloc   = Math.round(FUND_AUM * h.wt);
+      const current = Math.round(alloc * (1 + h.perf));
+      const dGain   = current - alloc;
+      const pct     = (h.perf * 100).toFixed(1);
+      const dir     = h.u ? "up" : "dn";
+      const sign    = h.u ? "+" : "";
+      const vals =
+        '<div class="hvals">' +
+        '<b class="hval tnum">' + fmtK(current) + '</b>' +
+        '<span class="hchg tnum ' + dir + '">' +
+        sign + pct + '% · ' + sign + fmtK(Math.abs(dGain)) +
+        '</span></div>';
+      return (
+        '<a class="holdrow" data-href="account.html">' +
+        '<span class="tk">' + h.n + '</span>' +
+        '<div class="hn"><b>' + h.co + '</b><s>' + h.n + '</s></div>' +
         spark(h.u) +
-        "</a>",
-    ).join("");
+        vals +
+        '</a>'
+      );
+    }).join("");
 
     drawChart("ALL");
     drawDonut(SECT);
