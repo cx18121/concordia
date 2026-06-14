@@ -190,9 +190,6 @@ export default function Welcome() {
             Join live fund
           </button>
         </div>
-        <span className="wl-sub">
-          Demo jumps straight in · live verifies with World ID, deposits demo USDC, then votes
-        </span>
       </div>
     </div>
   );

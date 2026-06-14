@@ -3,11 +3,10 @@ import { type Post, type Comment, type Attachment, type StockVote, SEED, cloneDe
 
 const KV_KEY = "concordia:forum:v2";
 
-// Direct Upstash Redis REST calls — no SDK, just fetch.
-// Set KV_REST_API_URL + KV_REST_API_TOKEN in Vercel env vars (copy from
-// console.upstash.com → your database → REST API tab).
-const KV_URL = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+// Direct Upstash Redis REST calls — no SDK, just fetch. Accepts either the
+// Vercel KV names or Upstash's native names (whichever is set in the env).
+const KV_URL = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
 
 async function kvGet(key: string): Promise<Post[] | null> {
   if (!KV_URL || !KV_TOKEN) return null;
