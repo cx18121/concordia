@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Concordia Auto-Voter</title>
+<style>
+  :root{
+    --bg:#06080C; --panel:rgba(255,255,255,.04); --panel2:rgba(255,255,255,.06);
+    --ink:#F4F7FA; --muted:#9AA7B4; --subtle:#7E8A98; --hair:rgba(255,255,255,.10);
+    --teal:#2DD4BF; --teal-deep:#0FA896; --green:#34E3A8; --red:#FF6B6B;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:
+      radial-gradient(700px 500px at 12% -8%, rgba(45,212,191,.18), transparent 60%),
+      radial-gradient(760px 560px at 110% 0%, rgba(56,134,221,.12), transparent 60%), var(--bg);
+    color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    display:flex;justify-content:center;padding:48px 20px 80px}
+  .wrap{width:min(680px,100%)}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .mark{width:40px;height:40px;border-radius:12px;flex:none;display:grid;place-items:center;color:#04201C;
+    background:linear-gradient(150deg,#4ff0db,#0fa896);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 10px 26px -8px rgba(45,212,191,.6)}
+  .mark svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  h1{font:700 22px/1.1 Outfit,Inter,sans-serif;margin:0;letter-spacing:.01em}
+  .sub{color:var(--muted);font-size:13.5px;margin:2px 0 26px}
+  .sub b{color:var(--teal);font-weight:600}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:18px;padding:22px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 24px 60px -36px rgba(0,0,0,.9)}
+  label{display:block;font:600 11.5px/1 Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--subtle);margin:0 0 8px}
+  .row{margin-bottom:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  input,select{width:100%;font:500 14px/1 Inter;color:var(--ink);background:var(--panel2);
+    border:1px solid var(--hair);border-radius:11px;padding:12px 13px;outline:none}
+  input::placeholder{color:#5d6772}
+  input:focus,select:focus{border-color:rgba(45,212,191,.45)}
+  select{appearance:none;cursor:pointer}
+  .hint{font-size:12px;color:var(--subtle);margin-top:7px}
+  .go{margin-top:6px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    font:700 15px/1 Inter;color:#04201C;padding:15px;border:none;border-radius:12px;cursor:pointer;
+    background:linear-gradient(150deg,#3FE9D2,#0FA896);box-shadow:0 16px 36px -14px rgba(45,212,191,.7),inset 0 1px 0 rgba(255,255,255,.5);
+    transition:transform .15s ease,box-shadow .15s ease,opacity .15s}
+  .go:hover{transform:translateY(-2px)}
+  .go:disabled{opacity:.6;cursor:default;transform:none}
+  .go svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .spin{width:16px;height:16px;border:2px solid rgba(4,32,28,.4);border-top-color:#04201C;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .out{margin-top:18px}
+  .res{background:var(--panel);border:1px solid var(--hair);border-radius:16px;padding:20px;animation:rise .35s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .res.err{border-color:rgba(255,107,107,.4)}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .pill{font:600 12px/1 Inter;color:var(--muted);background:var(--panel2);border:1px solid var(--hair);padding:7px 11px;border-radius:999px}
+  .pill b{color:var(--ink)}
+  .pill.ok{color:var(--green);border-color:rgba(52,227,168,.3);background:rgba(52,227,168,.08)}
+  .thesis{font:500 14.5px/1.5 Inter;color:var(--ink);background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.2);
+    border-radius:12px;padding:12px 14px;margin-bottom:16px}
+  .thesis s{display:block;font:600 10.5px/1 Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:6px;text-decoration:none}
+  .alloc{display:flex;flex-direction:column;gap:9px}
+  .arow{display:flex;align-items:center;gap:12px}
+  .tk{width:62px;font:700 14px/1 Outfit,Inter,sans-serif}
+  .bar{flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--teal),var(--teal-deep))}
+  .pc{width:42px;text-align:right;font:600 13px/1 Outfit,Inter,sans-serif;color:var(--muted)}
+  .errtxt{color:var(--red);font:500 14px/1.5 Inter}
+  .foot{margin-top:18px;font-size:11.5px;color:var(--subtle);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <span class="mark"><svg viewBox="0 0 24 24">
+      <line x1="12" y1="12" x2="12" y2="4.5"/><line x1="12" y1="12" x2="18.5" y2="8.25"/><line x1="12" y1="12" x2="18.5" y2="15.75"/>
+      <line x1="12" y1="12" x2="12" y2="19.5"/><line x1="12" y1="12" x2="5.5" y2="15.75"/><line x1="12" y1="12" x2="5.5" y2="8.25"/>
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+    </svg></span>
+    <h1>Concordia Auto-Voter</h1>
+  </div>
+  <p class="sub">One button — <b>a local AI model reads the live cycle and votes for you</b> through your agent API. Runs fully on <b>Ollama</b> (no key, no cloud). Claude is optional.</p>
+
+  <div class="card">
+    <div class="row">
+      <label for="url">Concordia API URL</label>
+      <input id="url" type="text" placeholder="http://localhost:3100" autocomplete="off" spellcheck="false" />
+      <div class="hint">Wherever your Concordia app runs — local or your Vercel deploy. The agent endpoints live under it.</div>
+    </div>
+    <div class="row">
+      <label for="agent">Concordia agent key</label>
+      <input id="agent" type="password" placeholder="cfsk_…" autocomplete="off" spellcheck="false" />
+      <div class="hint">From the Vote page (“Generate API key”) — paste just the <code>cfsk_…</code> secret (use COPY), <b style="color:var(--muted)">not</b> the whole curl line.</div>
+    </div>
+    <div class="row">
+      <label for="model">Model</label>
+      <select id="model"><option value="">Loading models…</option></select>
+      <div class="hint" id="modelHint">Local Ollama models need no key. (Claude options appear only if you add an Anthropic key to the server's <code>.env</code>.)</div>
+    </div>
+    <button id="go" class="go">
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      <span>Auto-vote for me</span>
+    </button>
+  </div>
+
+  <div class="out" id="out"></div>
+
+  <p class="foot">
+    Runs fully local with Ollama — no key needed, nothing logged. The Concordia agent key is stored only in this browser
+    (localStorage) and has vote-only permissions. (Optional: add an Anthropic key to the server's <code>.env</code> to enable
+    Claude — it stays server-side and is never shown or sent to the browser.)
+  </p>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const fields = { url: "http://localhost:3100", agent: "" };
+  for (const k of Object.keys(fields)) {
+    const v = localStorage.getItem("cv:" + k);
+    if (v !== null) $(k).value = v; else if (fields[k]) $(k).value = fields[k];
+    $(k).addEventListener("input", () => localStorage.setItem("cv:" + k, $(k).value));
+  }
+  $("model").addEventListener("change", () => localStorage.setItem("cv:model", $("model").value));
+
+  const CLAUDE_LABELS = {
+    "claude-opus-4-8": "Opus 4.8 (smartest)",
+    "claude-sonnet-4-6": "Sonnet 4.6 (balanced)",
+    "claude-haiku-4-5": "Haiku 4.5 (fastest)",
+  };
+  async function loadModels() {
+    const sel = $("model");
+    const hint = $("modelHint");
+    try {
+      const d = await (await fetch("/api/models")).json();
+      const ollama = d.ollama || [];
+      const claude = d.claude || [];
+      sel.innerHTML = "";
+      const addGroup = (label, items, labeller) => {
+        if (!items.length) return;
+        const g = document.createElement("optgroup");
+        g.label = label;
+        for (const m of items) {
+          const o = document.createElement("option");
+          o.value = m;
+          o.textContent = labeller(m);
+          g.appendChild(o);
+        }
+        sel.appendChild(g);
+      };
+      addGroup("Local · Ollama (no key)", ollama, (m) => m);
+      addGroup("Claude (uses your .env key)", claude, (m) => CLAUDE_LABELS[m] || m);
+      if (!sel.options.length) {
+        sel.innerHTML = '<option value="">No models available</option>';
+        hint.innerHTML = "No local Ollama models found. Install Ollama and run <code>ollama pull llama3.2</code> (or add an Anthropic key to <code>.env</code> for Claude).";
+        return;
+      }
+      const saved = localStorage.getItem("cv:model");
+      if (saved && [...sel.options].some((o) => o.value === saved)) sel.value = saved;
+      else sel.selectedIndex = 0;
+      const parts = [];
+      if (ollama.length) parts.push(ollama.length + " local Ollama model" + (ollama.length > 1 ? "s" : ""));
+      if (claude.length) parts.push("Claude available");
+      hint.textContent = (parts.join(" · ") || "ready") + " — local models need no key.";
+    } catch {
+      sel.innerHTML = '<option value="">Could not load models</option>';
+      hint.textContent = "Couldn't reach the voter server.";
+    }
+  }
+  loadModels();
+
+  const out = $("out");
+  const btn = $("go");
+  const btnLabel = btn.querySelector("span");
+  const btnIcon = btn.querySelector("svg");
+
+  function setBusy(busy) {
+    btn.disabled = busy;
+    btnLabel.textContent = busy ? "Deciding…" : "Auto-vote for me";
+    btnIcon.outerHTML = busy
+      ? '<span class="spin"></span>'
+      : '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  }
+
+  function renderError(msg) {
+    out.innerHTML = '<div class="res err"><div class="errtxt">⚠ ' + escapeHtml(msg) + "</div></div>";
+  }
+
+  function renderResult(r) {
+    const total = r.picks.reduce((s, p) => s + p.pct, 0);
+    const max = Math.max(...r.picks.map((p) => p.pct), 1);
+    const rows = r.picks
+      .map(
+        (p) =>
+          '<div class="arow"><span class="tk">' + p.ticker + '</span>' +
+          '<span class="bar"><i style="width:' + (p.pct / max) * 100 + '%"></i></span>' +
+          '<span class="pc">' + p.pct + "%</span></div>"
+      )
+      .join("");
+    out.innerHTML =
+      '<div class="res">' +
+      '<div class="meta">' +
+        '<span class="pill ok">✓ Vote cast</span>' +
+        '<span class="pill">Cycle <b>#' + r.cycle.id + "</b></span>" +
+        '<span class="pill">Voting power <b>' + (r.votingPowerPct ?? "?") + "%</b></span>" +
+        '<span class="pill">' + escapeHtml((r.provider ? r.provider + " · " : "") + r.model) + "</span>" +
+        '<span class="pill">Total <b>' + total + "%</b></span>" +
+      "</div>" +
+      '<div class="thesis"><s>' + escapeHtml((r.provider || "Agent") + " thesis") + "</s>" + escapeHtml(r.thesis || "") + "</div>" +
+      '<div class="alloc">' + rows + "</div>" +
+      "</div>";
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+
+  btn.addEventListener("click", async () => {
+    const payload = {
+      concordiaUrl: $("url").value.trim(),
+      agentKey: $("agent").value.trim(),
+      model: $("model").value,
+    };
+    if (!payload.concordiaUrl || !payload.agentKey) {
+      renderError("Fill in the Concordia URL and agent key first.");
+      return;
+    }
+    setBusy(true);
+    out.innerHTML = "";
+    try {
+      const res = await fetch("/api/run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) renderError(data.error || "Something went wrong (" + res.status + ").");
+      else renderResult(data);
+    } catch (e) {
+      renderError(e?.message || "Could not reach the voter server.");
+    } finally {
+      setBusy(false);
+    }
+  });
+</script>
+</body>
+</html>

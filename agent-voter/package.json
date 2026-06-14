@@ -1,0 +1,13 @@
+{
+  "name": "concordia-auto-voter",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "A tiny local dashboard that auto-votes in Concordia via the agent API. Runs fully on a local Ollama model (no key); Claude is optional.",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/sdk": "^0.70.0"
+  }
+}
