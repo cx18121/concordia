@@ -20,9 +20,22 @@ export default function NewPostModal({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [stocks, setStocks] = useState<string[]>([]);
+  const [tickerInput, setTickerInput] = useState("");
   const [fileError, setFileError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  function addTicker() {
+    const t = tickerInput.trim().toUpperCase().replace(/[^A-Z]/g, "");
+    if (!t || stocks.includes(t) || stocks.length >= 6) return;
+    setStocks((prev) => [...prev, t]);
+    setTickerInput("");
+  }
+
+  function removeTicker(ticker: string) {
+    setStocks((prev) => prev.filter((s) => s !== ticker));
+  }
 
   async function handleFiles(files: FileList | null) {
     if (!files) return;
@@ -58,6 +71,7 @@ export default function NewPostModal({ onClose }: { onClose: () => void }) {
       title: title.trim(),
       body: body.trim(),
       attachments,
+      stocks,
     });
     onClose();
   }
@@ -167,6 +181,90 @@ export default function NewPostModal({ onClose }: { onClose: () => void }) {
               onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(45,212,191,0.5)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
             />
+
+            {/* Stock picker */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <span className="material-symbols-outlined" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9aa7b4", fontSize: "18px", pointerEvents: "none" }}>
+                    show_chart
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Add stock ticker (e.g. NVDA)"
+                    value={tickerInput}
+                    onChange={(e) => setTickerInput(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTicker())}
+                    maxLength={6}
+                    style={{
+                      width: "100%",
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: "12px",
+                      padding: "10px 12px 10px 38px",
+                      color: "#f4f7fa",
+                      fontSize: "13px",
+                      fontFamily: "Inter, sans-serif",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(45,212,191,0.5)")}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={addTicker}
+                  disabled={!tickerInput.trim() || stocks.length >= 6}
+                  style={{
+                    background: "rgba(45,212,191,0.15)",
+                    border: "1px solid rgba(45,212,191,0.3)",
+                    borderRadius: "10px",
+                    padding: "10px 16px",
+                    color: "#2dd4bf",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: !tickerInput.trim() || stocks.length >= 6 ? "not-allowed" : "pointer",
+                    opacity: !tickerInput.trim() || stocks.length >= 6 ? 0.4 : 1,
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+              {stocks.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {stocks.map((ticker) => (
+                    <div
+                      key={ticker}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "rgba(45,212,191,0.1)",
+                        border: "1px solid rgba(45,212,191,0.25)",
+                        borderRadius: "999px",
+                        padding: "4px 8px 4px 12px",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: "#2dd4bf",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {ticker}
+                      <button
+                        type="button"
+                        onClick={() => removeTicker(ticker)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#2dd4bf", display: "flex", alignItems: "center", padding: 0, opacity: 0.7 }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>close</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Attachment previews */}
             {attachments.length > 0 && (

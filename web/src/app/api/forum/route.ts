@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { type Post, type Comment, type Attachment, SEED, cloneDeep } from "@/lib/forum-store";
+import { type Post, type Comment, type Attachment, type StockVote, SEED, cloneDeep } from "@/lib/forum-store";
 
-const KV_KEY = "concordia:forum:v1";
+const KV_KEY = "concordia:forum:v2";
 
 // In-memory fallback when KV env vars aren't present (local dev without KV).
 // Module-level so it persists for the dev-server session.
@@ -43,6 +43,11 @@ export async function POST(request: Request): Promise<Response> {
 
   switch (payload.action) {
     case "createPost": {
+      const stocks = (payload.stocks as string[]) ?? [];
+      const stockVotes: Record<string, StockVote> = {};
+      for (const ticker of stocks) {
+        stockVotes[ticker] = { bullish: 0, bearish: 0, bullishBy: [], bearishBy: [] };
+      }
       const post: Post = {
         id: crypto.randomUUID(),
         author: payload.author as string,
@@ -58,11 +63,42 @@ export async function POST(request: Request): Promise<Response> {
         upvotedBy: [],
         comments: [],
         attachments: (payload.attachments as Attachment[]) ?? [],
+        stocks,
+        stockVotes,
         delta: "just posted",
         deltaUp: true,
         ts: Date.now(),
       };
       posts.unshift(post);
+      break;
+    }
+
+    case "voteStock": {
+      const post = posts.find((p) => p.id === payload.postId);
+      const ticker = payload.ticker as string;
+      const direction = payload.direction as "bullish" | "bearish";
+      const addr = payload.userAddress as string;
+      if (post && post.stockVotes[ticker]) {
+        const sv = post.stockVotes[ticker];
+        const other = direction === "bullish" ? "bearish" : "bullish";
+        const otherKey = `${other}By` as "bullishBy" | "bearishBy";
+        const thisKey = `${direction}By` as "bullishBy" | "bearishBy";
+        // Remove from opposite side if switching
+        const otherIdx = sv[otherKey].indexOf(addr);
+        if (otherIdx >= 0) {
+          sv[otherKey].splice(otherIdx, 1);
+          sv[other] = Math.max(0, sv[other] - 1);
+        }
+        // Toggle on this side
+        const thisIdx = sv[thisKey].indexOf(addr);
+        if (thisIdx >= 0) {
+          sv[thisKey].splice(thisIdx, 1);
+          sv[direction] = Math.max(0, sv[direction] - 1);
+        } else {
+          sv[thisKey].push(addr);
+          sv[direction]++;
+        }
+      }
       break;
     }
 

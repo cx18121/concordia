@@ -19,6 +19,13 @@ export type Comment = {
   ts: number;
 };
 
+export type StockVote = {
+  bullish: number;
+  bearish: number;
+  bullishBy: string[];
+  bearishBy: string[];
+};
+
 export type Post = {
   id: string;
   author: string;
@@ -34,6 +41,8 @@ export type Post = {
   upvotedBy: string[];
   comments: Comment[];
   attachments: Attachment[];
+  stocks: string[];
+  stockVotes: Record<string, StockVote>;
   ts: number;
   delta: string;
   deltaUp: boolean;
@@ -85,6 +94,11 @@ Key risks: a macro shock (Fed surprise, geopolitical flare) would hit both simul
       },
     ],
     attachments: [],
+    stocks: ["NVDA", "META"],
+    stockVotes: {
+      NVDA: { bullish: 34, bearish: 7, bullishBy: [], bearishBy: [] },
+      META: { bullish: 28, bearish: 4, bullishBy: [], bearishBy: [] },
+    },
     ts: NOW - 86400000 * 2,
   },
   {
@@ -121,6 +135,12 @@ This is a medium conviction call — if the Fed surprises hawkish, cut to 5% tot
       },
     ],
     attachments: [],
+    stocks: ["JPM", "GS", "BAC"],
+    stockVotes: {
+      JPM: { bullish: 22, bearish: 3, bullishBy: [], bearishBy: [] },
+      GS: { bullish: 18, bearish: 5, bullishBy: [], bearishBy: [] },
+      BAC: { bullish: 15, bearish: 6, bullishBy: [], bearishBy: [] },
+    },
     ts: NOW - 86400000 * 3,
   },
   {
@@ -157,6 +177,11 @@ Combined target: 10% allocation split 6%/4%.`,
       },
     ],
     attachments: [],
+    stocks: ["GOOGL", "JPM"],
+    stockVotes: {
+      GOOGL: { bullish: 19, bearish: 4, bullishBy: [], bearishBy: [] },
+      JPM: { bullish: 14, bearish: 2, bullishBy: [], bearishBy: [] },
+    },
     ts: NOW - 86400000 * 4,
   },
   {
@@ -183,6 +208,10 @@ Recommendation: trim from 8% to 4% and redeploy into the financials rotation the
     upvotedBy: [],
     comments: [],
     attachments: [],
+    stocks: ["AAPL"],
+    stockVotes: {
+      AAPL: { bullish: 6, bearish: 11, bullishBy: [], bearishBy: [] },
+    },
     ts: NOW - 86400000,
   },
 ];
@@ -246,8 +275,19 @@ export async function createPost(data: {
   title: string;
   body: string;
   attachments: Attachment[];
+  stocks: string[];
 }): Promise<void> {
   await apiFetch({ action: "createPost", ...data });
+  notify();
+}
+
+export async function voteStock(
+  postId: string,
+  ticker: string,
+  direction: "bullish" | "bearish",
+  userAddress: string,
+): Promise<void> {
+  await apiFetch({ action: "voteStock", postId, ticker, direction, userAddress });
   notify();
 }
 

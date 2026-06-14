@@ -6,6 +6,7 @@ import "@/styles/forum.css";
 import {
   getPosts,
   toggleUpvote,
+  voteStock,
   subscribe,
   formatTs,
   type Post,
@@ -38,6 +39,11 @@ export default function ForumPage() {
   function handleUpvote(e: React.MouseEvent, postId: string) {
     e.stopPropagation();
     toggleUpvote(postId, address ?? "anon");
+  }
+
+  function handleStockVote(e: React.MouseEvent, postId: string, ticker: string, direction: "bullish" | "bearish") {
+    e.stopPropagation();
+    voteStock(postId, ticker, direction, address ?? "anon");
   }
 
   return (
@@ -130,6 +136,89 @@ export default function ForumPage() {
                     <p className="text-text-muted leading-relaxed line-clamp-2 max-w-3xl">
                       {t.body}
                     </p>
+                    {/* Stock chips with inline vote buttons */}
+                    {t.stocks?.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {t.stocks.map((ticker) => {
+                          const sv = t.stockVotes?.[ticker];
+                          if (!sv) return null;
+                          const myVote = address
+                            ? sv.bullishBy.includes(address)
+                              ? "bullish"
+                              : sv.bearishBy.includes(address)
+                              ? "bearish"
+                              : null
+                            : null;
+                          return (
+                            <div
+                              key={ticker}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "1px",
+                                background: "rgba(255,255,255,0.05)",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                borderRadius: "999px",
+                                overflow: "hidden",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {/* Ticker label */}
+                              <span style={{ padding: "5px 8px 5px 12px", color: "#f4f7fa", letterSpacing: "0.04em" }}>
+                                {ticker}
+                              </span>
+                              {/* Bull vote */}
+                              <button
+                                onClick={(e) => handleStockVote(e, t.id, ticker, "bullish")}
+                                style={{
+                                  background: myVote === "bullish" ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.04)",
+                                  border: "none",
+                                  borderLeft: "1px solid rgba(255,255,255,0.08)",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "3px",
+                                  padding: "5px 8px",
+                                  color: myVote === "bullish" ? "#34d399" : "#7e8a98",
+                                  fontSize: "11px",
+                                  fontWeight: 600,
+                                  transition: "background 0.15s",
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: "13px", fontVariationSettings: myVote === "bullish" ? "'FILL' 1" : "'FILL' 0" }}>
+                                  trending_up
+                                </span>
+                                {sv.bullish}
+                              </button>
+                              {/* Bear vote */}
+                              <button
+                                onClick={(e) => handleStockVote(e, t.id, ticker, "bearish")}
+                                style={{
+                                  background: myVote === "bearish" ? "rgba(248,113,113,0.2)" : "rgba(255,255,255,0.04)",
+                                  border: "none",
+                                  borderLeft: "1px solid rgba(255,255,255,0.08)",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "3px",
+                                  padding: "5px 8px",
+                                  color: myVote === "bearish" ? "#f87171" : "#7e8a98",
+                                  fontSize: "11px",
+                                  fontWeight: 600,
+                                  transition: "background 0.15s",
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: "13px", fontVariationSettings: myVote === "bearish" ? "'FILL' 1" : "'FILL' 0" }}>
+                                  trending_down
+                                </span>
+                                {sv.bearish}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                     {/* Attachment indicator */}
                     {t.attachments.length > 0 && (
                       <div className="flex items-center gap-1.5 text-text-subtle text-xs">
