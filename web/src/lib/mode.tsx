@@ -41,7 +41,7 @@ function subscribe(cb: () => void): () => void {
   };
 }
 
-function setMode(m: Mode): void {
+export function setMode(m: Mode): void {
   current = m;
   window.localStorage.setItem(STORAGE_KEY, m);
   listeners.forEach((l) => l());

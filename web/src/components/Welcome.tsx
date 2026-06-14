@@ -13,7 +13,8 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { useFundStats } from "@/lib/data";
+import { useFundStats, enterDemo } from "@/lib/data";
+import { setMode } from "@/lib/mode";
 import { countUp } from "@/lib/countUp";
 import NeuralBackground from "@/components/NeuralBackground";
 import "@/styles/welcome.css";
@@ -158,18 +159,39 @@ export default function Welcome() {
         ))}
       </div>
 
-      {/* CTA — into the join flow */}
+      {/* CTAs — explore the demo (no auth) or join the live fund (World ID + deposit) */}
       <div className="wl-actions wl-rise" style={{ animationDelay: "0.5s" }}>
-        <button className="wl-cta" onClick={() => router.push("/join")}>
-          <svg viewBox="0 0 16 16">
-            <circle cx="8" cy="8" r="6" />
-            <line x1="8" y1="5" x2="8" y2="11" />
-            <line x1="5" y1="8" x2="11" y2="8" />
-          </svg>
-          Join the fund
-        </button>
+        <div className="wl-btns">
+          <button
+            className="wl-cta"
+            onClick={() => {
+              setMode("mock");
+              enterDemo();
+              router.push("/");
+            }}
+          >
+            <svg viewBox="0 0 16 16">
+              <polygon points="5,4 12,8 5,12" fill="currentColor" stroke="none" />
+            </svg>
+            View demo
+          </button>
+          <button
+            className="wl-cta wl-cta-ghost"
+            onClick={() => {
+              setMode("live");
+              router.push("/join");
+            }}
+          >
+            <svg viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="6" />
+              <line x1="8" y1="5" x2="8" y2="11" />
+              <line x1="5" y1="8" x2="11" y2="8" />
+            </svg>
+            Join live fund
+          </button>
+        </div>
         <span className="wl-sub">
-          Verify once with World ID · deposit demo USDC · start voting
+          Demo jumps straight in · live verifies with World ID, deposits demo USDC, then votes
         </span>
       </div>
     </div>

@@ -17,6 +17,7 @@ import {
   useMemo,
   useReducer,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { useAuth } from "./useAuth";
@@ -542,14 +543,47 @@ export function useFundStats(): FundStats {
   return SEED_FUND_STATS;
 }
 
+// Demo-entry flag: the welcome page's "View demo" button sets this so a visitor
+// can jump straight into the app in mock mode without a real deposit/auth. Backed
+// by a module store (persisted) so it survives the provider remount when the mode
+// flips. Only consulted in mock mode — live still requires a real position.
+const DEMO_KEY = "concordia:demo-joined";
+let demoEntered: boolean | null = null;
+const demoListeners = new Set<() => void>();
+
+function demoSnapshot(): boolean {
+  if (demoEntered === null) demoEntered = window.localStorage.getItem(DEMO_KEY) === "1";
+  return demoEntered;
+}
+function demoServerSnapshot(): boolean {
+  return false;
+}
+function subscribeDemo(cb: () => void): () => void {
+  demoListeners.add(cb);
+  return () => {
+    demoListeners.delete(cb);
+  };
+}
+/** Mark the viewer as "in the demo" so the membership gate lets them into the app. */
+export function enterDemo(): void {
+  demoEntered = true;
+  window.localStorage.setItem(DEMO_KEY, "1");
+  demoListeners.forEach((l) => l());
+}
+function useDemoEntered(): boolean {
+  return useSyncExternalStore(subscribeDemo, demoSnapshot, demoServerSnapshot);
+}
+
 /**
- * True once the viewer has a position in the fund (deposited via /join).
- * Drives the membership gate: non-members see /welcome with no nav; members
- * get the full app and /welcome becomes inaccessible. Delegates to
- * usePosition() so it's correct in both mock and live modes.
+ * True once the viewer can see the full app. Live: holds a position (deposited via
+ * /join). Mock: holds a position OR clicked "View demo". Drives the membership gate:
+ * non-members see /welcome with no nav; members get the full app.
  */
 export function useHasJoined(): boolean {
-  return usePosition().shares > 0;
+  const isMock = useIsMock();
+  const demo = useDemoEntered();
+  const hasPosition = usePosition().shares > 0;
+  return hasPosition || (isMock && demo);
 }
 
 export interface FundActions {

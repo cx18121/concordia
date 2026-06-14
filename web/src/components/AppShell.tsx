@@ -13,7 +13,6 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useHasJoined } from "@/lib/data";
-import { ModeToggle } from "@/lib/mode";
 import Nav from "./Nav";
 
 // Routes a non-member is allowed to see. Everything else redirects to /welcome.
@@ -48,15 +47,9 @@ export default function AppShell({
 
   return (
     <>
-      {joined ? (
-        <Nav />
-      ) : (
-        // Non-members have no nav, so surface the demo/live toggle on its own
-        // (top-right) — a visitor can pick the mode from the welcome/join screens.
-        <div style={{ position: "fixed", top: 16, right: 16, zIndex: 50 }}>
-          <ModeToggle />
-        </div>
-      )}
+      {/* Non-members get no nav (and no mode toggle) — the welcome page's
+          "View demo" / "Join live fund" buttons choose the mode instead. */}
+      {joined && <Nav />}
       {/* Render nothing while a redirect is pending so the wrong screen never
           flashes (e.g. gated content before the bounce to /welcome). */}
       {wantsRedirect ? null : children}
