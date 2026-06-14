@@ -6,12 +6,13 @@ import { tickerToBytes32, UNIVERSE } from "@concordia/shared";
 export type CycleState = "IDLE" | "OPEN" | "LOCKED";
 export const CYCLE_STATE = ["IDLE", "OPEN", "LOCKED"] as const;
 
-/** Demo timing (seconds): 90s voting window, ~3.5 min hold ≈ a 5-min cycle (DESIGN §3.5, ISSUES #8). */
+/** Demo timing (seconds): 60s voting window + 30s hold ≈ a 90s cycle, so visitors can deposit +
+ *  vote unrushed yet see resolve/accuracy/rewards within ~30s of lock (DESIGN §3.5, ISSUES #8). */
 export interface CycleTiming {
   votingWindowSec: number;
   holdSec: number;
 }
-export const DEMO_TIMING: CycleTiming = { votingWindowSec: 90, holdSec: 210 };
+export const DEMO_TIMING: CycleTiming = { votingWindowSec: 60, holdSec: 30 };
 
 /** Decode an on-chain `Alloc[]` (bytes32 asset) into ticker-keyed backed weights for scoring. */
 export function decodeAllocs(
