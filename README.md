@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="web/public/cover-final.png" alt="Concordia, a community hedge fund DAO" width="680" />
+  <img src="web/public/cover-final.png" alt="Concordia — a community hedge fund where skill decides where the money goes" width="680" />
 </p>
 
 <h3 align="center">A community hedge fund where skill, not just capital, decides where the money goes.</h3>

@@ -7,7 +7,7 @@ import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Concordia",
-  description: "A community hedge fund DAO.",
+  description: "A community hedge fund where skill, not just capital, decides where the money goes.",
 };
 
 

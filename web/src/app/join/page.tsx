@@ -192,7 +192,7 @@ export default function JoinPage() {
           </div>
           <div className="logo-text">
             <h1>Concordia</h1>
-            <p>Hedge Fund DAO</p>
+            <p>Community Hedge Fund</p>
           </div>
         </div>
 
