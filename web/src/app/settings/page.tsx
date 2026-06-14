@@ -9,7 +9,12 @@
 // mockup's inline `onclick="this.classList.toggle('active')"`. The disabled
 // (deposit/withdraw) toggle stays inert. Off the demo path.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  loadAgentSecret,
+  generateAgentKey,
+  maskSecret,
+} from "@/lib/agentKey";
 import "@/styles/settings.css";
 
 function Toggle({
@@ -43,6 +48,38 @@ export default function SettingsPage() {
   const [voteOnBehalf, setVoteOnBehalf] = useState(true);
   const [demoMode, setDemoMode] = useState(true);
   const [notifications, setNotifications] = useState(false);
+
+  // Agent API key — the SAME credential the Vote page mints (shared via
+  // localStorage in lib/agentKey.ts). Copy / Show / Regenerate all act on it.
+  const [secret, setSecret] = useState("");
+  const [revealed, setRevealed] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // Intentional client-only localStorage read after hydration (a lazy initializer
+  // would render the masked key differently on server vs client -> hydration drift).
+  useEffect(() => {
+    const s = loadAgentSecret();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (s) setSecret(s);
+  }, []);
+
+  const copyKey = () => {
+    if (secret && navigator.clipboard) navigator.clipboard.writeText(secret);
+  };
+
+  const regenerate = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const s = await generateAgentKey(); // mints via /api/agent/keys + caches
+      setSecret(s);
+      setRevealed(true);
+    } catch {
+      /* leave the prior key in place on failure */
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <main className="max-w-[800px] mx-auto pt-32 pb-24 px-6 relative z-10">
@@ -90,16 +127,39 @@ export default function SettingsPage() {
             <label className="text-[10px] font-bold text-[#7E8A98] uppercase tracking-[0.05em] mb-2 block">Your API Key</label>
             <div className="flex items-center gap-4">
               <div className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-[#F4F7FA] text-sm flex flex-wrap items-center justify-between gap-y-2 gap-x-4">
-                <span className="tracking-widest">cf_live_••••••••••3f9a</span>
-                <div className="flex gap-4">
-                  <button className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all py-1">Copy</button>
-                  <button className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all py-1">Regenerate</button>
+                <span className="tracking-widest truncate">
+                  {revealed && secret ? secret : maskSecret(secret)}
+                </span>
+                <div className="flex gap-4 flex-none">
+                  <button
+                    onClick={copyKey}
+                    disabled={!secret}
+                    className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all disabled:opacity-40 py-1"
+                  >
+                    Copy
+                  </button>
+                  <button
+                    onClick={() => setRevealed((r) => !r)}
+                    disabled={!secret}
+                    className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all disabled:opacity-40 py-1"
+                  >
+                    {revealed ? "Hide" : "Show"}
+                  </button>
+                  <button
+                    onClick={regenerate}
+                    disabled={busy}
+                    className="text-[#2DD4BF] text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all disabled:opacity-40 py-1"
+                  >
+                    {busy ? "…" : secret ? "Regenerate" : "Generate"}
+                  </button>
                 </div>
               </div>
             </div>
             <p className="mt-3 flex items-center gap-2 text-xs text-[#7E8A98]">
               <span className="w-1 h-1 rounded-full bg-[#2DD4BF]" />
-              AgentKit linked · one agent per verified human
+              {secret
+                ? "Key active · one agent per verified human · vote-only"
+                : "Generate a key to connect an agent · one per verified human"}
             </p>
           </div>
           {/* Permissions */}

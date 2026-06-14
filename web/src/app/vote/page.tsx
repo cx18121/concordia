@@ -21,9 +21,18 @@ import {
   usePrices,
   useCycle,
   useVotingPower,
+  useAccuracy,
+  usePosition,
+  useFundStats,
   useFundActions,
+  PEER_AVG_ACCURACY_PCT,
   type Pick,
 } from "@/lib/data";
+import {
+  loadAgentSecret,
+  generateAgentKey,
+  maskSecret,
+} from "@/lib/agentKey";
 import "@/styles/vote.css";
 
 // UNIVERSE is tickers only; this maps each to a display company name for the
@@ -68,6 +77,9 @@ export default function VotePage() {
   const { isVerified } = useAuth();
   const { id, secondsLeft } = useCycle();
   const votingPower = useVotingPower();
+  const accuracy = useAccuracy(); // null until the member has been scored
+  const position = usePosition();
+  const fundStats = useFundStats();
   const prices = usePrices(); // bound so the universe reflects live tickers (B7).
   const { castVote, resolveCycle, startNewCycle, lastVote, canClaim } =
     useFundActions();
@@ -170,26 +182,40 @@ export default function VotePage() {
   // "Generate" mints a key server-side (POST /api/agent/keys). A bot then votes
   // with it via POST /api/agent/vote — and we poll /api/agent/me so a vote
   // placed over the API shows up right here in the demo (applied as your vote).
-  const [secret, setSecret] = useState("cfsk_a93Fb2L8qZ4tR7nX1eW0pV6");
+  // The secret is the SAME one shown on Settings → Agent API access (shared via
+  // localStorage in lib/agentKey.ts), so both surfaces never drift.
+  const [secret, setSecret] = useState("");
   const [revealed, setRevealed] = useState(false);
   const [genLabel, setGenLabel] = useState("Generate API key");
   const [apiActive, setApiActive] = useState(false); // true once a real key is minted
-  const [origin, setOrigin] = useState("");
+  // origin for the curl example — read once at init (only rendered once apiActive).
+  const [origin] = useState(() =>
+    typeof window !== "undefined" ? window.location.origin : "",
+  );
   const [apiNote, setApiNote] = useState<string | null>(null);
   const lastApiVoteRef = useRef<number | null>(null);
 
-  useEffect(() => { const t = setTimeout(() => setOrigin(window.location.origin), 0); return () => clearTimeout(t); }, []);
+  // Pick up a key already minted on this device (here or on Settings) so both
+  // surfaces show the same credential and the poller goes live immediately. This
+  // is an intentional client-only localStorage read AFTER hydration (a lazy
+  // initializer would render the unmasked key on the server -> hydration drift).
+  useEffect(() => {
+    const s = loadAgentSecret();
+    if (!s) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSecret(s);
+    setApiActive(true);
+  }, []);
 
   const copySecret = useCallback(() => {
-    if (navigator.clipboard) navigator.clipboard.writeText(secret);
+    if (secret && navigator.clipboard) navigator.clipboard.writeText(secret);
   }, [secret]);
 
   async function generateKeys() {
     setGenLabel("Generating key…");
     try {
-      const res = await fetch("/api/agent/keys", { method: "POST" });
-      const data = (await res.json()) as { keyId: string; secret: string };
-      setSecret(data.secret);
+      const s = await generateAgentKey(); // mints + caches in localStorage
+      setSecret(s);
       setRevealed(true);
       setApiActive(true);
       lastApiVoteRef.current = null;
@@ -238,7 +264,6 @@ export default function VotePage() {
     };
   }, [apiActive, secret, castVote]);
 
-  const MASK = "•".repeat(28);
 
   return (
     <div className="wrap">
@@ -253,6 +278,66 @@ export default function VotePage() {
         <div className="vp">
           <div className="k">Your voting power</div>
           <div className="v tnum">{votingPower.toFixed(2)}%</div>
+        </div>
+      </div>
+
+      {/* Your performance — accuracy + supporting stats, right under voting power.
+          accuracy is null until the cycle resolves; returns/capital come from
+          usePosition(); community accuracy gives a benchmark to compare against. */}
+      <div className="vstats">
+        <div className="vstat">
+          <div className="k">Your accuracy</div>
+          <div
+            className={
+              "v tnum " +
+              (accuracy == null ? "" : accuracy >= 0 ? "up" : "down")
+            }
+          >
+            {accuracy == null
+              ? "—"
+              : `${accuracy >= 0 ? "+" : ""}${accuracy.toFixed(1)}%`}
+          </div>
+          <div className="s">
+            {accuracy == null
+              ? "scored when this cycle resolves"
+              : "excess return vs S&P 500"}
+          </div>
+        </div>
+        <div className="vstat">
+          <div className="k">Your return</div>
+          <div
+            className={
+              "v tnum " + (position.returnPct >= 0 ? "up" : "down")
+            }
+          >
+            {position.returnPct >= 0 ? "+" : ""}
+            {position.returnPct.toFixed(1)}%
+          </div>
+          <div className="s">on your deposited capital</div>
+        </div>
+        <div className="vstat">
+          <div className="k">Capital at work</div>
+          <div className="v tnum">
+            ${Math.round(position.navUsd).toLocaleString()}
+          </div>
+          <div className="s">
+            {position.shares.toLocaleString(undefined, {
+              maximumFractionDigits: 0,
+            })}{" "}
+            shares
+          </div>
+        </div>
+        <div className="vstat">
+          <div className="k">Peer avg accuracy</div>
+          <div
+            className={
+              "v tnum " + (PEER_AVG_ACCURACY_PCT >= 0 ? "up" : "down")
+            }
+          >
+            {PEER_AVG_ACCURACY_PCT >= 0 ? "+" : ""}
+            {PEER_AVG_ACCURACY_PCT.toFixed(1)}%
+          </div>
+          <div className="s">avg alpha across {fundStats.agents} agents</div>
         </div>
       </div>
 
@@ -380,7 +465,7 @@ export default function VotePage() {
           {resolved && (
             <>
               <div className="resolved">
-                Cycle resolved. Accuracy posted, claim available on Overview.
+                Cycle resolved — accuracy posted.
               </div>
               <div className="demobar">
                 <button className="demobtn" onClick={onNewCycle}>
@@ -426,7 +511,7 @@ export default function VotePage() {
               <div className="keyl">Secret key</div>
               <div className="key">
                 <code className={revealed ? "" : "masked"}>
-                  {revealed ? secret : MASK}
+                  {revealed && secret ? secret : maskSecret(secret)}
                 </code>
                 <button onClick={copySecret}>Copy</button>
                 <button onClick={() => setRevealed((r) => !r)}>

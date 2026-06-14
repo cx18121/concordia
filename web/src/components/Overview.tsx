@@ -17,7 +17,8 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useCycle, usePosition } from "@/lib/data";
+import { useCycle, usePosition, useFundBasket } from "@/lib/data";
+import Holdings from "@/components/Holdings";
 import "@/styles/overview.css";
 
 function fmtClock(secs: number): string {
@@ -46,6 +47,14 @@ export default function Overview() {
   useEffect(() => {
     positionRef.current = position;
   }, [position]);
+
+  // The donut's stock view reads the SAME rotating basket as the Holdings table
+  // (useFundBasket), via a ref so the imperative effect can read it on toggle.
+  const basket = useFundBasket();
+  const basketRef = useRef(basket);
+  useEffect(() => {
+    basketRef.current = basket;
+  }, [basket]);
 
   useEffect(() => {
     const RM =
@@ -81,9 +90,21 @@ export default function Overview() {
       const r = SPY[i] / SPY[i - 1] - 1;
       FUND.push(FUND[i - 1] * (1 + (r * 1.12 + 0.0011)));
     }
-    const END = positionRef.current.navUsd || 43820.5;
-    const fsc = END / FUND[N - 1];
-    const FUSD = FUND.map((v) => v * fsc);
+    // Anchor the series to the VIEWER's own position: it starts at their cost
+    // basis and ends at their current NAV, following the fund's curve shape in
+    // between. So the hero number ($NAV), the $ change, and the % change all
+    // reconcile to the viewer's REAL return (flat + 0% right after depositing),
+    // instead of projecting the fund's all-time +25.94% onto a fresh balance.
+    const END = positionRef.current.navUsd;
+    const START = positionRef.current.costUsd || END;
+    const f0 = FUND[0];
+    const fN = FUND[N - 1];
+    const FUSD = FUND.map((v) =>
+      fN === f0 ? END : START + (END - START) * ((v - f0) / (fN - f0)),
+    );
+    // S&P normalized to start alongside the fund, so the gap between them IS the
+    // fund's alpha (matches the Account chart).
+    const SPY_NORM = SPY.map((v) => (v / SPY[0]) * FUSD[0]);
     const DATES: string[] = [];
     const d0 = new Date(2024, 1, 26);
     for (let k = 0; k < N; k++) {
@@ -139,7 +160,7 @@ export default function Overview() {
       const v = usd[i],
         base = usd[0],
         dv = v - base,
-        pct = (v / base - 1) * 100,
+        pct = base ? (v / base - 1) * 100 : 0, // guard: zero position => +0.00%
         up = v >= base;
       $("val")!.textContent = fmt(v);
       const c = $("chg")!;
@@ -160,9 +181,11 @@ export default function Overview() {
         s = Math.max(0, N - n);
       sliceStart = s;
       const fu = FUSD.slice(s);
+      const spu = SPY_NORM.slice(s);
       usd = fu;
-      let mn = Math.min.apply(null, fu),
-        mx = Math.max.apply(null, fu);
+      // Range fits BOTH lines so the benchmark never clips below the fund.
+      let mn = Math.min(Math.min.apply(null, fu), Math.min.apply(null, spu)),
+        mx = Math.max(Math.max.apply(null, fu), Math.max.apply(null, spu));
       const pad = (mx - mn) * 0.16 || 1;
       mn -= pad;
       mx += pad;
@@ -175,6 +198,10 @@ export default function Overview() {
         .join(" ");
       $("fundpath")!.setAttribute("points", fp);
       $("area")!.setAttribute("points", fp + " " + W + "," + H + " 0," + H);
+      $("spypath")!.setAttribute(
+        "points",
+        spu.map((v, i) => X(i).toFixed(1) + "," + Y(v).toFixed(1)).join(" "),
+      );
       $("axis")!.innerHTML = TFAX[tf]
         .map((l) => "<span>" + l + "</span>")
         .join("");
@@ -225,14 +252,24 @@ export default function Overview() {
       { nm: "Financials", pc: 12, c: "#818CF8" },
       { nm: "Cash", pc: 8, c: "#475569" },
     ];
-    const STOCKS = [
-      { nm: "mNVDA", co: "Nvidia", pc: 24.1, c: "#2DD4BF" },
-      { nm: "mMSFT", co: "Microsoft", pc: 18.4, c: "#22D3EE" },
-      { nm: "mAAPL", co: "Apple", pc: 15.0, c: "#60A5FA" },
-      { nm: "mTSLA", co: "Tesla", pc: 12.2, c: "#818CF8" },
-      { nm: "mAMZN", co: "Amazon", pc: 10.1, c: "#A78BFA" },
-      { nm: "Cash", co: "Reserve", pc: 20.2, c: "#475569" },
-    ];
+    // Stock view of the donut, derived from the live fund basket (top 5 by weight
+    // + an aggregated "Others" slice) so the ring matches the Fund Composition
+    // table below it. Rebuilt on each toggle so it tracks cycle rotation.
+    const DONUT_COLORS = ["#2DD4BF", "#22D3EE", "#60A5FA", "#818CF8", "#A78BFA", "#475569"];
+    function buildStocks() {
+      const bk = basketRef.current;
+      const top = bk.slice(0, 5);
+      const othersPc = bk.slice(5).reduce((s, h) => s + h.weightPct, 0);
+      const out = top.map((h, i) => ({
+        nm: h.ticker,
+        co: h.company,
+        pc: Math.round(h.weightPct * 10) / 10,
+        c: DONUT_COLORS[i],
+      }));
+      if (othersPc > 0)
+        out.push({ nm: "Others", co: `${bk.length - 5} more`, pc: Math.round(othersPc * 10) / 10, c: DONUT_COLORS[5] });
+      return out;
+    }
     let dmode = 0;
     const CC = 2 * Math.PI * 80;
     const arcsEl = $("arcs")!;
@@ -281,7 +318,7 @@ export default function Overview() {
         leg.style.opacity = "1";
       }, 160);
       pendingTimeouts.add(tid);
-      $("dctr")!.textContent = dmode ? "5" : "100%";
+      $("dctr")!.textContent = dmode ? String(basketRef.current.length) : "100%";
       $("dctrs")!.textContent = dmode ? "holdings" : "invested";
     }
     function toggleDonut() {
@@ -292,7 +329,7 @@ export default function Overview() {
       }, 560);
       pendingTimeouts.add(tid);
       dmode = dmode ? 0 : 1;
-      drawDonut(dmode ? STOCKS : SECT);
+      drawDonut(dmode ? buildStocks() : SECT);
     }
     const ringEl = $("ring")!;
     const legEl = $("leg")!;
@@ -307,50 +344,8 @@ export default function Overview() {
     ringEl.addEventListener("click", onRingClick);
     legEl.addEventListener("click", onLegClick);
 
-    const FUND_AUM = END; // same value driving the chart ($43,820.50 default)
-    const HOLD = [
-      { n: "mNVDA", co: "Nvidia",     u: 1, wt: 0.241, perf:  0.184 },
-      { n: "mMSFT", co: "Microsoft",  u: 1, wt: 0.184, perf:  0.072 },
-      { n: "mAAPL", co: "Apple",      u: 0, wt: 0.150, perf: -0.026 },
-      { n: "mTSLA", co: "Tesla",      u: 1, wt: 0.122, perf:  0.122 },
-      { n: "mAMZN", co: "Amazon",     u: 0, wt: 0.101, perf: -0.041 },
-    ];
-    const fmtK = (v: number) =>
-      "$" + v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    const spark = (up: number) => {
-      const pts = up
-        ? "0,30 60,20 120,24 180,11 240,15 300,3"
-        : "0,11 60,16 120,9 180,20 240,17 300,26";
-      return (
-        '<svg class="hspark" viewBox="0 0 300 38" preserveAspectRatio="none"><polyline points="' +
-        pts +
-        '" fill="none" stroke="' +
-        (up ? "#34E3A8" : "#FF6B6B") +
-        '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      );
-    };
-    $("holdings")!.innerHTML = HOLD.map((h) => {
-      const alloc   = Math.round(FUND_AUM * h.wt);
-      const current = Math.round(alloc * (1 + h.perf));
-      const dGain   = current - alloc;
-      const pct     = (h.perf * 100).toFixed(1);
-      const dir     = h.u ? "up" : "dn";
-      const sign    = h.u ? "+" : "";
-      const vals =
-        '<div class="hvals">' +
-        '<b class="hval tnum">' + fmtK(current) + '</b>' +
-        '<span class="hchg tnum ' + dir + '">' +
-        sign + pct + '% · ' + sign + fmtK(Math.abs(dGain)) +
-        '</span></div>';
-      return (
-        '<a class="holdrow" data-href="account.html">' +
-        '<span class="tk">' + h.n + '</span>' +
-        '<div class="hn"><b>' + h.co + '</b><s>' + h.n + '</s></div>' +
-        spark(h.u) +
-        vals +
-        '</a>'
-      );
-    }).join("");
+    // Holdings are rendered by the shared <Holdings /> React component in the
+    // #hold section (same UI + data as the Account page) — no imperative fill.
 
     drawChart("ALL");
     drawDonut(SECT);
@@ -591,6 +586,19 @@ export default function Overview() {
               </filter>
             </defs>
             <polygon id="area" points="" fill="url(#fill)" />
+            {/* S&P benchmark — same treatment as the Account chart (muted grey,
+                dashed) so the fund's positive alpha reads the same everywhere. */}
+            <polyline
+              id="spypath"
+              points=""
+              fill="none"
+              stroke="#8A94A6"
+              strokeWidth="2"
+              strokeDasharray="7,5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.8"
+            />
             <polyline
               id="fundpath"
               points=""
@@ -607,11 +615,13 @@ export default function Overview() {
         <div className="stip" id="stip" />
 
         <div className="value">
+          {/* Neutral first-paint placeholders — readout() fills these with the
+              viewer's real position value + change synchronously on mount. */}
           <div className="num tnum" id="val">
-            $43,820.50
+            $0.00
           </div>
           <div className="chg tnum" id="chg">
-            {"▲ $9,027 · +25.94%"}
+            —
           </div>
         </div>
 
@@ -704,7 +714,7 @@ export default function Overview() {
       </section>
 
       <section id="hold">
-        <div className="reveal" id="holdings" />
+        <Holdings basis={position.navUsd} basisLabel="Your allocation" />
       </section>
     </>
   );

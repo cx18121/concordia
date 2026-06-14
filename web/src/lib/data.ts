@@ -43,8 +43,6 @@ import {
   LEADERBOARD,
   LEADERBOARD_FRAMES,
   DEMO_CYCLE_ID,
-  DEMO_CYCLE_RETURNS,
-  DEMO_SPX_RETURN,
   AGENT_MEMBERS,
 } from "./demoData";
 
@@ -121,6 +119,140 @@ export interface FundStats {
 
 export type Ticker = (typeof UNIVERSE)[number];
 
+/** A single fund holding — the basket shown on Overview + Account (same data,
+ * same UI). Click a row to expand its detail; nothing navigates away. */
+export interface Holding {
+  ticker: string;
+  company: string;
+  weightPct: number; // allocation as a % of the fund
+  perfPct: number; // trailing 1-month performance, %
+  accent: string; // tailwind avatar bg/text classes
+  blurb: string; // one-line thesis shown when the row is expanded
+}
+
+// ---------------------------------------------------------------------------
+// Fund basket — the fund always holds exactly 10 names, re-picked every cycle as
+// the top performers of its investable universe. Because it holds the BEST 10
+// (weighted top-heavy), the basket's blended return always beats the equal-weight
+// market benchmark — that gap IS the fund's alpha. The selection rotates round to
+// round, so the "Fund Composition" table on Overview + Account changes over time.
+// ---------------------------------------------------------------------------
+
+// Per-asset display metadata (company name, avatar accent, one-line thesis).
+const STOCK_META: Record<string, { company: string; accent: string; blurb: string }> = {
+  NVDA: { company: "Nvidia", accent: "bg-teal/20 text-teal", blurb: "AI/GPU leader — the fund's highest-conviction compute bet." },
+  MSFT: { company: "Microsoft", accent: "bg-cyan-500/20 text-cyan-400", blurb: "Cloud + Copilot compounder; the steady anchor of the basket." },
+  AAPL: { company: "Apple", accent: "bg-blue-500/20 text-blue-400", blurb: "Hardware + services franchise with the deepest install base." },
+  META: { company: "Meta", accent: "bg-indigo-500/20 text-indigo-400", blurb: "Ad-spend recovery plus disciplined AI capex — a momentum re-rate." },
+  AMZN: { company: "Amazon", accent: "bg-orange-500/20 text-orange-400", blurb: "AWS reacceleration and retail-margin expansion." },
+  GOOGL: { company: "Alphabet", accent: "bg-sky-500/20 text-sky-400", blurb: "Search resilience + Gemini; the cheapest of the megacaps." },
+  TSLA: { company: "Tesla", accent: "bg-red-500/20 text-red-400", blurb: "EV + autonomy optionality; the basket's high-beta sleeve." },
+  JPM: { company: "JPMorgan", accent: "bg-emerald-500/20 text-emerald-400", blurb: "Financials ballast with a net-interest-income tailwind." },
+  XOM: { company: "ExxonMobil", accent: "bg-amber-500/20 text-amber-400", blurb: "Energy hedge — uncorrelated cash flow when rates bite." },
+  UNH: { company: "UnitedHealth", accent: "bg-violet-500/20 text-violet-400", blurb: "Defensive healthcare compounder with pricing power." },
+  WMT: { company: "Walmart", accent: "bg-blue-400/20 text-blue-300", blurb: "Defensive retail + ads optionality; low-beta ballast." },
+  XLK: { company: "Tech Sector", accent: "bg-cyan-400/20 text-cyan-300", blurb: "Broad technology sleeve — diversified semis + software." },
+  XLF: { company: "Financials", accent: "bg-emerald-400/20 text-emerald-300", blurb: "Banks + insurers basket; a rate-cycle play." },
+  XLE: { company: "Energy", accent: "bg-amber-400/20 text-amber-300", blurb: "Energy sector basket — inflation and supply hedge." },
+  XLV: { company: "Health Care", accent: "bg-rose-400/20 text-rose-300", blurb: "Defensive health-care sleeve; low-drawdown profile." },
+  ARKK: { company: "ARK Innovation", accent: "bg-pink-500/20 text-pink-400", blurb: "High-growth innovation sleeve — the basket's risk-on tilt." },
+  SPY: { company: "S&P 500 ETF", accent: "bg-slate-400/20 text-slate-300", blurb: "Broad-market beta." },
+  QQQ: { company: "Nasdaq 100 ETF", accent: "bg-purple-500/20 text-purple-400", blurb: "Large-cap growth beta." },
+};
+
+// The fund picks from everything investable EXCEPT the broad-index ETFs (those
+// ARE the benchmark, not an active pick).
+const FUND_POOL: Ticker[] = (UNIVERSE as readonly Ticker[]).filter(
+  (t) => t !== "SPY" && t !== "QQQ",
+) as Ticker[];
+
+// Top-heavy conviction weights for the 10 chosen names (sum = 100).
+const FUND_WEIGHTS = [21, 17, 14, 11, 9, 7.5, 6.5, 5.5, 4.5, 4];
+const FUND_SIZE = FUND_WEIGHTS.length;
+
+// Long-run return tilt per asset (so megacaps usually — not always — lead),
+// before per-cycle noise. Keeps the rotating basket recognisable.
+const TICKER_DRIFT: Record<string, number> = {
+  NVDA: 0.03, META: 0.024, MSFT: 0.02, AMZN: 0.017, ARKK: 0.016, GOOGL: 0.015,
+  XLK: 0.014, TSLA: 0.013, AAPL: 0.012, WMT: 0.009, UNH: 0.008, JPM: 0.008,
+  XLV: 0.007, XLF: 0.006, XOM: 0.005, XLE: 0.004,
+};
+
+// Deterministic [0,1) hash from (cycle, index) — no Date/Math.random at module
+// scope so server and client render the same basket (no hydration mismatch).
+function hash01(cycle: number, i: number): number {
+  const x = Math.sin((cycle + 1) * 12.9898 + (i + 1) * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// A single asset's realised return for a cycle: long-run drift ± per-cycle noise.
+function tickerCycleReturn(cycle: number, ticker: string): number {
+  const i = Math.max(0, (UNIVERSE as readonly string[]).indexOf(ticker));
+  const drift = TICKER_DRIFT[ticker] ?? 0.008;
+  const noise = (hash01(cycle, i) - 0.5) * 0.07; // ±3.5 pts
+  return drift + noise;
+}
+
+// The benchmark ("S&P") = equal-weight mean of the investable pool that cycle.
+// The fund holds the BEST 10 of that pool, so it beats this by construction.
+function marketReturn(cycle: number): number {
+  let s = 0;
+  for (const t of FUND_POOL) s += tickerCycleReturn(cycle, t);
+  return s / FUND_POOL.length;
+}
+
+// The fund's 10-name basket for a cycle: top performers, top-heavy weights.
+function fundBasket(cycle: number): Holding[] {
+  const ranked = [...FUND_POOL]
+    .map((t) => ({ t, r: tickerCycleReturn(cycle, t) }))
+    .sort((a, b) => b.r - a.r)
+    .slice(0, FUND_SIZE);
+  return ranked.map((x, idx) => {
+    const meta = STOCK_META[x.t] ?? { company: x.t, accent: "bg-white/10 text-text-primary", blurb: "" };
+    return {
+      ticker: x.t,
+      company: meta.company,
+      weightPct: FUND_WEIGHTS[idx],
+      perfPct: x.r * 100,
+      accent: meta.accent,
+      blurb: meta.blurb,
+    };
+  });
+}
+
+// The fund's blended return for a cycle = Σ weightᵢ × assetᵢ return (fraction).
+function fundCycleReturn(cycle: number): number {
+  let r = 0;
+  for (const h of fundBasket(cycle)) r += (h.weightPct / 100) * (h.perfPct / 100);
+  return r;
+}
+
+// 20% of the fund's positive alpha each cycle is skimmed from NAV into the reward
+// pool (matches Governance.REWARD_POOL_PCT); the rest grows everyone's shares.
+const REWARD_POOL_PCT = 0.2;
+
+// One cycle's NAV growth = the fund's return minus the 20% alpha skim.
+function navGrowthForCycle(cycle: number): number {
+  const fr = fundCycleReturn(cycle);
+  return fr - REWARD_POOL_PCT * Math.max(fr - marketReturn(cycle), 0);
+}
+
+// The fund has a track record BEFORE you join (the rest of the fund has been
+// running for cycles). Compound the basket's realised returns over the cycles
+// preceding the current one, so NAV/share, the S&P index, and the alpha between
+// them all reflect real history the moment you arrive — derived from the same
+// basket math as the live cycles, so nothing can drift.
+const SEED_HISTORY_CYCLES = 9;
+function seedTrackRecord(): { navPerShare: number; spxIndex: number } {
+  let navPerShare = 1;
+  let spxIndex = 1;
+  for (let c = DEMO_CYCLE_ID - SEED_HISTORY_CYCLES; c < DEMO_CYCLE_ID; c++) {
+    navPerShare *= 1 + navGrowthForCycle(c);
+    spxIndex *= 1 + marketReturn(c);
+  }
+  return { navPerShare, spxIndex };
+}
+
 // ===========================================================================
 // Mock adapter — seeded state in a client provider mounted in layout.tsx.
 // State is shared across routes (root layout persists across client nav), so
@@ -157,33 +289,27 @@ const CYCLE_SECONDS = 5 * 60;
 // the small-capital, high-skill agent out-ranks the big-capital, mediocre one.
 const SEED_LEADERBOARD: LeaderboardRow[] = LEADERBOARD;
 
-// Apply the demo cycle's real weekly returns to a price map; tickers outside the agent
-// fixture move with the S&P. Same per-ticker moves the user's vote is scored against.
-function applyDemoReturns(prices: Record<Ticker, number>): Record<Ticker, number> {
+// Move a price map by each ticker's realised return this cycle — the same
+// per-asset moves the user's vote is scored against, so prices and scores agree.
+function applyCycleReturns(prices: Record<Ticker, number>, cycle: number): Record<Ticker, number> {
   const out = { ...prices };
   for (const t of Object.keys(out) as Ticker[]) {
-    const r = DEMO_CYCLE_RETURNS[t] ?? DEMO_SPX_RETURN;
-    out[t] = Number((out[t] * (1 + r)).toFixed(2));
+    out[t] = Number((out[t] * (1 + tickerCycleReturn(cycle, t))).toFixed(2));
   }
   return out;
 }
 
-// Vote-weighted excess return vs the S&P for the user's own basket — the exact accuracy
-// formula the agents are scored by (agents/src/resolve.ts cycleAccuracy). Returns a percent.
-function scoreVoteAccuracy(picks: Pick[]): number {
-  let acc = 0;
-  for (const p of picks) {
-    const r = DEMO_CYCLE_RETURNS[p.ticker] ?? 0;
-    acc += (p.pct / 100) * (r - DEMO_SPX_RETURN);
-  }
-  return acc * 100;
+// Gross weekly return of the user's own basket this cycle (fraction).
+function scoreVoteReturn(picks: Pick[], cycle: number): number {
+  let raw = 0;
+  for (const p of picks) raw += (p.pct / 100) * tickerCycleReturn(cycle, p.ticker);
+  return raw;
 }
 
-// Raw (gross) weekly return of the user's basket — drives the NAV bump on resolve.
-function scoreVoteReturn(picks: Pick[]): number {
-  let raw = 0;
-  for (const p of picks) raw += (p.pct / 100) * (DEMO_CYCLE_RETURNS[p.ticker] ?? 0);
-  return raw;
+// Vote-weighted excess return vs the benchmark for the user's own basket — the
+// accuracy formula the agents are scored by (agents/src/resolve.ts). Returns a percent.
+function scoreVoteAccuracy(picks: Pick[], cycle: number): number {
+  return (scoreVoteReturn(picks, cycle) - marketReturn(cycle)) * 100;
 }
 
 // The user's voting power as a peer-relative share against the agents — same formula as
@@ -198,18 +324,58 @@ function yourVotingPowerPct(capital: number, accuracyPct: number, cycles: number
   return vp * 100;
 }
 
+// Peer benchmark — mean agent "alpha" (excess return vs the S&P) across the demo
+// peer set, in the SAME percentage units as useAccuracy()/scoreVoteAccuracy().
+// Lets the vote page compare your accuracy against peers on a like-for-like
+// scale, instead of the 0–100 community skill score shown on the public page.
+export const PEER_AVG_ACCURACY_PCT =
+  (AGENT_MEMBERS.reduce((s, m) => s + m.accuracy, 0) / AGENT_MEMBERS.length) * 100;
+
+// Fund headline figures shown on the public /welcome page are DERIVED so the
+// landing page can never drift from the rest of the app. The return is the
+// basket's weight-weighted performance and the benchmark is the same cycle's
+// market mean (so the headline shows the same positive alpha as the Account
+// stats); AUM is the fund's real current value; accuracy is the member win-rate.
+const HEADLINE_CYCLE = DEMO_CYCLE_ID; // the seed cycle the trailing-window figures use
+
+// The fund's REAL current AUM — the rest-of-fund base (every member except you)
+// plus a representative ~$1k active position — so the public number matches the
+// ~$43.8K shown in-app, not an inflated notional. Reused by seedState() as the
+// seed otherAum. The return stat below reports the basket's performance; AUM is
+// the resulting value, so the two are consistent without double-counting.
+const OTHER_AUM_BASE = 42_820;
+export const TOTAL_FUND_AUM_USD = OTHER_AUM_BASE + 1_000; // ≈ $43.8K
+
+// "Member accuracy" = the share of the member cohort beating the benchmark
+// (positive alpha), from the agent peer set — a real win-rate, not a magic number.
+const MEMBER_WIN_RATE_PCT =
+  Math.round(
+    (AGENT_MEMBERS.filter((m) => m.accuracy > 0).length / AGENT_MEMBERS.length) * 1000,
+  ) / 10;
+
+/** Weight-weighted trailing-window return of the current basket, in percent. */
+export function fundBasketReturnPct(): number {
+  return Math.round(fundCycleReturn(HEADLINE_CYCLE) * 1e4) / 100;
+}
+
+/** The benchmark return over the same window, percent (always below the fund). */
+function spBenchmarkReturnPct(): number {
+  return Math.round(marketReturn(HEADLINE_CYCLE) * 1e4) / 100;
+}
+
 // Whole-fund aggregate shown on the public /welcome page (no per-user data).
 const SEED_FUND_STATS: FundStats = {
-  aumUsd: 1_284_932,
-  allTimeReturnPct: 25.94,
-  spReturnPct: 14.6,
+  // AUM is the fund's real current value; return + S&P reflect the basket.
+  aumUsd: TOTAL_FUND_AUM_USD,
+  allTimeReturnPct: fundBasketReturnPct(),
+  spReturnPct: spBenchmarkReturnPct(),
   members: 47,
   humans: 41,
   agents: 6,
   cyclesResolved: 128,
-  avgAccuracy: 64.8,
-  topName: "satoshi.eth",
-  topAccuracy: 81.5,
+  avgAccuracy: MEMBER_WIN_RATE_PCT,
+  topName: LEADERBOARD[0].name,
+  topAccuracy: LEADERBOARD[0].accuracy,
 };
 
 interface MockState {
@@ -218,7 +384,13 @@ interface MockState {
   endsAt: number; // epoch ms
   prices: Record<Ticker, number>;
   position: Position;
-  accuracy: number | null; // null until resolveCycle() runs
+  // ---- fund economics (shared NAV; everyone rides it) ----
+  otherAum: number; // value of the rest of the fund (all members except you)
+  navPerShare: number; // fund NAV per share (1.0 at inception)
+  spxIndex: number; // S&P benchmark index (1.0 at inception)
+  rewardEarned: number; // your cumulative reward credits (your share of 20% of alpha)
+  cyclesPlayed: number; // resolved cycles you participated in
+  accuracy: number | null; // your EWMA forecast accuracy, % (null until first resolve)
   lastVote: Pick[] | null; // recorded vote, so UI can confirm
   claimed: boolean;
   resolved: boolean;
@@ -226,12 +398,20 @@ interface MockState {
 }
 
 function seedState(): MockState {
+  // The fund's pre-join history (positive alpha) — NAV/share + S&P start from the
+  // fund's track record, not a flat 1.0, so the stats reflect real performance.
+  const { navPerShare, spxIndex } = seedTrackRecord();
   return {
     cycleId: BigInt(DEMO_CYCLE_ID),
     cycleState: "OPEN",
     endsAt: Date.now() + CYCLE_SECONDS * 1000,
     prices: { ...SEED_PRICES },
     position: { shares: 0, navUsd: 0, costUsd: 0, returnPct: 0 },
+    otherAum: OTHER_AUM_BASE,
+    navPerShare,
+    spxIndex,
+    rewardEarned: 0,
+    cyclesPlayed: 0,
     accuracy: null,
     lastVote: null,
     claimed: false,
@@ -247,23 +427,23 @@ type Action =
   | { type: "RESOLVE" }
   | { type: "NEW_CYCLE" };
 
-// 1 share == $1 at seed; deposit grows shares/cost 1:1, NAV tracks cost
-// until resolve bumps it. Keeps the demo math obvious.
+// Pooled ERC-4626 model: deposits buy shares at the current NAV/share; everyone
+// (you + the rest of the fund) rides the same NAV. On resolve the fund's NAV
+// grows by its return MINUS 20% of the alpha (REWARD_POOL_PCT, defined above) —
+// that alpha is paid out to accurate members as reward credits (DESIGN.md
+// §"Fees & rewards"). Your position and the total fund move together, the fund
+// "loses" 20% of alpha from NAV, and you earn it back (more if you're accurate).
+
 function reducer(state: MockState, action: Action): MockState {
   switch (action.type) {
     case "DEPOSIT": {
-      const shares = state.position.shares + action.amount;
+      // Buy shares at the current NAV; value = shares × NAV. Total fund AUM grows
+      // by the deposit (otherAum is untouched; your position adds on top).
+      const shares = state.position.shares + action.amount / state.navPerShare;
       const costUsd = state.position.costUsd + action.amount;
-      // Before resolve NAV == cost; after resolve preserve the gained ratio.
-      const navUsd = state.resolved
-        ? state.position.navUsd + action.amount
-        : costUsd;
-      const returnPct =
-        costUsd > 0 ? ((navUsd - costUsd) / costUsd) * 100 : 0;
-      return {
-        ...state,
-        position: { shares, navUsd, costUsd, returnPct },
-      };
+      const navUsd = shares * state.navPerShare;
+      const returnPct = costUsd > 0 ? (navUsd / costUsd - 1) * 100 : 0;
+      return { ...state, position: { shares, navUsd, costUsd, returnPct } };
     }
     case "VOTE":
       return { ...state, lastVote: action.picks };
@@ -271,35 +451,66 @@ function reducer(state: MockState, action: Action): MockState {
       // Available only after resolve; no-op otherwise.
       return state.resolved ? { ...state, claimed: true } : state;
     case "NEW_CYCLE":
-      // Roll over to a fresh OPEN cycle when the clock hits 0: bump the id, reset
-      // the countdown + prices, and clear the per-cycle vote/score so the user
-      // (and API bots) can vote again. Position carries over across cycles.
+      // Roll over to a fresh OPEN cycle: bump the id, reset the countdown + prices,
+      // clear the per-cycle vote so you can vote again. The fund economics
+      // (NAV/share, S&P, AUM, reward, accuracy EWMA) all carry across cycles.
       return {
         ...state,
         cycleId: state.cycleId + BigInt(1),
         cycleState: "OPEN",
         endsAt: Date.now() + CYCLE_SECONDS * 1000,
         prices: { ...SEED_PRICES },
-        accuracy: null,
         lastVote: null,
         resolved: false,
         claimed: false,
       };
     case "RESOLVE": {
       if (state.resolved) return state;
-      // Flip OPEN -> LOCKED and score the user's ACTUAL vote against the demo cycle's real
-      // weekly returns — same math the agents are scored by. NAV bumps by the basket's gross
-      // return; accuracy is its excess vs the S&P; prices move by the same per-ticker amounts.
+      const cycle = Number(state.cycleId);
+      // The FUND runs its own 10-name basket — its NAV grows by the fund's return
+      // whether or not you voted (the fund beats the benchmark by construction).
+      // 20% of the fund's positive alpha is skimmed from NAV into the reward pool;
+      // the rest grows everyone's shares. spxIndex tracks the same benchmark.
+      const market = marketReturn(cycle); // fraction (the "S&P")
+      const navGrowth = navGrowthForCycle(cycle); // fund return minus 20% alpha skim
+
+      const navPerShare = state.navPerShare * (1 + navGrowth);
+      const spxIndex = state.spxIndex * (1 + market);
+      const otherAum = state.otherAum * (1 + navGrowth);
+
+      const navBefore = state.position.shares * state.navPerShare;
+      const navUsd = state.position.shares * navPerShare; // your position rides NAV
+      const returnPct =
+        state.position.costUsd > 0 ? (navUsd / state.position.costUsd - 1) * 100 : 0;
+
+      // YOUR reward = 20% of the alpha YOUR vote generated on your position. Beat
+      // the benchmark and you earn back more than the NAV skim costs you; sit out
+      // (no vote) and you still ride the fund's NAV but earn nothing — accuracy is
+      // what's rewarded. Accuracy EWMA only updates on a cycle you actually voted.
       const vote = state.lastVote ?? [];
-      const navGain = scoreVoteReturn(vote);
-      const navUsd = state.position.costUsd * (1 + navGain);
-      const returnPct = state.position.costUsd > 0 ? navGain * 100 : 0;
+      const voted = vote.length > 0;
+      const userAlpha = voted ? scoreVoteReturn(vote, cycle) - market : 0;
+      const rewardEarned =
+        state.rewardEarned + REWARD_POOL_PCT * Math.max(userAlpha, 0) * navBefore;
+
+      const cycleAcc = scoreVoteAccuracy(vote, cycle); // percent
+      const accuracy = !voted
+        ? state.accuracy
+        : state.accuracy == null
+          ? cycleAcc
+          : 0.25 * cycleAcc + 0.75 * state.accuracy;
+
       return {
         ...state,
         cycleState: "LOCKED",
         resolved: true,
-        prices: applyDemoReturns(state.prices),
-        accuracy: scoreVoteAccuracy(vote),
+        prices: applyCycleReturns(state.prices, cycle),
+        navPerShare,
+        spxIndex,
+        otherAum,
+        rewardEarned,
+        cyclesPlayed: state.cyclesPlayed + 1,
+        accuracy,
         position: { ...state.position, navUsd, returnPct },
       };
     }
@@ -408,6 +619,15 @@ export function useCycle(): Cycle {
   return live;
 }
 
+/** The fund's current 10-name basket, re-picked each cycle (rotates as rounds
+ * advance). Single source for the shared "Fund Composition" table on Overview +
+ * Account. Reads useCycle() so it re-renders when the cycle rolls over. */
+export function useFundBasket(): Holding[] {
+  const { id } = useCycle();
+  const cycle = Number(id);
+  return useMemo(() => fundBasket(cycle), [cycle]);
+}
+
 export function usePrices(): Record<string, number> {
   const USE_MOCK = useIsMock();
   const mock = useContext(MockDataContext);
@@ -445,11 +665,59 @@ export function useVotingPower(): number {
     return Number(await scGetVotingPower(livePub(), address)) / 100;
   });
   if (USE_MOCK) {
-    // Reactive: 0 before any deposit, a capital share after, and a jump once accuracy posts.
+    // Reactive: capital share from your live position value (min = your deposit),
+    // plus the accuracy share that ramps with cycles played. Grows when you deposit.
     const s = mock!.state;
-    return yourVotingPowerPct(s.position.costUsd, s.accuracy ?? 0, s.resolved ? 1 : 0);
+    return yourVotingPowerPct(s.position.navUsd, s.accuracy ?? 0, s.cyclesPlayed);
   }
   return live;
+}
+
+/** Display-ready whole-fund totals: AUM, NAV/share, S&P benchmark, alpha, your share. */
+export interface FundTotals {
+  aum: number; // total fund value (your position + everyone else)
+  navPerShare: number;
+  navPct: number; // NAV/share gain since inception, %
+  spxIndex: number;
+  spxPct: number; // S&P gain since inception, %
+  alphaPct: number; // NAV outperformance vs the S&P, %
+  positionPct: number; // your position as a % of the fund
+}
+
+export function useFundTotals(): FundTotals {
+  const USE_MOCK = useIsMock();
+  const mock = useContext(MockDataContext);
+  if (!USE_MOCK || !mock) {
+    // Live total-fund reads aren't wired (B7); return inert zeros off the mock path.
+    return { aum: 0, navPerShare: 1, navPct: 0, spxIndex: 1, spxPct: 0, alphaPct: 0, positionPct: 0 };
+  }
+  const s = mock.state;
+  const aum = s.otherAum + s.position.navUsd;
+  return {
+    aum,
+    navPerShare: s.navPerShare,
+    navPct: (s.navPerShare - 1) * 100,
+    spxIndex: s.spxIndex,
+    spxPct: (s.spxIndex - 1) * 100,
+    alphaPct: (s.navPerShare - s.spxIndex) * 100,
+    positionPct: aum > 0 ? (s.position.navUsd / aum) * 100 : 0,
+  };
+}
+
+/** Your cumulative reward earned (your share of 20% of alpha), in USD. */
+export function useRewardEarned(): number {
+  const USE_MOCK = useIsMock();
+  const mock = useContext(MockDataContext);
+  if (!USE_MOCK || !mock) return 0;
+  return mock.state.rewardEarned;
+}
+
+/** Resolved cycles you've participated in. */
+export function useCyclesPlayed(): number {
+  const USE_MOCK = useIsMock();
+  const mock = useContext(MockDataContext);
+  if (!USE_MOCK || !mock) return 0;
+  return mock.state.cyclesPlayed;
 }
 
 /** null until the member has been scored (cyclesParticipated > 0); a percent after. */
@@ -528,10 +796,6 @@ export function useLeaderboardRace(): LeaderboardRace {
     return { rows: LEADERBOARD_FRAMES[frame] ?? LEADERBOARD, cycle: frame + 1, total: LEADERBOARD_FRAMES.length };
   }
   return { rows: live, cycle: 0, total: 0 };
-}
-
-export function useLeaderboard(): LeaderboardRow[] {
-  return useLeaderboardRace().rows;
 }
 
 /**

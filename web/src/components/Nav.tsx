@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { countUp } from "@/lib/countUp";
+import { usePosition } from "@/lib/data";
 import { ModeToggle } from "@/lib/mode";
+
+const fmtUsd = (v: number) =>
+  "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // Tabs: [label, href, isActive(pathname)]. Active state derives from the
 // current path instead of shell.js's body.dataset.page.
@@ -18,11 +20,9 @@ const TABS: [string, string, (p: string) => boolean][] = [
 
 export default function Nav() {
   const pathname = usePathname();
-  const walRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    if (walRef.current) countUp(walRef.current);
-  }, []);
+  // The wallet chip shows the viewer's own position value (moves with deposits +
+  // resolves), not a hardcoded fund total.
+  const { navUsd } = usePosition();
 
   return (
     <nav>
@@ -65,9 +65,7 @@ export default function Nav() {
       </div>
       <div className="navr">
         <ModeToggle />
-        <span ref={walRef} className="wal tnum" data-count="43820.50">
-          $43,820.50
-        </span>
+        <span className="wal tnum">{fmtUsd(navUsd)}</span>
         <Link className="gear" href="/settings" aria-label="Settings">
           <svg
             viewBox="0 0 24 24"

@@ -128,7 +128,7 @@ export default function Welcome() {
           ${stats.aumUsd.toLocaleString()}
         </span>
         <span className="wl-chg">
-          ▲ +{stats.allTimeReturnPct}% <span className="muted">· all-time</span>
+          ▲ +{stats.allTimeReturnPct}% <span className="muted">· trailing 1M</span>
         </span>
       </div>
 

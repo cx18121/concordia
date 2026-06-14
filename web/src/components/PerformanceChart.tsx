@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef } from "react";
+import { TOTAL_FUND_AUM_USD } from "@/lib/data";
 
-// Same series as Overview — SPY daily closes, FUND = amplified SPY returns.
+// SPY daily closes; FUND = amplified SPY returns using the SAME drift constants
+// as the Overview hero curve, scaled to the `endNav` prop (the fund AUM passed in).
 const SPY_RAW = [
   680.73, 678.87, 671.4, 676.47, 680.59, 684.83, 687.96, 690.38, 690.31,
   687.85, 687.01, 681.92, 683.17, 687.72, 691.81, 689.58, 689.51, 694.07,
@@ -24,6 +26,9 @@ const N = SPY_RAW.length;
 const FUND_IDX: number[] = [100];
 for (let i = 1; i < N; i++) {
   const r = SPY_RAW[i] / SPY_RAW[i - 1] - 1;
+  // Amplified S&P returns + steady alpha drift → the fund visibly outperforms
+  // the benchmark (clear positive alpha, widening over the window). Same
+  // constants as Overview so the two fund curves agree.
   FUND_IDX.push(FUND_IDX[i - 1] * (1 + r * 1.12 + 0.0011));
 }
 // Scaled dynamically from the endNav prop; fallback keeps the Overview's original value.
@@ -59,7 +64,7 @@ const H = 400;
 const fmt = (v: number) =>
   "$" + v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-export default function PerformanceChart({ endNav = 43820.5 }: { endNav?: number }) {
+export default function PerformanceChart({ endNav = TOTAL_FUND_AUM_USD }: { endNav?: number }) {
   const [period, setPeriod] = useState<Period>("1M");
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -182,14 +187,15 @@ export default function PerformanceChart({ endNav = 43820.5 }: { endNav?: number
             </linearGradient>
           </defs>
 
-          {/* S&P benchmark */}
+          {/* S&P benchmark — clearly distinct from the fund line (muted grey,
+              dashed) and sitting visibly below it (the fund's positive alpha). */}
           <polyline
             points={spyLine}
             fill="none"
-            stroke="#7E8A98"
-            strokeDasharray="6,4"
-            strokeWidth="1.5"
-            opacity="0.5"
+            stroke="#8A94A6"
+            strokeDasharray="7,5"
+            strokeWidth="2"
+            opacity="0.85"
           />
           {/* Fill */}
           <polygon points={fundArea} fill="url(#perf-fill)" />

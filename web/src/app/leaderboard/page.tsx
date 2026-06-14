@@ -8,13 +8,17 @@
 // that replay as a race — rows reorder (FLIP-animated) as the small-skilled agent overtakes
 // the big-capital one, cycle by cycle. Live mode shows the on-chain leaderboard, static.
 
-import Link from "next/link";
 import { useLayoutEffect, useRef } from "react";
-import { useLeaderboardRace } from "@/lib/data";
+import {
+  useLeaderboardRace,
+  useVotingPower,
+  useAccuracy,
+  useFundStats,
+} from "@/lib/data";
 import "@/styles/leaderboard.css";
 
 // Purely cosmetic per-rank avatar/bar colors. kind / strategy / capital now come from
-// useLeaderboard() (the agent engine's replay), not from here.
+// useLeaderboardRace() (the agent engine's replay), not from here.
 const ROW_COLORS = [
   { accent: "bg-teal/20 border-teal/40 text-teal", bar: "bg-teal shadow-[0_0_8px_rgba(45,212,191,0.5)]" },
   { accent: "bg-indigo-500/20 border-indigo-500/40 text-indigo-400", bar: "bg-white/40" },
@@ -35,6 +39,9 @@ function initials(name: string): string {
 
 export default function LeaderboardPage() {
   const { rows, cycle, total } = useLeaderboardRace();
+  const votingPower = useVotingPower();
+  const accuracy = useAccuracy();
+  const { members } = useFundStats();
   const top = rows[0];
   const second = rows[1];
 
@@ -75,23 +82,45 @@ export default function LeaderboardPage() {
           </div>
         )}
       </header>
-      {/* Your standing — personal rank + accuracy, ported from the account card. */}
-      <section className="mb-16 flex justify-center md:justify-start">
-        <Link
-          href="/account"
-          className="glass glass-border shine rounded-xl p-6 flex items-start gap-5 w-full max-w-md group hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]"
-        >
-          <div className="w-12 h-12 flex-none rounded-lg bg-teal/10 border border-teal/20 flex items-center justify-center text-teal">
-            <span className="material-symbols-outlined">emoji_events</span>
+      {/* Your standing — the viewer's own live metrics, integrated into the board.
+          Non-clickable (informational); mirrors the table's Accuracy / Voting Power columns. */}
+      <section className="mb-16">
+        <div className="glass glass-border shine rounded-xl px-6 py-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-12 h-12 flex-none rounded-lg bg-teal/10 border border-teal/20 flex items-center justify-center text-teal">
+              <span className="material-symbols-outlined">emoji_events</span>
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-text-primary font-display text-lg leading-tight">Your standing</h4>
+              <p className="text-xs text-text-muted leading-relaxed mt-0.5">
+                Your live voting power and forecast accuracy among {members} members.
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="text-text-primary font-display text-lg leading-tight">Your standing</h4>
-            <p className="text-[11px] text-text-subtle uppercase tracking-widest mt-1 mb-2">Rank #42 of 1,284</p>
-            <p className="text-xs text-text-muted leading-relaxed">
-              Compare your portfolio accuracy against the community. Earn badges for top-tier forecasting.
-            </p>
+          <div className="flex items-stretch gap-5 sm:gap-8 pl-16 sm:pl-0">
+            <div className="text-left sm:text-right">
+              <p className="text-[11px] text-text-subtle uppercase tracking-widest mb-1">Accuracy</p>
+              <p
+                className={`font-display text-2xl tabular-nums leading-none ${
+                  accuracy == null
+                    ? "text-text-muted"
+                    : accuracy >= 0
+                      ? "text-gain"
+                      : "text-loss"
+                }`}
+              >
+                {accuracy == null ? "—" : `${accuracy.toFixed(1)}%`}
+              </p>
+            </div>
+            <div className="w-px bg-white/10" />
+            <div className="text-left sm:text-right">
+              <p className="text-[11px] text-text-subtle uppercase tracking-widest mb-1">Voting Power</p>
+              <p className="font-display text-2xl tabular-nums leading-none text-teal">
+                {votingPower.toFixed(2)}%
+              </p>
+            </div>
           </div>
-        </Link>
+        </div>
       </section>
       {/* Comparison Block (Free on Background) — bound to top two rows */}
       {top && second && (
@@ -137,7 +166,7 @@ export default function LeaderboardPage() {
           <div className="hidden md:block col-span-2 text-right">Capital</div>
           <div className="col-span-4 md:col-span-3 text-right">Voting Power</div>
         </div>
-        {/* List Rows — bound to useLeaderboard() */}
+        {/* List Rows — bound to useLeaderboardRace() */}
         {rows.length === 0 && (
           <div className="py-16 text-center text-text-muted text-sm">
             No members ranked yet. Cast a vote to claim a spot on the board.
