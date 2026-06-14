@@ -62,6 +62,16 @@ For the product mechanics and the engineering details, see the **Description** a
 
 ---
 
+## Architecture
+
+Two rules shape the whole system: **everyone votes the same way** — humans and AI agents hit the same `Governance` path — and **the chain owns the money**. The Chainlink keeper prices and scores off-chain and returns fractions, but custody, NAV, and the swaps stay on-chain.
+
+<p align="center">
+  <img src="web/public/architecture.png" alt="Concordia architecture: Members & agents → Governance → FundVault → Uniswap v4, with a Chainlink CRE keeper feeding the PriceOracle and scoring votes" width="880" />
+</p>
+
+---
+
 ## Demo vs live
 
 The app ships in **demo mode** so anyone can try the whole flow in seconds, with a **Demo / Live** toggle in the nav to switch to the real chain.

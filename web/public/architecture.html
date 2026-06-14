@@ -1,0 +1,104 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  :root{ --teal:#2DD4BF; --bright:#3FE9D2; --deep:#14B8A6; --ink:#04201C; --cl:#5b8def; }
+  html,body{ width:1240px; height:600px; }
+  .arch{ position:relative; width:1240px; height:600px; overflow:hidden; font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(100% 120% at 14% 0%, rgba(45,212,191,.13), transparent 50%),
+      radial-gradient(80% 120% at 96% 100%, rgba(91,141,239,.10), transparent 58%),
+      linear-gradient(135deg,#070b10,#0a1217 60%,#090f14); }
+  .arch::before{ content:""; position:absolute; inset:0;
+    background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:40px 40px;
+    -webkit-mask-image:radial-gradient(120% 100% at 50% 40%,#000 30%,transparent 82%); mask-image:radial-gradient(120% 100% at 50% 40%,#000 30%,transparent 82%); }
+
+  .title{ position:absolute; left:44px; top:30px; z-index:5; }
+  .title h1{ font-family:'Outfit'; font-weight:700; font-size:30px; color:#F4F7FA; letter-spacing:-.02em; }
+  .title p{ font-size:14px; color:#8fa0a8; margin-top:5px; font-weight:500; }
+
+  .box{ position:absolute; z-index:3; border-radius:15px; padding:15px 17px;
+    background:linear-gradient(160deg, rgba(22,30,37,.92), rgba(12,18,23,.92));
+    border:1px solid rgba(255,255,255,.09);
+    box-shadow:0 18px 40px -22px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.05); }
+  .box .bt{ font-family:'Outfit'; font-weight:600; font-size:17px; color:#F4F7FA; display:flex; align-items:center; gap:8px; }
+  .box .bs{ font-size:12px; line-height:1.4; color:#9aabb2; margin-top:7px; }
+  .tag{ font:600 9.5px/1 'Inter'; letter-spacing:.08em; text-transform:uppercase; padding:3px 7px; border-radius:5px; }
+  .tag.on{ color:var(--ink); background:linear-gradient(var(--bright),var(--deep)); }
+  .tag.off{ color:#cfe0ff; background:rgba(91,141,239,.18); border:1px solid rgba(91,141,239,.4); }
+  .tag.code{ font-family:'JetBrains Mono'; font-size:9.5px; color:#aebbc4; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); }
+  .box.contract{ border-color:rgba(45,212,191,.30); box-shadow:0 18px 40px -22px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px rgba(45,212,191,.05); }
+  .box.keeper{ border-color:rgba(91,141,239,.34); }
+
+  .lbl{ position:absolute; z-index:4; font:600 11.5px/1 'Inter'; color:#cfe9e4; white-space:nowrap;
+    background:rgba(9,14,18,.85); padding:3px 8px; border-radius:6px; transform:translate(-50%,-50%); }
+  .lbl.sub{ font-size:10px; font-weight:500; color:#7e8c94; background:transparent; padding:0; }
+  .lbl.read{ color:#9aabb2; }
+</style></head>
+<body>
+  <div class="arch">
+    <div class="title"><h1>Architecture</h1><p>Humans and agents vote &middot; the chain owns the money &middot; a Chainlink keeper closes the loop</p></div>
+
+    <!-- main flow row -->
+    <div class="box" style="left:44px; top:178px; width:224px; height:118px;">
+      <div class="bt">Members &amp; agents</div>
+      <div class="bs">Humans and AI agents vote through the <b style="color:#cfe9e4">same path</b> — no special casing.</div>
+    </div>
+    <div class="box contract" style="left:352px; top:178px; width:240px; height:118px;">
+      <div class="bt">Governance <span class="tag on">on-chain</span></div>
+      <div class="bs">Tallies votes, computes voting power (50% capital + 50% accuracy), picks the basket, runs the weekly cycle.</div>
+    </div>
+    <div class="box contract" style="left:672px; top:178px; width:240px; height:118px;">
+      <div class="bt">FundVault <span class="tag code">ERC-4626</span></div>
+      <div class="bs">Pooled USDC, shares &amp; NAV, and the on-chain swaps. Owns all the money math.</div>
+    </div>
+    <div class="box contract" style="left:992px; top:178px; width:204px; height:118px;">
+      <div class="bt">Uniswap v4 <span class="tag on">on-chain</span></div>
+      <div class="bs">One live pool per stock. Real execution, gated by KYCHook.</div>
+    </div>
+
+    <!-- oracle + keeper -->
+    <div class="box contract" style="left:672px; top:362px; width:240px; height:70px;">
+      <div class="bt" style="font-size:15px;">PriceOracle</div>
+      <div class="bs" style="margin-top:5px;">Stock prices + the S&amp;P, posted on-chain.</div>
+    </div>
+    <div class="box keeper" style="left:352px; top:474px; width:560px; height:86px;">
+      <div class="bt">Chainlink CRE keeper <span class="tag off">off-chain</span></div>
+      <div class="bs">Posts prices to the oracle &middot; re-pegs the pools &middot; scores every vote against the S&amp;P &middot; drives the cycle. It returns <b style="color:#cfe0ff">fractions</b> — the contracts own custody and the money math.</div>
+    </div>
+
+    <!-- arrows -->
+    <svg width="1240" height="600" style="position:absolute; inset:0; z-index:1;">
+      <defs>
+        <marker id="at" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#2DD4BF"/></marker>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#7e8c94"/></marker>
+        <marker id="ab" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5b8def"/></marker>
+      </defs>
+      <g fill="none" stroke="#2DD4BF" stroke-width="2.2" marker-end="url(#at)">
+        <line x1="268" y1="237" x2="346" y2="237"/>
+        <line x1="592" y1="237" x2="666" y2="237"/>
+        <line x1="912" y1="237" x2="986" y2="237"/>
+      </g>
+      <!-- keeper -> oracle (prices) -->
+      <line x1="792" y1="474" x2="792" y2="438" fill="none" stroke="#5b8def" stroke-width="2.2" marker-end="url(#ab)"/>
+      <!-- oracle -> vault (read) dashed -->
+      <line x1="792" y1="362" x2="792" y2="302" fill="none" stroke="#7e8c94" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ar)"/>
+      <!-- keeper -> governance (scores) -->
+      <line x1="462" y1="474" x2="462" y2="302" fill="none" stroke="#5b8def" stroke-width="2.2" marker-end="url(#ab)"/>
+    </svg>
+
+    <!-- arrow labels -->
+    <div class="lbl" style="left:307px; top:226px;">cast vote</div>
+    <div class="lbl sub" style="left:307px; top:250px;">World ID · Dynamic</div>
+    <div class="lbl" style="left:629px; top:226px;">basket</div>
+    <div class="lbl" style="left:949px; top:226px;">swap</div>
+    <div class="lbl sub" style="left:949px; top:250px;">KYCHook gate</div>
+    <div class="lbl" style="left:792px; top:456px; color:#cfe0ff;">writes prices</div>
+    <div class="lbl read" style="left:792px; top:332px;">read</div>
+    <div class="lbl" style="left:462px; top:392px; color:#cfe0ff;">scores votes</div>
+  </div>
+</body></html>
