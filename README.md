@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="web/public/cover-final.png" alt="Concordia — a community hedge fund where skill decides where the money goes" width="680" />
+  <img src="web/public/cover-final.png" alt="Concordia, a community hedge fund where skill decides where the money goes" width="680" />
 </p>
 
 <h3 align="center">A community hedge fund where skill, not just capital, decides where the money goes.</h3>
@@ -24,11 +24,9 @@
 
 ---
 
-## The idea in one breath
+## What it is
 
-Think Wall Street Bets, but the track record is real. On a normal forum everyone pitches picks, the wins get screenshotted, the losses get buried, and none of it manages real money. Concordia turns that comment section into an actual on-chain fund. Every vote and every score is public and recomputable, so the people who are consistently right gain influence over the fund, and the loud-but-wrong lose it.
-
-> **The money shot:** in our seeded demo, **SectorBot** deposited ~$2.7k and sits at **#1**, while **ContrarianBot** put in ~$12k and got pushed to **#2** because its calls were wrong. The small, accurate voice beats the big one. Skill is steering the fund, not capital.
+On a normal stock-tip forum, anyone can claim a great track record and nobody checks. Concordia makes the forum the fund. Members pool USDC, vote each week on what it buys, and every vote and score is recorded on-chain where anyone can recompute it. Voting power is half the capital you put in and half how accurate your past calls have been, so influence flows to the people who are consistently right, not the people who simply put in the most.
 
 ---
 
@@ -45,7 +43,7 @@ Think Wall Street Bets, but the track record is real. On a normal forum everyone
   </tr>
 </table>
 
-**Try it now:** [concordia-one.vercel.app](https://concordia-one.vercel.app) - no wallet or setup needed to view demo.
+**Try it now:** [concordia-one.vercel.app](https://concordia-one.vercel.app). No wallet or setup needed to view the demo.
 
 ---
 
@@ -62,7 +60,7 @@ A new member joins in two minutes, then the fund runs on a weekly loop:
 
 ## Architecture
 
-Two rules shape the whole system: **everyone votes the same way** — humans and AI agents hit the same `Governance` path — and **the chain owns the money**. The Chainlink keeper prices and scores off-chain and returns fractions, but custody, NAV, and the swaps stay on-chain.
+Two rules shape the whole system. First, **everyone votes the same way**: humans and AI agents hit the same `Governance` path. Second, **the chain owns the money**. The Chainlink keeper prices and scores off-chain and returns fractions, but custody, NAV, and the swaps stay on-chain.
 
 <p align="center">
   <img src="web/public/architecture.png" alt="Concordia architecture: Members & agents → Governance → FundVault → Uniswap v4, with a Chainlink CRE keeper feeding the PriceOracle and scoring votes" width="880" />
@@ -74,34 +72,38 @@ Two rules shape the whole system: **everyone votes the same way** — humans and
 
 The app ships in **demo mode** so anyone can try the whole flow in seconds, with a **Demo / Live** toggle in the nav to switch to the real chain.
 
-- **Demo** — the UI binds to an in-browser simulation that replays real 2024 market weeks (a cycle runs ~5 minutes, or resolve one instantly). "View demo" drops you straight into a funded portfolio with a few weeks already played, so you can vote, resolve, and watch the leaderboard with no wallet, login, or testnet funds. No money moves.
-- **Live** — the real thing on Base Sepolia: email login + a gas-sponsored wallet (Dynamic), World ID verification, a real USDC deposit into the ERC-4626 vault, real Uniswap v4 swaps, and Chainlink scoring every vote. The leaderboard and your position read straight from chain.
+- **Demo.** The UI binds to an in-browser simulation that replays real 2024 market weeks (a cycle runs ~5 minutes, or resolve one instantly). "View demo" drops you straight into a funded portfolio with a few weeks already played, so you can vote, resolve, and watch the leaderboard with no wallet, login, or testnet funds. No money moves.
+- **Live.** The real thing on Base Sepolia: email login plus a gas-sponsored wallet (Dynamic), World ID verification, a real USDC deposit into the ERC-4626 vault, real Uniswap v4 swaps, and Chainlink scoring every vote. The leaderboard and your position read straight from chain.
 
-Either way the **contracts and the Chainlink keeper are always live** on Base Sepolia — demo mode just swaps which data the UI reads (a local simulation instead of the chain) so you can explore without funds; it doesn't fake the backend.
+Either way the **contracts and the Chainlink keeper are always live** on Base Sepolia. Demo mode just swaps which data the UI reads, a local simulation instead of the chain, so you can explore without funds. It doesn't fake the backend.
 
 ---
 
 ## Built with
 
-Three integrations, each load-bearing — the product breaks without any of them. Full engineering detail in **[`docs/how-its-made.md`](docs/how-its-made.md)**.
+Three integrations, each one load-bearing. The product breaks without any of them. Full engineering detail in **[`docs/how-its-made.md`](docs/how-its-made.md)**.
 
-### Chainlink CRE — the orchestration layer the whole fund runs on
+### Chainlink CRE
 
-The weekly cycle *is* a CRE workflow (the CRE TypeScript SDK on Bun). Each tick reads on-chain state, **fetches stock prices from an external market API**, writes prices and the S&P to the `PriceOracle`, re-pegs every Uniswap pool to the new oracle price, scores every member's vote against the benchmark, and advances the lifecycle (`IDLE → OPEN → LOCKED → resolve`) — a single workflow connecting a blockchain to off-chain data and heavy per-member compute, which is exactly what CRE is for. It makes **real state changes on Base Sepolia**, run via `cre workflow simulate --broadcast` (with a plain backup script on the *identical* code path if the DON hiccups). The one rule: **CRE only ever returns fractions** — each member's new accuracy and reward share — and the contract turns those into USDC against its own NAV. Votes in and scores out are both on-chain, so anyone can re-run a cycle and verify the math.
+The weekly cycle *is* a CRE workflow (the CRE TypeScript SDK on Bun). Each tick reads on-chain state, **fetches stock prices from an external market API**, writes prices and the S&P to the `PriceOracle`, re-pegs every Uniswap pool to the new oracle price, scores every member's vote against the benchmark, and advances the lifecycle (`IDLE → OPEN → LOCKED → resolve`). It's a single workflow connecting a blockchain to off-chain data and heavy per-member compute, which is exactly what CRE is for. It makes **real state changes on Base Sepolia**, run via `cre workflow simulate --broadcast`, with a plain backup script on the *identical* code path if the DON hiccups. The one rule we hold: **CRE only ever returns fractions** (each member's new accuracy and reward share), and the contract turns those into USDC against its own NAV. Votes in and scores out are both on-chain, so anyone can re-run a cycle and verify the math.
 
-### World ID — proof of human, or the whole thing is farmable
+### World ID
 
-Voting power is half *accuracy*, so without one-human-one-account anyone could spin up wallets, farm a track record, and capture the fund — World ID is the constraint that makes the accuracy half mean anything (sybil-resistant voting + personhood-gated reputation). Because World ID's on-chain verifier on Base Sepolia is **Orb-only** (useless to anyone who's never opened World App), we verify the IDKit proof **server-side against the World ID v4 API** in a Next.js route, then **write the result on-chain** — the vault reverts `NotVerified` on any deposit or vote from an unattested wallet. Proof validated in both the backend *and* the contract (`web/src/app/api/verify`).
+Voting power is half *accuracy*, so without one-human-one-account anyone could spin up wallets, farm a track record, and capture the fund. World ID is the constraint that makes the accuracy half mean anything: sybil-resistant voting and personhood-gated reputation. Because World ID's on-chain verifier on Base Sepolia is **Orb-only** (useless to anyone who's never opened World App), we verify the IDKit proof **server-side against the World ID v4 API** in a Next.js route, then **write the result on-chain**. The vault reverts `NotVerified` on any deposit or vote from an unattested wallet, so the proof is validated in both the backend and the contract (`web/src/app/api/verify`).
 
-### Dynamic — email to a funded, voting wallet in one session
+### Dynamic
 
-Concordia is a money app, and Dynamic is what makes it usable by a normal person: sign in with an email and Dynamic provisions a **gas-sponsored embedded wallet** — no extension, no seed phrase, no faucet — so you go from an email address to verified, deposited, and voting without leaving the page. The deployed app at **[concordia-one.vercel.app](https://concordia-one.vercel.app)** runs the full flow on Dynamic's SDK. (The same wallet infra is the rail for delegated agents, which sign votes through Dynamic server wallets on the identical `Governance.castVote` path.)
+Concordia is a money app, and Dynamic is what makes it usable by a normal person. Sign in with an email and Dynamic provisions a **gas-sponsored embedded wallet** (no extension, no seed phrase, no faucet), so you go from an email address to verified, deposited, and voting without leaving the page. The deployed app at **[concordia-one.vercel.app](https://concordia-one.vercel.app)** runs the full flow on Dynamic's SDK. The same wallet infra is the rail for delegated agents, which sign votes through Dynamic server wallets on the identical `Governance.castVote` path.
 
-Also built with **Uniswap v4** for real execution — one live pool per stock against USDC, gated by a custom `beforeSwap` KYC hook (CREATE2-mined so its address encodes the hook permissions, and traded through our own minimal router so the hook gates the *fund*, not a shared router) — plus Foundry + OpenZeppelin ERC-4626 (the vault) and Next.js, all on Base Sepolia.
+Also built with **Uniswap v4** for real execution: one live pool per stock against USDC, gated by a custom `beforeSwap` KYC hook (CREATE2-mined so its address encodes the hook permissions, and traded through our own minimal router so the hook gates the *fund*, not a shared router). Plus Foundry and OpenZeppelin ERC-4626 for the vault, and Next.js, all on Base Sepolia.
 
 ---
 
 ## Live deployment
+
+Every contract is deployed and **source-verified on Basescan**, so you can read the code and watch the fund operate on-chain in real time. Deposits, votes, swaps, posted prices, and accuracy scores are all public transactions on **Base Sepolia**, not state hidden in a backend. Click any address to inspect it.
+
+App on Vercel, keeper looping cycles on Railway, contracts on **Base Sepolia** (chain 84532).
 
 | Contract | Address |
 |---|---|
