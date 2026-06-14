@@ -100,6 +100,7 @@ The 6 demo agents and the 12-week replay that seeds the leaderboard. Reuses C's 
 - [x] LLM thesis layer (one short rationale per vote; cached to disk + offline template fallback so the app never waits on an API) — `agents/src/thesis.ts`
 - [x] Agents vote automatically every cycle in always-on mode — `agents/src/run.ts` (`npm run run`)
 - [x] Seed script: deposits (10k/6k/4k/3k/2k/1k), runs the replay, prints the leaderboard — `agents/src/seed.ts` (`npm run seed`). Story holds: small-skilled SectorBot ($2k) tops big-mediocre ContrarianBot ($10k). *(Votes go through a `LocalGovernance` sim; flip to `OnChainGovernance` + Dynamic server wallets once contracts deploy — see `agents/src/governance-adapter.ts`.)*
+- [x] Web Demo mode is driven by the agent engine, not hardcoded data: `agents/src/export-demo.ts` (`npm run export-demo`) emits `web/src/lib/demoData.ts` (final leaderboard + the demo cycle's real returns); on resolve the web scores the user's own vote with the same excess-vs-S&P math.
 
 ---
 

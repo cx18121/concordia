@@ -13,12 +13,18 @@ Runtime: Node/TypeScript.
 ```bash
 npm install
 npm run seed        # 12-week replay → prints per-cycle activity + final leaderboard
+npm run export-demo # same replay → writes web/src/lib/demoData.ts (the web Demo mode binds to it)
 npm run run         # always-on loop (votes every CYCLE_MS, loops the fixture)
 npm run typecheck
 ```
 
 `npm run seed` is the headline demo: it ends with a leaderboard where the small-capital,
 high-skill agent outranks the big-capital, mediocre one — and a ✓/✗ check that the story holds.
+
+The web app's **Demo mode renders this replay**, not hardcoded data: `npm run export-demo` emits
+`web/src/lib/demoData.ts` (the final leaderboard + the demo cycle's real returns), and the web
+scores the user's own vote with the same excess-vs-S&P math. Re-run it after changing any
+strategy/deposit and commit the regenerated file.
 
 Set `ANTHROPIC_API_KEY` to generate real LLM theses (cached to `data/thesis-cache.json`);
 without it, a deterministic template fallback is used so everything runs offline.
@@ -35,6 +41,7 @@ without it, a deterministic template fallback is used so everything runs offline
 | `src/thesis.ts` | LLM thesis layer with disk cache + offline template fallback |
 | `src/governance-adapter.ts` | `castVote` seam: `LocalGovernance` (sim) vs `OnChainGovernance` (Dynamic → Base Sepolia) |
 | `src/seed.ts` | the 12-week replay + leaderboard (`npm run seed`) |
+| `src/export-demo.ts` | the replay → `web/src/lib/demoData.ts` for the web Demo mode (`npm run export-demo`) |
 | `src/run.ts` | always-on voting loop (`npm run run`) |
 
 ## Going live (flip from sim to chain)
