@@ -75,17 +75,24 @@ export default function LeaderboardPage() {
           </div>
         )}
       </header>
-      {/* Toggle Segment */}
-      <div className="flex justify-center md:justify-start mb-16">
-        <div className="glass glass-border p-1 rounded-full flex gap-1">
-          <button className="px-6 py-2 rounded-full text-sm font-medium bg-teal/20 text-teal shadow-[0_0_15px_rgba(45,212,191,0.15)] transition-all">
-            Voting Power
-          </button>
-          <button className="px-6 py-2 rounded-full text-sm font-medium text-text-muted hover:text-text-primary transition-all">
-            Accuracy
-          </button>
-        </div>
-      </div>
+      {/* Your standing — personal rank + accuracy, ported from the account card. */}
+      <section className="mb-16 flex justify-center md:justify-start">
+        <Link
+          href="/account"
+          className="glass glass-border shine rounded-xl p-6 flex items-start gap-5 w-full max-w-md group hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]"
+        >
+          <div className="w-12 h-12 flex-none rounded-lg bg-teal/10 border border-teal/20 flex items-center justify-center text-teal">
+            <span className="material-symbols-outlined">emoji_events</span>
+          </div>
+          <div>
+            <h4 className="text-text-primary font-display text-lg leading-tight">Your standing</h4>
+            <p className="text-[11px] text-text-subtle uppercase tracking-widest mt-1 mb-2">Rank #42 of 1,284</p>
+            <p className="text-xs text-text-muted leading-relaxed">
+              Compare your portfolio accuracy against the community. Earn badges for top-tier forecasting.
+            </p>
+          </div>
+        </Link>
+      </section>
       {/* Comparison Block (Free on Background) — bound to top two rows */}
       {top && second && (
         <section className="mb-20 grid grid-cols-1 md:grid-cols-11 items-center gap-8 px-4">
@@ -116,12 +123,6 @@ export default function LeaderboardPage() {
               <span className={second.accuracy >= 0 ? "text-gain" : "text-loss"}>acc {second.accuracy.toFixed(1)}%</span> · VP{" "}
               {second.votingPowerPct.toFixed(1)}% ·{" "}
               <span className="tabular-nums">{fmtCapital(second.capital)}</span>
-            </p>
-          </div>
-          <div className="md:col-span-11 text-center mt-6">
-            <p className="text-text-subtle font-body text-sm bg-white/5 inline-block px-4 py-2 rounded-full border border-white/5">
-              <span className="text-teal font-medium">{top.name}</span> leads on proven accuracy.{" "}
-              <span className="italic text-text-muted">Being right earns influence.</span>
             </p>
           </div>
         </section>
@@ -188,44 +189,6 @@ export default function LeaderboardPage() {
               </div>
             );
           })}
-        </div>
-      </section>
-      {/* Footer Navigation Cards (cosmetic) */}
-      <section className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/vote" className="glass glass-border shine p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
-          <div className="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
-            <span className="material-symbols-outlined">north_east</span>
-          </div>
-          <div className="w-10 h-10 bg-teal/10 rounded-lg flex items-center justify-center mb-4 text-teal">
-            <span className="material-symbols-outlined">how_to_vote</span>
-          </div>
-          <h4 className="text-text-primary font-display text-lg mb-1">Cast your vote</h4>
-          <p className="text-text-muted text-sm mb-4">Weight your influence on active DAO proposals.</p>
-          <div className="flex items-center gap-2 text-teal text-sm font-semibold">Open Proposals: 12</div>
-        </Link>
-        <div className="glass glass-border shine p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
-          <div className="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
-            <span className="material-symbols-outlined">north_east</span>
-          </div>
-          <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-4 text-indigo-400">
-            <span className="material-symbols-outlined">person_add</span>
-          </div>
-          <h4 className="text-text-primary font-display text-lg mb-1">Delegate to agent</h4>
-          <p className="text-text-muted text-sm mb-4">Let high-accuracy agents trade on your behalf.</p>
-          <div className="flex items-center gap-2 text-indigo-400 text-sm font-semibold">Avg Yield: 14.2%</div>
-        </div>
-        <div className="glass glass-border shine p-6 rounded-xl relative group cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(45,212,191,0.1)]">
-          <div className="absolute top-4 right-4 text-text-subtle group-hover:text-teal transition-colors">
-            <span className="material-symbols-outlined">north_east</span>
-          </div>
-          <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center mb-4 text-amber-400">
-            <span className="material-symbols-outlined">military_tech</span>
-          </div>
-          <h4 className="text-text-primary font-display text-lg mb-1">Agent Perks</h4>
-          <p className="text-text-muted text-sm mb-4">High performance unlocks API tier-2 access.</p>
-          <button className="bg-teal text-obsidian px-4 py-1.5 rounded-full text-xs font-bold hover:bg-teal-bright transition-colors mt-2">
-            Claim Badge
-          </button>
         </div>
       </section>
     </main>

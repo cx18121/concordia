@@ -18,8 +18,8 @@ export const LEADERBOARD: DemoAgentRow[] = [
     "rank": 1,
     "name": "SectorBot",
     "strategy": "Sector Rotation",
-    "capital": 2000,
-    "votingPowerPct": 23.9,
+    "capital": 2721,
+    "votingPowerPct": 24.2,
     "accuracy": 3.3,
     "kind": "Agent"
   },
@@ -27,8 +27,8 @@ export const LEADERBOARD: DemoAgentRow[] = [
     "rank": 2,
     "name": "ContrarianBot",
     "strategy": "Contrarian",
-    "capital": 10000,
-    "votingPowerPct": 19.2,
+    "capital": 12388,
+    "votingPowerPct": 18.9,
     "accuracy": -0.2,
     "kind": "Agent"
   },
@@ -36,8 +36,8 @@ export const LEADERBOARD: DemoAgentRow[] = [
     "rank": 3,
     "name": "MeanRevBot",
     "strategy": "Mean Reversion",
-    "capital": 4000,
-    "votingPowerPct": 15.5,
+    "capital": 5067,
+    "votingPowerPct": 15.6,
     "accuracy": 1.3,
     "kind": "Agent"
   },
@@ -45,8 +45,8 @@ export const LEADERBOARD: DemoAgentRow[] = [
     "rank": 4,
     "name": "ValueBot",
     "strategy": "Deep Value",
-    "capital": 3000,
-    "votingPowerPct": 15.2,
+    "capital": 3804,
+    "votingPowerPct": 15.3,
     "accuracy": 1.6,
     "kind": "Agent"
   },
@@ -54,8 +54,8 @@ export const LEADERBOARD: DemoAgentRow[] = [
     "rank": 5,
     "name": "MomentumBot",
     "strategy": "Momentum Trend",
-    "capital": 1000,
-    "votingPowerPct": 14.2,
+    "capital": 1391,
+    "votingPowerPct": 14.4,
     "accuracy": 2,
     "kind": "Agent"
   },
@@ -63,15 +63,15 @@ export const LEADERBOARD: DemoAgentRow[] = [
     "rank": 6,
     "name": "LowVolBot",
     "strategy": "Low Volatility",
-    "capital": 6000,
-    "votingPowerPct": 11.9,
+    "capital": 7438,
+    "votingPowerPct": 11.7,
     "accuracy": 0.1,
     "kind": "Agent"
   }
 ];
 
 /** Standings after each cycle (1..12) — the web plays these as a leaderboard race. */
-export const LEADERBOARD_FRAMES: DemoAgentRow[][] = [[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":20.1,"accuracy":0,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":12.4,"accuracy":0,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":8.5,"accuracy":0,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":6.6,"accuracy":0,"kind":"Agent"},{"rank":5,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":3.8,"accuracy":-0.3,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":2.8,"accuracy":0,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":21.2,"accuracy":0.5,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":12.4,"accuracy":0.2,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":9.7,"accuracy":0.5,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":7.7,"accuracy":0.5,"kind":"Agent"},{"rank":5,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":4.6,"accuracy":0.2,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":2.7,"accuracy":0.2,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.3,"accuracy":0,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":14.6,"accuracy":0.9,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":10.5,"accuracy":0.8,"kind":"Agent"},{"rank":4,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":8.7,"accuracy":1.4,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":5.8,"accuracy":0,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":3.7,"accuracy":0.5,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":20,"accuracy":0.2,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":14.8,"accuracy":1,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":10.9,"accuracy":1,"kind":"Agent"},{"rank":4,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":10.1,"accuracy":1.9,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":5.8,"accuracy":0,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":5.2,"accuracy":1,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.2,"accuracy":-1.1,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":18.3,"accuracy":0.8,"kind":"Agent"},{"rank":3,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":10.6,"accuracy":0.8,"kind":"Agent"},{"rank":4,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":10.5,"accuracy":0.3,"kind":"Agent"},{"rank":5,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":6.5,"accuracy":0.6,"kind":"Agent"},{"rank":6,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":5.8,"accuracy":-0.3,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.2,"accuracy":-0.4,"kind":"Agent"},{"rank":2,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":15.9,"accuracy":2.1,"kind":"Agent"},{"rank":3,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":14.4,"accuracy":0.5,"kind":"Agent"},{"rank":4,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":12,"accuracy":0.8,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":6.8,"accuracy":0.2,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":6.6,"accuracy":0.8,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.2,"accuracy":-1.5,"kind":"Agent"},{"rank":2,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":16,"accuracy":2,"kind":"Agent"},{"rank":3,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":14.3,"accuracy":2.5,"kind":"Agent"},{"rank":4,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":12.7,"accuracy":0.3,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":8.9,"accuracy":0.7,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":8,"accuracy":1.5,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.2,"accuracy":-1.6,"kind":"Agent"},{"rank":2,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":17.2,"accuracy":2.4,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":14.6,"accuracy":1.2,"kind":"Agent"},{"rank":4,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":11.5,"accuracy":0,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":10.8,"accuracy":0.9,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":10,"accuracy":1.4,"kind":"Agent"}],[{"rank":1,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":22.7,"accuracy":1.5,"kind":"Agent"},{"rank":2,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.2,"accuracy":-0.4,"kind":"Agent"},{"rank":3,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":16.1,"accuracy":1.2,"kind":"Agent"},{"rank":4,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":11.5,"accuracy":-0.3,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":10.4,"accuracy":0.5,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":7.6,"accuracy":0.6,"kind":"Agent"}],[{"rank":1,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":19.5,"accuracy":2,"kind":"Agent"},{"rank":2,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.2,"accuracy":-0.1,"kind":"Agent"},{"rank":3,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":18.7,"accuracy":2.5,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":12,"accuracy":1,"kind":"Agent"},{"rank":5,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":11.5,"accuracy":-0.3,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":10.6,"accuracy":1.4,"kind":"Agent"}],[{"rank":1,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":21.6,"accuracy":3,"kind":"Agent"},{"rank":2,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.2,"accuracy":-0.7,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":15.6,"accuracy":1.3,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":14.8,"accuracy":1.5,"kind":"Agent"},{"rank":5,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":12.5,"accuracy":1.8,"kind":"Agent"},{"rank":6,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":12.1,"accuracy":0.1,"kind":"Agent"}],[{"rank":1,"name":"SectorBot","strategy":"Sector Rotation","capital":2000,"votingPowerPct":23.9,"accuracy":3.3,"kind":"Agent"},{"rank":2,"name":"ContrarianBot","strategy":"Contrarian","capital":10000,"votingPowerPct":19.2,"accuracy":-0.2,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4000,"votingPowerPct":15.5,"accuracy":1.3,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3000,"votingPowerPct":15.2,"accuracy":1.6,"kind":"Agent"},{"rank":5,"name":"MomentumBot","strategy":"Momentum Trend","capital":1000,"votingPowerPct":14.2,"accuracy":2,"kind":"Agent"},{"rank":6,"name":"LowVolBot","strategy":"Low Volatility","capital":6000,"votingPowerPct":11.9,"accuracy":0.1,"kind":"Agent"}]];
+export const LEADERBOARD_FRAMES: DemoAgentRow[][] = [[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10055,"votingPowerPct":20.1,"accuracy":0,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6033,"votingPowerPct":12.4,"accuracy":0,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4022,"votingPowerPct":8.5,"accuracy":0,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3016,"votingPowerPct":6.6,"accuracy":0,"kind":"Agent"},{"rank":5,"name":"SectorBot","strategy":"Sector Rotation","capital":2011,"votingPowerPct":3.8,"accuracy":-0.3,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1005,"votingPowerPct":2.8,"accuracy":0,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10320,"votingPowerPct":21.2,"accuracy":0.5,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6189,"votingPowerPct":12.4,"accuracy":0.2,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4140,"votingPowerPct":9.7,"accuracy":0.5,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3110,"votingPowerPct":7.7,"accuracy":0.5,"kind":"Agent"},{"rank":5,"name":"SectorBot","strategy":"Sector Rotation","capital":2075,"votingPowerPct":4.6,"accuracy":0.2,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1038,"votingPowerPct":2.8,"accuracy":0.2,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10483,"votingPowerPct":19.2,"accuracy":0,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6300,"votingPowerPct":14.6,"accuracy":0.9,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4213,"votingPowerPct":10.5,"accuracy":0.8,"kind":"Agent"},{"rank":4,"name":"SectorBot","strategy":"Sector Rotation","capital":2133,"votingPowerPct":8.7,"accuracy":1.4,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3159,"votingPowerPct":5.8,"accuracy":0,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1061,"votingPowerPct":3.7,"accuracy":0.5,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10769,"votingPowerPct":19.9,"accuracy":0.2,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6480,"votingPowerPct":14.8,"accuracy":1,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4339,"votingPowerPct":10.9,"accuracy":1,"kind":"Agent"},{"rank":4,"name":"SectorBot","strategy":"Sector Rotation","capital":2221,"votingPowerPct":10.2,"accuracy":1.9,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3243,"votingPowerPct":5.8,"accuracy":0,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1112,"votingPowerPct":5.2,"accuracy":1,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10581,"votingPowerPct":19.1,"accuracy":-1.1,"kind":"Agent"},{"rank":2,"name":"LowVolBot","strategy":"Low Volatility","capital":6367,"votingPowerPct":18.2,"accuracy":0.8,"kind":"Agent"},{"rank":3,"name":"SectorBot","strategy":"Sector Rotation","capital":2182,"votingPowerPct":10.7,"accuracy":0.8,"kind":"Agent"},{"rank":4,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4263,"votingPowerPct":10.5,"accuracy":0.3,"kind":"Agent"},{"rank":5,"name":"MomentumBot","strategy":"Momentum Trend","capital":1092,"votingPowerPct":6.6,"accuracy":0.6,"kind":"Agent"},{"rank":6,"name":"ValueBot","strategy":"Deep Value","capital":3186,"votingPowerPct":5.8,"accuracy":-0.3,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":10961,"votingPowerPct":19.1,"accuracy":-0.4,"kind":"Agent"},{"rank":2,"name":"SectorBot","strategy":"Sector Rotation","capital":2264,"votingPowerPct":16,"accuracy":2.1,"kind":"Agent"},{"rank":3,"name":"LowVolBot","strategy":"Low Volatility","capital":6595,"votingPowerPct":14.4,"accuracy":0.5,"kind":"Agent"},{"rank":4,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4417,"votingPowerPct":12,"accuracy":0.8,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3301,"votingPowerPct":6.8,"accuracy":0.2,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1132,"votingPowerPct":6.7,"accuracy":0.8,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":11170,"votingPowerPct":19.1,"accuracy":-1.5,"kind":"Agent"},{"rank":2,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4527,"votingPowerPct":16,"accuracy":2,"kind":"Agent"},{"rank":3,"name":"SectorBot","strategy":"Sector Rotation","capital":2323,"votingPowerPct":14.4,"accuracy":2.5,"kind":"Agent"},{"rank":4,"name":"LowVolBot","strategy":"Low Volatility","capital":6721,"votingPowerPct":12.7,"accuracy":0.3,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3375,"votingPowerPct":8.9,"accuracy":0.7,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1169,"votingPowerPct":8.1,"accuracy":1.5,"kind":"Agent"}],[{"rank":1,"name":"ContrarianBot","strategy":"Contrarian","capital":11233,"votingPowerPct":19.1,"accuracy":-1.6,"kind":"Agent"},{"rank":2,"name":"SectorBot","strategy":"Sector Rotation","capital":2337,"votingPowerPct":17.3,"accuracy":2.4,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4553,"votingPowerPct":14.7,"accuracy":1.2,"kind":"Agent"},{"rank":4,"name":"LowVolBot","strategy":"Low Volatility","capital":6759,"votingPowerPct":11.5,"accuracy":0,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3395,"votingPowerPct":10.8,"accuracy":0.9,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1176,"votingPowerPct":10,"accuracy":1.4,"kind":"Agent"}],[{"rank":1,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4618,"votingPowerPct":22.7,"accuracy":1.5,"kind":"Agent"},{"rank":2,"name":"ContrarianBot","strategy":"Contrarian","capital":11382,"votingPowerPct":19.1,"accuracy":-0.4,"kind":"Agent"},{"rank":3,"name":"SectorBot","strategy":"Sector Rotation","capital":2364,"votingPowerPct":16.2,"accuracy":1.2,"kind":"Agent"},{"rank":4,"name":"LowVolBot","strategy":"Low Volatility","capital":6838,"votingPowerPct":11.5,"accuracy":-0.3,"kind":"Agent"},{"rank":5,"name":"ValueBot","strategy":"Deep Value","capital":3434,"votingPowerPct":10.3,"accuracy":0.5,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1190,"votingPowerPct":7.7,"accuracy":0.6,"kind":"Agent"}],[{"rank":1,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4820,"votingPowerPct":19.6,"accuracy":2,"kind":"Agent"},{"rank":2,"name":"ContrarianBot","strategy":"Contrarian","capital":11803,"votingPowerPct":19,"accuracy":-0.1,"kind":"Agent"},{"rank":3,"name":"SectorBot","strategy":"Sector Rotation","capital":2513,"votingPowerPct":18.9,"accuracy":2.5,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3587,"votingPowerPct":12,"accuracy":1,"kind":"Agent"},{"rank":5,"name":"LowVolBot","strategy":"Low Volatility","capital":7086,"votingPowerPct":11.4,"accuracy":-0.3,"kind":"Agent"},{"rank":6,"name":"MomentumBot","strategy":"Momentum Trend","capital":1275,"votingPowerPct":10.8,"accuracy":1.4,"kind":"Agent"}],[{"rank":1,"name":"SectorBot","strategy":"Sector Rotation","capital":2601,"votingPowerPct":21.9,"accuracy":3,"kind":"Agent"},{"rank":2,"name":"ContrarianBot","strategy":"Contrarian","capital":12047,"votingPowerPct":18.9,"accuracy":-0.7,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":4919,"votingPowerPct":15.6,"accuracy":1.3,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3685,"votingPowerPct":14.8,"accuracy":1.5,"kind":"Agent"},{"rank":5,"name":"MomentumBot","strategy":"Momentum Trend","capital":1323,"votingPowerPct":12.7,"accuracy":1.8,"kind":"Agent"},{"rank":6,"name":"LowVolBot","strategy":"Low Volatility","capital":7242,"votingPowerPct":11.9,"accuracy":0.1,"kind":"Agent"}],[{"rank":1,"name":"SectorBot","strategy":"Sector Rotation","capital":2721,"votingPowerPct":24.2,"accuracy":3.3,"kind":"Agent"},{"rank":2,"name":"ContrarianBot","strategy":"Contrarian","capital":12388,"votingPowerPct":18.9,"accuracy":-0.2,"kind":"Agent"},{"rank":3,"name":"MeanRevBot","strategy":"Mean Reversion","capital":5067,"votingPowerPct":15.6,"accuracy":1.3,"kind":"Agent"},{"rank":4,"name":"ValueBot","strategy":"Deep Value","capital":3804,"votingPowerPct":15.3,"accuracy":1.6,"kind":"Agent"},{"rank":5,"name":"MomentumBot","strategy":"Momentum Trend","capital":1391,"votingPowerPct":14.4,"accuracy":2,"kind":"Agent"},{"rank":6,"name":"LowVolBot","strategy":"Low Volatility","capital":7438,"votingPowerPct":11.7,"accuracy":0.1,"kind":"Agent"}]];
 
 /** The demo cycle the user's vote+resolve plays out (matches the displayed cycle #). */
 export const DEMO_CYCLE_ID = 4;
@@ -94,32 +94,32 @@ export const DEMO_SPX_RETURN = 0.0137;
 /** Agent members (capital + final accuracy) — used to compute the user's voting-power share. */
 export const AGENT_MEMBERS: { capital: number; accuracy: number; cycles: number }[] = [
   {
-    "capital": 10000,
+    "capital": 12388,
     "accuracy": -0.0023,
     "cycles": 12
   },
   {
-    "capital": 6000,
+    "capital": 7438,
     "accuracy": 0.0006,
     "cycles": 12
   },
   {
-    "capital": 4000,
+    "capital": 5067,
     "accuracy": 0.0128,
     "cycles": 12
   },
   {
-    "capital": 3000,
+    "capital": 3804,
     "accuracy": 0.0155,
     "cycles": 12
   },
   {
-    "capital": 2000,
+    "capital": 2721,
     "accuracy": 0.0329,
     "cycles": 12
   },
   {
-    "capital": 1000,
+    "capital": 1391,
     "accuracy": 0.0202,
     "cycles": 12
   }

@@ -12,7 +12,7 @@
 // successful submit we reveal a demo-only "resolve cycle now" trigger that
 // calls resolveCycle() so accuracy + claim appear on Overview/Account.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
@@ -64,25 +64,24 @@ function fmtClock(secs: number): string {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
-function randId(len: number, ch: string): string {
-  let out = "";
-  for (let i = 0; i < len; i++) out += ch[Math.floor(Math.random() * ch.length)];
-  return out;
-}
-
 export default function VotePage() {
   const { isVerified } = useAuth();
   const { id, secondsLeft } = useCycle();
   const votingPower = useVotingPower();
   const prices = usePrices(); // bound so the universe reflects live tickers (B7).
-  const { castVote, resolveCycle } = useFundActions();
+  const { castVote, resolveCycle, startNewCycle, lastVote, canClaim } =
+    useFundActions();
   const searchParams = useSearchParams();
 
   // --- Allocation form state -------------------------------------------------
-  const [alloc, setAlloc] = useState<Pick[]>(SEED_ALLOC);
+  // Seed the basket from the recorded vote when one exists, so a submitted vote
+  // (basket + "submitted" + "resolved") survives tab switches — these live in
+  // the shared data layer, not local state that unmounts on navigation. They
+  // reset automatically on a new cycle (NEW_CYCLE clears lastVote + resolved).
+  const [alloc, setAlloc] = useState<Pick[]>(() => lastVote ?? SEED_ALLOC);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [resolved, setResolved] = useState(false);
+  const submitted = lastVote !== null;
+  const resolved = canClaim;
 
   const total = alloc.reduce((t, a) => t + a.pct, 0);
   const rounded = Math.round(total);
@@ -136,18 +135,23 @@ export default function VotePage() {
     return () => document.removeEventListener("click", onDoc);
   }, [menuOpen]);
 
-  // Enabled only when verified and the basket sums to exactly 100%.
-  const canSubmit = isVerified && rounded === 100 && !submitted;
+  // Votable while the cycle is OPEN: verified + basket sums to 100, and the
+  // cycle isn't resolved/locked yet. A submitted vote can be RE-cast (changed)
+  // any time before the cycle resolves — only a resolved cycle disables it,
+  // and the next cycle re-opens it (NEW_CYCLE clears lastVote + resolved).
+  const canSubmit = isVerified && rounded === 100 && !resolved;
 
   async function onSubmit() {
     if (!canSubmit) return;
-    await castVote(alloc);
-    setSubmitted(true);
+    await castVote(alloc); // "submitted" derives from the recorded vote
   }
 
   async function onResolve() {
-    await resolveCycle();
-    setResolved(true);
+    await resolveCycle(); // "resolved" derives from canClaim
+  }
+
+  async function onNewCycle() {
+    await startNewCycle(); // fresh OPEN cycle — clears the vote so you can vote again
   }
 
   // Backup demo shortcut: Shift+R resolves once a vote is in (visible button
@@ -162,23 +166,77 @@ export default function VotePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitted, resolved]);
 
-  // --- API keys card (cosmetic; not on the demo path) ------------------------
-  const [keyId, setKeyId] = useState("CK7XQ2M9A4PL3VNB1DZE");
+  // --- API keys card (a real, working agent credential) ----------------------
+  // "Generate" mints a key server-side (POST /api/agent/keys). A bot then votes
+  // with it via POST /api/agent/vote — and we poll /api/agent/me so a vote
+  // placed over the API shows up right here in the demo (applied as your vote).
   const [secret, setSecret] = useState("cfsk_a93Fb2L8qZ4tR7nX1eW0pV6");
   const [revealed, setRevealed] = useState(false);
-  const [genLabel, setGenLabel] = useState("Generate new keys");
+  const [genLabel, setGenLabel] = useState("Generate API key");
+  const [apiActive, setApiActive] = useState(false); // true once a real key is minted
+  const [origin, setOrigin] = useState("");
+  const [apiNote, setApiNote] = useState<string | null>(null);
+  const lastApiVoteRef = useRef<number | null>(null);
 
-  const copyKey = useCallback(() => {
-    if (navigator.clipboard) navigator.clipboard.writeText(keyId);
-  }, [keyId]);
+  useEffect(() => setOrigin(window.location.origin), []);
 
-  function generateKeys() {
-    setKeyId(randId(20, "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789"));
-    setSecret("cfsk_" + randId(24, "abcdefghijkmnpqrstuvwxyz0123456789"));
-    setRevealed(true);
-    setGenLabel("New keys generated ✓");
-    window.setTimeout(() => setGenLabel("Generate new keys"), 1600);
+  const copySecret = useCallback(() => {
+    if (navigator.clipboard) navigator.clipboard.writeText(secret);
+  }, [secret]);
+
+  async function generateKeys() {
+    setGenLabel("Minting…");
+    try {
+      const res = await fetch("/api/agent/keys", { method: "POST" });
+      const data = (await res.json()) as { keyId: string; secret: string };
+      setSecret(data.secret);
+      setRevealed(true);
+      setApiActive(true);
+      lastApiVoteRef.current = null;
+      setGenLabel("Key generated ✓");
+    } catch {
+      setGenLabel("Generation failed — retry");
+    }
+    window.setTimeout(() => setGenLabel("Generate API key"), 1800);
   }
+
+  // Poll the agent API for votes placed with the active key. When a new one
+  // lands, apply it as the cast vote so the demo reflects the bot's trade.
+  useEffect(() => {
+    if (!apiActive) return;
+    let alive = true;
+    const poll = async () => {
+      try {
+        const res = await fetch("/api/agent/me", {
+          headers: { Authorization: `Bearer ${secret}` },
+        });
+        if (!res.ok) return;
+        const me = (await res.json()) as {
+          votedAt: number | null;
+          lastVote: Pick[] | null;
+        };
+        if (
+          alive &&
+          me.votedAt &&
+          me.lastVote &&
+          me.votedAt !== lastApiVoteRef.current
+        ) {
+          lastApiVoteRef.current = me.votedAt;
+          setAlloc(me.lastVote);
+          await castVote(me.lastVote);
+          setApiNote(`Vote placed via API · ${me.lastVote.length} positions`);
+        }
+      } catch {
+        /* ignore transient poll errors */
+      }
+    };
+    poll();
+    const id = window.setInterval(poll, 3000);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, [apiActive, secret, castVote]);
 
   const MASK = "•".repeat(28);
 
@@ -288,7 +346,11 @@ export default function VotePage() {
             disabled={!canSubmit}
             onClick={onSubmit}
           >
-            {submitted ? "Vote submitted ✓" : "Submit vote"}
+            {resolved
+              ? "Cycle locked"
+              : submitted
+                ? "Update vote ✓"
+                : "Submit vote"}
           </button>
 
           {!isVerified && (
@@ -316,9 +378,16 @@ export default function VotePage() {
           )}
 
           {resolved && (
-            <div className="resolved">
-              Cycle resolved — accuracy posted, claim available on Overview.
-            </div>
+            <>
+              <div className="resolved">
+                Cycle resolved — accuracy posted, claim available on Overview.
+              </div>
+              <div className="demobar">
+                <button className="demobtn" onClick={onNewCycle}>
+                  Start a new cycle → vote again
+                </button>
+              </div>
+            </>
           )}
         </div>
 
@@ -335,16 +404,13 @@ export default function VotePage() {
           </div>
           <p>
             Connect a bot or agent to vote with your power programmatically
-            &mdash; the same on-chain path you use. Alpaca-style key + secret.
+            &mdash; the same allocation a human casts. Generate a key, then POST
+            to <code style={{ color: "var(--teal)" }}>/api/agent/vote</code>.
           </p>
-          <div className="keyl">Key ID</div>
-          <div className="key">
-            <code>{keyId}</code>
-            <button onClick={copyKey}>COPY</button>
-          </div>
           <div className="keyl">Secret key</div>
           <div className="key">
             <code>{revealed ? secret : MASK}</code>
+            <button onClick={copySecret}>COPY</button>
             <button onClick={() => setRevealed((r) => !r)}>
               {revealed ? "HIDE" : "SHOW"}
             </button>
@@ -352,9 +418,46 @@ export default function VotePage() {
           <div className="gen" role="button" tabIndex={0} onClick={generateKeys}>
             {genLabel}
           </div>
+
+          {apiActive && (
+            <>
+              <div className="keyl" style={{ marginTop: 14 }}>
+                Place a vote (live)
+              </div>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "rgba(0,0,0,.28)",
+                  border: "1px solid var(--hair)",
+                  font: "500 11px/1.55 ui-monospace,Menlo,monospace",
+                  color: "var(--muted)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                }}
+              >
+{`curl -X POST ${origin}/api/agent/vote \\
+  -H "Authorization: Bearer ${secret}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"picks":[{"ticker":"NVDA","pct":60},{"ticker":"MSFT","pct":40}]}'`}
+              </pre>
+              {apiNote && (
+                <div
+                  className="confirm"
+                  style={{ marginTop: 10 }}
+                >
+                  ✓ {apiNote} — applied to your basket above.
+                </div>
+              )}
+            </>
+          )}
+
           <div className="note">
-            Shown once at generation. Permissions (vote-only, no withdrawals) and
-            revocation live in{" "}
+            {apiActive
+              ? "Key is live — endpoints: /api/agent/cycle · /universe · /me · /vote. "
+              : "Shown once at generation. "}
+            Permissions (vote-only, no withdrawals) and revocation live in{" "}
             <Link href="/settings" style={{ color: "var(--teal)" }}>
               Settings
             </Link>

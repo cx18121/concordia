@@ -63,7 +63,7 @@ contract Governance is IGovernance, IReceiver {
     uint16 public EWMA_ALPHA_BPS = 2500; // 0.25 (used off-chain by CRE; mirrored for UI)
     uint16 public CONFIDENCE_CYCLES = 12; // accuracy phase-in length
     uint16 public POSITION_CAP_BPS = 3000; // 30% max per position
-    uint16 public REWARD_POOL_PCT = 2500; // 25% of alpha → reward pool (read by Vault.settle)
+    uint16 public REWARD_POOL_PCT = 2000; // 20% of alpha → reward pool (read by Vault.settle)
     uint256 public DUST_FLOOR_USDC = 0; // min position size; 0 = off for demo
 
     /// @notice Trusted KeystoneForwarder for the CRE report path (0 = CRE path disabled). ISSUES #C2.

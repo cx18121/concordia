@@ -13,7 +13,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { AGENTS } from "./agents.js";
-import { STRATEGIES, type StrategyId } from "./strategies.js";
+import { STRATEGIES, type StrategyId, type Allocation } from "./strategies.js";
 import { WEEKS, weekReturn } from "./fixture.js";
 import { cycleAccuracy, ewma, votingPower } from "./resolve.js";
 import { TICKERS, SPX } from "./universe.js";
@@ -38,12 +38,31 @@ const round = (x: number, p = 2) => Number(x.toFixed(p));
 // We capture the standings AFTER EACH cycle so the web can play the leaderboard as a race:
 // early on, confidence is low so capital leads (ContrarianBot $10k on top); as accuracy
 // accumulates and confidence ramps, the small-skilled SectorBot ($2k) climbs past it.
+// REWARD_POOL_PCT of generated alpha is skimmed each cycle and redistributed to
+// positive-alpha voters (DESIGN.md §"Fees & rewards"). Capital is no longer the
+// static deposit: each cycle every agent's capital first moves with the fund's
+// own return (up or down), then the alpha pool is carved from the pooled NAV and
+// paid out by positive-alpha credit weight — so skilled agents compound capital
+// while mediocre ones don't, and voting power reflects the live capital share.
+const REWARD_POOL_PCT = 0.2; // 20% of alpha → reward pool (matches Governance.REWARD_POOL_PCT)
+
 const acc: Record<string, number> = Object.fromEntries(AGENTS.map((a) => [a.id, 0]));
+const capital: Record<string, number> = Object.fromEntries(AGENTS.map((a) => [a.id, a.deposit]));
+let cumExcess = 0; // cumulative fund excess vs S&P
+let hwmExcess = 0; // benchmark-relative high-water mark
 const frames: ReturnType<typeof standings>[] = [];
+
+// One agent's gross (benchmark-inclusive) basket return for the cycle.
+function grossReturn(allocations: Allocation[], cycle: number): number {
+  return allocations.reduce(
+    (g, a) => g + (a.weightBps / 10000) * weekReturn(a.ticker, cycle),
+    0,
+  );
+}
 
 function standings(cycle: number) {
   return votingPower(
-    AGENTS.map((a) => ({ id: a.id, capital: a.deposit, accuracy: acc[a.id]!, cycles: cycle })),
+    AGENTS.map((a) => ({ id: a.id, capital: capital[a.id]!, accuracy: acc[a.id]!, cycles: cycle })),
   )
     .sort((a, b) => b.votingPower - a.votingPower)
     .map((r, i) => {
@@ -52,7 +71,7 @@ function standings(cycle: number) {
         rank: i + 1,
         name: agent.name,
         strategy: STRATEGY_LABEL[agent.strategy],
-        capital: agent.deposit,
+        capital: Math.round(capital[r.id]!),
         votingPowerPct: round(r.votingPower * 100, 1),
         accuracy: round(r.accuracy * 100, 1),
         kind: "Agent" as const,
@@ -61,10 +80,55 @@ function standings(cycle: number) {
 }
 
 for (let cycle = 1; cycle <= WEEKS; cycle++) {
+  // This cycle's realized gross + excess (vs S&P) per agent; roll the EWMA accuracy.
+  const gross: Record<string, number> = {};
+  const excess: Record<string, number> = {};
   for (const agent of AGENTS) {
     const pick = STRATEGIES[agent.strategy](cycle);
-    acc[agent.id] = ewma(acc[agent.id]!, cycleAccuracy(pick.allocations, cycle));
+    gross[agent.id] = grossReturn(pick.allocations, cycle);
+    excess[agent.id] = cycleAccuracy(pick.allocations, cycle);
+    acc[agent.id] = ewma(acc[agent.id]!, excess[agent.id]!);
   }
+
+  // The fund executes the voting-power-weighted basket, so its return is the
+  // VP-weighted blend of the agents' baskets; excess is that minus the S&P.
+  const vp = votingPower(
+    AGENTS.map((a) => ({ id: a.id, capital: capital[a.id]!, accuracy: acc[a.id]!, cycles: cycle })),
+  );
+  const vpTotal = vp.reduce((s, r) => s + r.votingPower, 0) || 1;
+  const fundGross = vp.reduce((s, r) => s + (r.votingPower / vpTotal) * gross[r.id]!, 0);
+  const fundExcess = fundGross - weekReturn(SPX, cycle);
+
+  // 1) Capital moves with fund performance — every share grows/shrinks by the NAV return.
+  const navBefore = AGENTS.reduce((s, a) => s + capital[a.id]!, 0);
+  for (const a of AGENTS) capital[a.id] = capital[a.id]! * (1 + fundGross);
+  const navAfter = navBefore * (1 + fundGross);
+
+  // 2) Reward pool = REWARD_POOL_PCT of the *new* alpha gain, gated on a fresh
+  //    benchmark high-water mark AND a positive absolute dollar return, capped at
+  //    the real gain (mirrors FundVault.settle).
+  cumExcess += fundExcess;
+  let pool = 0;
+  if (fundGross > 0 && cumExcess > hwmExcess) {
+    const chargeable = cumExcess - hwmExcess;
+    const gain = Math.min(navBefore * chargeable, navBefore * fundGross);
+    pool = REWARD_POOL_PCT * Math.max(gain, 0);
+    hwmExcess = cumExcess;
+  }
+
+  // 3) Redistribute the pool by positive-alpha credit weight, carved pro-rata
+  //    from the pooled NAV so total capital is conserved in the redistribution.
+  if (pool > 0 && navAfter > 0) {
+    const posTotal = AGENTS.reduce((s, a) => s + Math.max(excess[a.id]!, 0), 0);
+    if (posTotal > 0) {
+      for (const a of AGENTS) {
+        const creditWeight = Math.max(excess[a.id]!, 0) / posTotal;
+        const navShare = capital[a.id]! / navAfter;
+        capital[a.id] = capital[a.id]! + pool * creditWeight - pool * navShare;
+      }
+    }
+  }
+
   frames.push(standings(cycle));
 }
 
@@ -77,7 +141,7 @@ for (const t of TICKERS) returns[t] = round(weekReturn(t, DEMO_CYCLE), 4);
 const spxReturn = round(weekReturn(SPX, DEMO_CYCLE), 4);
 
 // Peers for computing the user's voting power relative to the agents (votingPower in resolve.ts).
-const members = AGENTS.map((a) => ({ capital: a.deposit, accuracy: round(acc[a.id]!, 4), cycles: WEEKS }));
+const members = AGENTS.map((a) => ({ capital: Math.round(capital[a.id]!), accuracy: round(acc[a.id]!, 4), cycles: WEEKS }));
 
 const out = `// GENERATED by agents/src/export-demo.ts — do not edit by hand.
 // Run \`npm run export-demo\` in agents/ to regenerate. This is the agent engine's own

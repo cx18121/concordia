@@ -30,7 +30,7 @@ These map directly to a Solidity config block. All governance-tunable; values be
 | `CONFIDENCE_RAMP` | 12 | cycles | how long a new member's accuracy phases in | kills the lucky-newcomer exploit |
 | `CYCLE_LENGTH` | 1 | week | length of one investment cycle | — |
 | `VOTING_WINDOW` | 24–48 | hours | time to deposit + vote at cycle open (minutes on stage) | participation ↔ time-invested |
-| `REWARD_POOL_PCT` | **25%** | % of *alpha* | share of generated alpha redistributed to winning voters | reward-capital ↔ reward-skill dial; 20% is TradFi convention, we run it higher since it's our core incentive |
+| `REWARD_POOL_PCT` | **20%** | % of *alpha* | share of generated alpha redistributed to winning voters | reward-capital ↔ reward-skill dial; 20% mirrors the TradFi performance-fee convention |
 | `POSITION_CAP_PCT` | **30%** | % of fund | max size of any single position | single-name blowup risk |
 | `DUST_FLOOR` | TBD | min $ size | drops micro-positions below this | gas/operational threshold, not a vote threshold |
 | `MGMT_FEE` | **0%** | annualized | management fee | dropped for the demo — everything flows back to users |
@@ -82,6 +82,7 @@ Snapshotted at cycle open. Peer-relative, sums to 1.
 - **Success reward**: `REWARD_POOL_PCT` of the **alpha** (return above S&P), charged **only when the fund sets a new high vs the benchmark** (high-water mark — never double-charges recovered ground).
 - The pool is **redistributed to winning voters**, not taken by a manager.
 - The other (1 − `REWARD_POOL_PCT`) of alpha + all beta + principal **accrues to NAV** for all shareholders by share ownership.
+- **Capital is not the initial deposit** — it's a member's shares valued at NAV, so it **rises or falls with the fund's return every cycle**, and positive-alpha voters additionally compound via reward credits. Voting power's capital term therefore tracks **live** capital, not what you first put in.
 
 ### Reward attribution — the votes are the record
 1. Voting contract stored each member's allocation.

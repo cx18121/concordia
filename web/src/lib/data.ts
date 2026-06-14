@@ -243,7 +243,8 @@ type Action =
   | { type: "DEPOSIT"; amount: number }
   | { type: "VOTE"; picks: Pick[] }
   | { type: "CLAIM" }
-  | { type: "RESOLVE" };
+  | { type: "RESOLVE" }
+  | { type: "NEW_CYCLE" };
 
 // 1 share == $1 at seed; deposit grows shares/cost 1:1, NAV tracks cost
 // until resolve bumps it. Keeps the demo math obvious.
@@ -268,6 +269,21 @@ function reducer(state: MockState, action: Action): MockState {
     case "CLAIM":
       // Available only after resolve; no-op otherwise.
       return state.resolved ? { ...state, claimed: true } : state;
+    case "NEW_CYCLE":
+      // Roll over to a fresh OPEN cycle when the clock hits 0: bump the id, reset
+      // the countdown + prices, and clear the per-cycle vote/score so the user
+      // (and API bots) can vote again. Position carries over across cycles.
+      return {
+        ...state,
+        cycleId: state.cycleId + BigInt(1),
+        cycleState: "OPEN",
+        endsAt: Date.now() + CYCLE_SECONDS * 1000,
+        prices: { ...SEED_PRICES },
+        accuracy: null,
+        lastVote: null,
+        resolved: false,
+        claimed: false,
+      };
     case "RESOLVE": {
       if (state.resolved) return state;
       // Flip OPEN -> LOCKED and score the user's ACTUAL vote against the demo cycle's real
@@ -309,8 +325,14 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
 
   const endsAt = state.endsAt;
   useEffect(() => {
-    const tick = () =>
-      setSecondsLeft(Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)));
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      // Always-on: when the clock runs out, roll straight into a new cycle.
+      // NEW_CYCLE sets a fresh endsAt, so this effect re-subscribes and the
+      // next tick reads the full window — only one rollover fires per cycle.
+      if (remaining <= 0) dispatch({ type: "NEW_CYCLE" });
+    };
     tick(); // resync immediately when endsAt changes.
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
@@ -537,6 +559,8 @@ export interface FundActions {
   claim(): Promise<void>;
   /** Mock: resolve the cycle locally. Live: POST the keeper's advance route. */
   resolveCycle(): Promise<void>;
+  /** Roll straight into a fresh OPEN cycle (clears the recorded vote + score). */
+  startNewCycle(): Promise<void>;
   /** Mock: cycle resolved. Live: you have a claimable reward balance. */
   canClaim: boolean;
   /** True once claim() has run. */
@@ -610,12 +634,21 @@ export function useFundActions(): FundActions {
     await fetch("/api/advance", { method: "POST" }).catch(() => {});
   }, [USE_MOCK, ctx]);
 
+  const startNewCycle = useCallback(async () => {
+    if (USE_MOCK) {
+      ctx?.dispatch({ type: "NEW_CYCLE" });
+      return;
+    }
+    await fetch("/api/advance", { method: "POST" }).catch(() => {});
+  }, [USE_MOCK, ctx]);
+
   return {
     getDemoUSDC,
     deposit,
     castVote,
     claim,
     resolveCycle,
+    startNewCycle,
     canClaim: USE_MOCK ? Boolean(ctx?.state.resolved) : rewardCredit > BigInt(0),
     claimed: USE_MOCK ? Boolean(ctx?.state.claimed) : claimedLive,
     lastVote: USE_MOCK ? ctx?.state.lastVote ?? null : lastVoteLive,
