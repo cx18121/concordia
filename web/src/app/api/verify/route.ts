@@ -3,9 +3,11 @@ import { addresses, vaultAbi, walletClientFromKey, publicClient } from "@concord
 import { parseEther, type Hex } from "viem";
 
 // Gas drip: top a fresh user's wallet up to DRIP_TARGET if it's below DRIP_MIN, so they can
-// pay gas for approve/deposit/vote without their own faucet run. Cheap on Base Sepolia.
-const DRIP_MIN = parseEther("0.001");
-const DRIP_TARGET = parseEther("0.002");
+// pay gas for approve/deposit/vote without their own faucet run. Base Sepolia gas is ~0.007
+// gwei, so a full user flow (~450k gas) costs ~0.000003 ETH — 0.0005 is ample headroom and
+// lets one faucet-limited admin wallet onboard hundreds of users.
+const DRIP_MIN = parseEther("0.0002");
+const DRIP_TARGET = parseEther("0.0005");
 
 // In-memory nullifier store — enough for the demo (resets on redeploy).
 const usedNullifiers = new Set<string>();
