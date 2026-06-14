@@ -3,17 +3,14 @@
 // Leaderboard — ranked members by voting power (Track B, Task B6).
 //
 // Markup + helper CSS are ported from redesign/mockups/stitch-leaderboard.html.
-// The mockup's hardcoded rows are replaced by useLeaderboard() (mock seam): the
-// table binds rank / name / accuracy / votingPowerPct from our 4-field rows.
-// Columns the mockup shows but we don't model (capital, agent/human badge,
-// strategy subtitle, avatar accent) are filled from the mockup's own seeded
-// values, keyed by row index — purely cosmetic, kept for visual fidelity.
-//
-// Static (cosmetic) sections kept verbatim from the mockup: the Voting
-// Power / Accuracy toggle, the comparison hero, and the footer cards.
+// Rows bind to useLeaderboardRace() (mock seam): name / strategy / capital / accuracy /
+// votingPowerPct come from the agent engine's 12-week replay. In Demo mode the board PLAYS
+// that replay as a race — rows reorder (FLIP-animated) as the small-skilled agent overtakes
+// the big-capital one, cycle by cycle. Live mode shows the on-chain leaderboard, static.
 
 import Link from "next/link";
-import { useLeaderboard } from "@/lib/data";
+import { useLayoutEffect, useRef } from "react";
+import { useLeaderboardRace } from "@/lib/data";
 import "@/styles/leaderboard.css";
 
 // Purely cosmetic per-rank avatar/bar colors. kind / strategy / capital now come from
@@ -37,15 +34,46 @@ function initials(name: string): string {
 }
 
 export default function LeaderboardPage() {
-  const rows = useLeaderboard();
+  const { rows, cycle, total } = useLeaderboardRace();
   const top = rows[0];
   const second = rows[1];
+
+  // FLIP: animate rows to their new position whenever the race reorders them. Keyed by name
+  // (stable identity) so React keeps the DOM node and we can slide it from old → new spot.
+  const rowEls = useRef<Map<string, HTMLDivElement>>(new Map());
+  const prevTop = useRef<Map<string, number>>(new Map());
+  useLayoutEffect(() => {
+    rowEls.current.forEach((el, name) => {
+      const now = el.offsetTop;
+      const was = prevTop.current.get(name);
+      if (was != null && was !== now) {
+        el.style.transition = "none";
+        el.style.transform = `translateY(${was - now}px)`;
+        requestAnimationFrame(() => {
+          el.style.transition = "transform 600ms cubic-bezier(0.2,0.8,0.2,1)";
+          el.style.transform = "";
+        });
+      }
+      prevTop.current.set(name, now);
+    });
+  }, [rows]);
 
   return (
     <main className="max-w-[1140px] mx-auto pt-32 pb-20 px-6 relative z-10">
       {/* Header Section */}
       <header className="mb-12 text-center md:text-left">
         <h1 className="font-display text-5xl md:text-6xl text-text-primary tracking-tight">Leaderboard</h1>
+        {total > 0 && (
+          <div className="mt-4 inline-flex items-center gap-2 text-text-muted text-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-teal opacity-75 animate-ping" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
+            </span>
+            Replaying the agents&rsquo; 12 weeks — cycle{" "}
+            <span className="text-text-primary font-semibold tabular-nums">{cycle}</span>/{total}.{" "}
+            <span className="text-text-subtle">Watch skill out-vote capital.</span>
+          </div>
+        )}
       </header>
       {/* Toggle Segment */}
       <div className="flex justify-center md:justify-start mb-16">
@@ -115,8 +143,12 @@ export default function LeaderboardPage() {
             const up = row.accuracy >= 0;
             return (
               <div
-                key={row.rank}
-                className="grid grid-cols-12 items-center px-6 py-6 list-row transition-all duration-300"
+                key={row.name}
+                ref={(el) => {
+                  if (el) rowEls.current.set(row.name, el);
+                  else rowEls.current.delete(row.name);
+                }}
+                className="grid grid-cols-12 items-center px-6 py-6 list-row"
               >
                 <div className="col-span-1 font-display text-xl text-text-muted tabular-nums">{row.rank}</div>
                 <div className="col-span-5 md:col-span-4 flex items-center gap-4">
@@ -147,7 +179,10 @@ export default function LeaderboardPage() {
                     {row.votingPowerPct.toFixed(1)}%
                   </span>
                   <div className="w-24 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
-                    <div className={`h-full ${c.bar}`} style={{ width: `${row.votingPowerPct}%` }} />
+                    <div
+                      className={`h-full ${c.bar} transition-[width] duration-500`}
+                      style={{ width: `${Math.min(row.votingPowerPct * 3, 100)}%` }}
+                    />
                   </div>
                 </div>
               </div>

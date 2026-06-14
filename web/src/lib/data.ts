@@ -40,6 +40,7 @@ import {
 } from "@concordia/shared";
 import {
   LEADERBOARD,
+  LEADERBOARD_FRAMES,
   DEMO_CYCLE_ID,
   DEMO_CYCLE_RETURNS,
   DEMO_SPX_RETURN,
@@ -443,9 +444,50 @@ export function useAccuracy(): number | null {
   return live;
 }
 
-export function useLeaderboard(): LeaderboardRow[] {
+// Leaderboard race playback: in Demo mode the board plays through the agents' 12-week
+// replay (LEADERBOARD_FRAMES) so judges watch skill overtake capital — early cycles are
+// capital-ordered (ContrarianBot $10k on top), the final frame is skill-ordered (SectorBot
+// $2k on top). Advances a frame per RACE_FRAME_MS, holds on the final standings, then loops.
+const RACE_FRAME_MS = 1100;
+const RACE_HOLD_MS = 4500;
+
+function useRaceFrame(active: boolean): number {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let idx = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    setI(0);
+    const tick = () => {
+      idx += 1;
+      if (idx < LEADERBOARD_FRAMES.length) {
+        setI(idx);
+        timer = setTimeout(tick, RACE_FRAME_MS);
+      } else {
+        timer = setTimeout(() => {
+          idx = 0;
+          setI(0);
+          timer = setTimeout(tick, RACE_FRAME_MS);
+        }, RACE_HOLD_MS);
+      }
+    };
+    timer = setTimeout(tick, RACE_FRAME_MS);
+    return () => clearTimeout(timer);
+  }, [active]);
+  return Math.min(i, LEADERBOARD_FRAMES.length - 1);
+}
+
+export interface LeaderboardRace {
+  rows: LeaderboardRow[];
+  /** 1-based replay cycle being shown (0 in live mode). */
+  cycle: number;
+  /** Total cycles in the replay (0 in live mode). */
+  total: number;
+}
+
+export function useLeaderboardRace(): LeaderboardRace {
   const USE_MOCK = useIsMock();
-  const mock = useContext(MockDataContext);
+  const frame = useRaceFrame(USE_MOCK);
   const live = useLivePoll<LeaderboardRow[]>([], "leaderboard", async () => {
     const rows = await scGetLeaderboard(livePub());
     return rows.map((r, i) => ({
@@ -459,8 +501,14 @@ export function useLeaderboard(): LeaderboardRow[] {
       kind: "Human" as const,
     }));
   });
-  if (USE_MOCK) return mock!.state.leaderboard;
-  return live;
+  if (USE_MOCK) {
+    return { rows: LEADERBOARD_FRAMES[frame] ?? LEADERBOARD, cycle: frame + 1, total: LEADERBOARD_FRAMES.length };
+  }
+  return { rows: live, cycle: 0, total: 0 };
+}
+
+export function useLeaderboard(): LeaderboardRow[] {
+  return useLeaderboardRace().rows;
 }
 
 /**

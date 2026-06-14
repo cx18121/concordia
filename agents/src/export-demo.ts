@@ -32,33 +32,43 @@ const STRATEGY_LABEL: Record<StrategyId, string> = {
   contrarian: "Contrarian",
 };
 
+const round = (x: number, p = 2) => Number(x.toFixed(p));
+
 // 12-week replay, compute only (no printing / no thesis) — same strategy + scoring as seed.ts.
+// We capture the standings AFTER EACH cycle so the web can play the leaderboard as a race:
+// early on, confidence is low so capital leads (ContrarianBot $10k on top); as accuracy
+// accumulates and confidence ramps, the small-skilled SectorBot ($2k) climbs past it.
 const acc: Record<string, number> = Object.fromEntries(AGENTS.map((a) => [a.id, 0]));
+const frames: ReturnType<typeof standings>[] = [];
+
+function standings(cycle: number) {
+  return votingPower(
+    AGENTS.map((a) => ({ id: a.id, capital: a.deposit, accuracy: acc[a.id]!, cycles: cycle })),
+  )
+    .sort((a, b) => b.votingPower - a.votingPower)
+    .map((r, i) => {
+      const agent = AGENTS.find((a) => a.id === r.id)!;
+      return {
+        rank: i + 1,
+        name: agent.name,
+        strategy: STRATEGY_LABEL[agent.strategy],
+        capital: agent.deposit,
+        votingPowerPct: round(r.votingPower * 100, 1),
+        accuracy: round(r.accuracy * 100, 1),
+        kind: "Agent" as const,
+      };
+    });
+}
+
 for (let cycle = 1; cycle <= WEEKS; cycle++) {
   for (const agent of AGENTS) {
     const pick = STRATEGIES[agent.strategy](cycle);
     acc[agent.id] = ewma(acc[agent.id]!, cycleAccuracy(pick.allocations, cycle));
   }
+  frames.push(standings(cycle));
 }
 
-const scored = votingPower(
-  AGENTS.map((a) => ({ id: a.id, capital: a.deposit, accuracy: acc[a.id]!, cycles: WEEKS })),
-).sort((a, b) => b.votingPower - a.votingPower);
-
-const round = (x: number, p = 2) => Number(x.toFixed(p));
-
-const leaderboard = scored.map((r, i) => {
-  const agent = AGENTS.find((a) => a.id === r.id)!;
-  return {
-    rank: i + 1,
-    name: agent.name,
-    strategy: STRATEGY_LABEL[agent.strategy],
-    capital: agent.deposit,
-    votingPowerPct: round(r.votingPower * 100, 1),
-    accuracy: round(r.accuracy * 100, 1),
-    kind: "Agent" as const,
-  };
-});
+const leaderboard = frames[frames.length - 1]!; // final standings
 
 // The demo cycle's real weekly returns — the web scores the user's own vote against these
 // (same excess-vs-S&P formula as resolve.ts) and moves prices by the same amounts.
@@ -85,6 +95,9 @@ export interface DemoAgentRow {
 
 /** Final standings after the 12-week replay — the headline leaderboard. */
 export const LEADERBOARD: DemoAgentRow[] = ${JSON.stringify(leaderboard, null, 2)};
+
+/** Standings after each cycle (1..12) — the web plays these as a leaderboard race. */
+export const LEADERBOARD_FRAMES: DemoAgentRow[][] = ${JSON.stringify(frames)};
 
 /** The demo cycle the user's vote+resolve plays out (matches the displayed cycle #). */
 export const DEMO_CYCLE_ID = ${DEMO_CYCLE};
