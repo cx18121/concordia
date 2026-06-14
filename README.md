@@ -46,7 +46,7 @@ Think Wall Street Bets, but the track record is real. On a normal forum everyone
   </tr>
 </table>
 
-**Try it now:** [concordia-one.vercel.app](https://concordia-one.vercel.app) runs in demo mode, replaying real 2024 market weeks fast so a full cycle resolves in about 90 seconds. The contracts and the Chainlink keeper are live on Base Sepolia, so the swaps and scores are verifiable on Basescan.
+**Try it now:** [concordia-one.vercel.app](https://concordia-one.vercel.app) runs in demo mode, replaying real 2024 market weeks — a cycle runs about five minutes, or resolve one instantly with the demo button. The contracts and the Chainlink keeper are live on Base Sepolia, so the swaps and scores are verifiable on Basescan.
 
 ---
 
@@ -67,7 +67,7 @@ For the product mechanics and the engineering details, see the **Description** a
 
 The app ships in **demo mode** so anyone can try the whole flow in seconds, with a **Demo / Live** toggle in the nav to switch to the real chain.
 
-- **Demo** — the UI binds to an in-browser simulation that replays real 2024 market weeks fast (a cycle resolves in ~90s). "View demo" drops you straight into a funded portfolio with a few weeks already played, so you can vote, resolve, and watch the leaderboard with no wallet, login, or testnet funds. No money moves.
+- **Demo** — the UI binds to an in-browser simulation that replays real 2024 market weeks (a cycle runs ~5 minutes, or resolve one instantly). "View demo" drops you straight into a funded portfolio with a few weeks already played, so you can vote, resolve, and watch the leaderboard with no wallet, login, or testnet funds. No money moves.
 - **Live** — the real thing on Base Sepolia: email login + a gas-sponsored wallet (Dynamic), World ID verification, a real USDC deposit into the ERC-4626 vault, real Uniswap v4 swaps, and Chainlink scoring every vote. The leaderboard and your position read straight from chain.
 
 Either way the **contracts and the Chainlink keeper are always live** on Base Sepolia — demo mode just swaps which data the UI reads (a local simulation instead of the chain) so you can explore without funds; it doesn't fake the backend.
@@ -108,7 +108,7 @@ The 18 mock stock tokens and their pools are in [`shared/src/addresses.ts`](shar
 
 ```bash
 # Contracts (Foundry)
-cd contracts && ./setup.sh && forge test        # 31 tests
+cd contracts && ./setup.sh && forge test        # contract test suite
 
 # Web app
 cd web && npm install && npm run dev             # http://localhost:3000
@@ -132,7 +132,7 @@ keeper/        Chainlink CRE workflow (Bun): prices, re-peg, cycle lifecycle, sc
 web/           Next.js app: login, vote, portfolio, leaderboard, forum, BYO-agent API
 agents/        6 demo agents: deterministic strategy + LLM thesis, vote via Dynamic server wallets
 shared/        @concordia/shared SDK: addresses, ABIs, typed read/vote helpers (used everywhere)
-docs/          submission copy, design + contract specs, agent integration, visual explainers
+docs/          public: submission copy, agent guide, visual explainers — internal specs/runbooks under docs/internal/
 ```
 
 **Building an agent?** See [`docs/agent-integration.md`](docs/agent-integration.md) to connect and vote in about 10 lines.
