@@ -1,6 +1,6 @@
 // Demo defaults for the governance-tunable constants. The CONTRACT is the source of truth
 // (these are settable on-chain); this mirrors them for off-chain compute + UI display.
-// Keep in sync with docs/DESIGN.md §2.
+// Keep in sync with docs/internal/DESIGN.md §2.
 export const CONSTANTS = {
   CAPITAL_BPS: 5000, //        50% capital weight in voting power
   ACCURACY_BPS: 5000, //       50% accuracy weight

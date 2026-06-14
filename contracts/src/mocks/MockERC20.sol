@@ -8,7 +8,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 ///         `mint()` is public on purpose: it doubles as the "get demo USDC" button
 ///         and lets us seed pools / the synthetic executor generously (ISSUES #2, #6).
 ///         Interface is plain ERC-20 so a mainnet drop-in (real USDC / Dinari) is a
-///         constructor-arg swap, no contract change. See docs/CONTRACTS.md §7.
+///         constructor-arg swap, no contract change. See docs/internal/CONTRACTS.md §7.
 contract MockERC20 is ERC20 {
     uint8 private immutable _decimals;
 

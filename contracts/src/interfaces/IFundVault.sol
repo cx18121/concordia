@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 /// @title IFundVault — the money contract (ERC-4626 base)
 /// @notice Owns ALL money state: USDC custody, shares, NAV, positions, reward pool,
-///         high-water mark, claims, and the Uniswap swaps. See docs/CONTRACTS.md §3.
+///         high-water mark, claims, and the Uniswap swaps. See docs/internal/CONTRACTS.md §3.
 /// @dev Scales: NAV/USDC in USDC's own decimals; excess return tracked in signed E4 (bps).
 ///      Only Governance may move the basket or fund/settle rewards. Money trust lives here:
 ///      the reward-pool SIZE is computed from this contract's own NAV, never handed in.

@@ -15,7 +15,7 @@ import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/src/type
 ///         Our UniswapExecutor calls the PoolManager DIRECTLY (it is its own router), so `sender`
 ///         is the executor — and only the executor (the fund's swap arm) is allowlisted. A swap
 ///         routed through any shared router would show that router as `sender`, so gating only
-///         works because the executor swaps directly. See docs/CONTRACTS.md §7 and ISSUES.md.
+///         works because the executor swaps directly. See docs/internal/CONTRACTS.md §7 and ISSUES.md.
 /// @dev Only the `beforeSwap` flag is set, so add/remove-liquidity (pool seeding) is NOT gated.
 ///      Must be deployed to a CREATE2 address whose low bits encode exactly BEFORE_SWAP_FLAG
 ///      (mined via HookMiner) or BaseHook's constructor validation reverts.

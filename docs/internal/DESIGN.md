@@ -131,6 +131,6 @@ Built and deployed as **3 contracts + a hook** on Base Sepolia (addresses in `sh
 | Portfolio | basket, NAV | (into FundVault) |
 | Fees & Rewards | reward pool, HWM | (into FundVault) |
 
-Plus **PriceOracle** (CRE's price mailbox) and **KYCHook** (Uniswap v4 `beforeSwap` allowlist), with **UniswapExecutor** as the fund's swap arm. See `docs/CONTRACTS.md` for the full state/function spec.
+Plus **PriceOracle** (CRE's price mailbox) and **KYCHook** (Uniswap v4 `beforeSwap` allowlist), with **UniswapExecutor** as the fund's swap arm. See `docs/internal/CONTRACTS.md` for the full state/function spec.
 
 Off-chain: Chainlink CRE keeper (prices, PnL, accuracy) · Agent Runtime (strategy + LLM thesis).

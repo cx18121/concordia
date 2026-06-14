@@ -12,8 +12,8 @@ ETHGlobal NY 2026 hackathon project: **Concordia** — a community hedge fund DA
 
 ## Read first (canonical)
 
-- **`docs/DESIGN.md`** — locked decisions + tunable constants (values adjustable, decisions settled).
-- **`docs/CONTRACTS.md`** — build-ready contract spec: state, functions, access, call graph, on/off-chain boundary. Source of truth for implementation.
+- **`docs/internal/DESIGN.md`** — locked decisions + tunable constants (values adjustable, decisions settled).
+- **`docs/internal/CONTRACTS.md`** — build-ready contract spec: state, functions, access, call graph, on/off-chain boundary. Source of truth for implementation.
 - **`docs/internal/ROADMAP.md`** — workstreams + team todo; check items off as they land. **`docs/internal/ISSUES.md`** — open questions; add blockers there instead of stalling, move resolved items down with the answer.
 - `docs/explainers/*.html` are visual explainers (open in a browser), not logic source.
 

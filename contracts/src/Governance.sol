@@ -20,7 +20,7 @@ interface IVaultSnapshot {
 /// @notice The rules contract. Members cast weighted allocations during OPEN; at LOCK the votes
 ///         become a proportional basket (cap + dust + renormalize) the Vault executes; at RESOLVE
 ///         the keeper supplies off-chain per-member figures and this contract computes fund-level
-///         excess on-chain and drives Vault.settle(). See docs/CONTRACTS.md §4.
+///         excess on-chain and drives Vault.settle(). See docs/internal/CONTRACTS.md §4.
 /// @dev Scales: accuracy signed E4, power/weights bps. Lifecycle fns are keeper-triggered (CRE).
 ///      The selection count EMERGES from votes — no fixed top-N. Money math lives in the Vault.
 contract Governance is IGovernance, IReceiver {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 /// @title IGovernance — the rules contract (Voting + Reputation)
 /// @notice Owns votes, the voting-power snapshot, accuracy scores, basket selection,
-///         and the cycle lifecycle. See docs/CONTRACTS.md §4.
+///         and the cycle lifecycle. See docs/internal/CONTRACTS.md §4.
 /// @dev Scales: accuracy signed E4, power/weights bps. Lifecycle fns are keeper-triggered
 ///      (CRE) for the demo. The selection count EMERGES from votes (proportional + cap + dust),
 ///      there is no fixed top-N.

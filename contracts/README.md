@@ -1,6 +1,6 @@
 # contracts — Solidity (Foundry + Uniswap v4-template)
 
-Workstreams A + B (`../docs/internal/ROADMAP.md`). Spec: `../docs/CONTRACTS.md`. Frozen cross-workstream interfaces in `src/interfaces/` — change only by team agreement + an ISSUES.md note.
+Workstreams A + B (`../docs/internal/ROADMAP.md`). Spec: `../docs/internal/CONTRACTS.md`. Frozen cross-workstream interfaces in `src/interfaces/` — change only by team agreement + an ISSUES.md note.
 
 ## Setup (after clone)
 

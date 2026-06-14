@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 /// @notice The keeper (Chainlink CRE) writes stock + benchmark prices here;
 ///         Vault reads them for NAV, Governance reads them for fund excess.
 /// @dev Prices are 8-decimal USD (E8). `asset` is a short symbol, e.g. bytes32("NVDA").
-///      The S&P 500 benchmark is stored separately. See docs/CONTRACTS.md §2.
+///      The S&P 500 benchmark is stored separately. See docs/internal/CONTRACTS.md §2.
 interface IPriceOracle {
     /// @notice Emitted whenever the keeper posts a fresh price batch.
     event PricesPosted(uint256 indexed cycleId, uint256 timestamp);

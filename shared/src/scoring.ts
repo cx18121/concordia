@@ -1,5 +1,5 @@
 // Pure resolve math — the keeper's per-member compute AND the replay engine use these
-// (write it once). Returns are fractional (0.06 = +6%). See docs/CONTRACTS.md §6, DESIGN.md §3.
+// (write it once). Returns are fractional (0.06 = +6%). See docs/internal/CONTRACTS.md §6, DESIGN.md §3.
 import { CONSTANTS } from "./constants";
 
 /** One member's weight (bps) on a backed asset this cycle. */

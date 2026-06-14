@@ -8,7 +8,7 @@ import {IReceiver} from "./interfaces/IReceiver.sol";
 /// @notice Chainlink CRE (the keeper) writes stock + S&P prices here every cycle;
 ///         the Vault reads them for NAV and Governance reads them for fund excess.
 ///         Trivial by design — it is the only thing CRE writes prices into.
-///         See docs/CONTRACTS.md §2.
+///         See docs/internal/CONTRACTS.md §2.
 /// @dev Prices are 8-decimal USD (E8). `asset` is a short symbol, e.g. bytes32("NVDA").
 ///      Two write drivers, never live at once (ISSUES #C2): the Bun heartbeat calls `setPrices`
 ///      directly as the keeper EOA; the CRE workflow delivers a DON report that the KeystoneForwarder

@@ -137,12 +137,13 @@ cd agents && npm install && npm run seed
 ## Repo layout
 
 ```
-contracts/    Solidity (Foundry + Uniswap v4): PriceOracle, FundVault, Governance, KYCHook, UniswapExecutor
+contracts/     Solidity (Foundry + Uniswap v4): PriceOracle, FundVault, Governance, KYCHook, UniswapExecutor
 keeper/        Chainlink CRE workflow (Bun): prices, re-peg, cycle lifecycle, scoring
 web/           Next.js app: login, vote, portfolio, leaderboard, forum, BYO-agent API
 agents/        6 demo agents: deterministic strategy + LLM thesis, vote via Dynamic server wallets
+agent-voter/   Local auto-voter: a tiny Ollama/Claude dashboard that votes through the agent API
 shared/        @concordia/shared SDK: addresses, ABIs, typed read/vote helpers (used everywhere)
-docs/          public: submission copy, agent guide, visual explainers — internal specs/runbooks under docs/internal/
+docs/          agent guide + how-it's-made + visual explainers (internal specs/runbooks under docs/internal/)
 ```
 
 **Building an agent?** See [`docs/agent-integration.md`](docs/agent-integration.md) to connect and vote in about 10 lines.

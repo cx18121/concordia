@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 /// @title IUniswapExecutor — the execution layer (workstream B)
 /// @notice Wraps the real Uniswap v4 swaps so the Vault stays clean. The Vault calls this to
-///         buy the winning basket and to unwind back to cash. See docs/CONTRACTS.md §7.
+///         buy the winning basket and to unwind back to cash. See docs/internal/CONTRACTS.md §7.
 /// @dev Built and tested standalone against a stub vault; the Vault integrates it behind
 ///      executeBasket / closePositions. Swaps route via Universal Router (+Permit2). Pools are
 ///      gated by the KYCHook (allowlist) — the Vault/executor must be on the allowlist.

@@ -1,6 +1,6 @@
 // The replay fixture: real 2024 weekly closes for the universe + S&P, committed once
 // (built by scripts/build-fixture.ts) and looped in always-on demo mode. Pure — no I/O at
-// runtime. See docs/DESIGN.md §3.5 (demo replays real history; one fast cycle = one market week).
+// runtime. See docs/internal/DESIGN.md §3.5 (demo replays real history; one fast cycle = one market week).
 
 /** One week's snapshot of closing prices (floats, USD) + the S&P level. */
 export interface FixtureWeek {
