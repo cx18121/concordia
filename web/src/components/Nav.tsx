@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { countUp } from "@/lib/countUp";
+import { ModeToggle } from "@/lib/mode";
 
 // Tabs: [label, href, isActive(pathname)]. Active state derives from the
 // current path instead of shell.js's body.dataset.page.
@@ -47,6 +48,7 @@ export default function Nav() {
         ))}
       </div>
       <div className="navr">
+        <ModeToggle />
         <span ref={walRef} className="wal tnum" data-count="43820.50">
           $43,820.50
         </span>

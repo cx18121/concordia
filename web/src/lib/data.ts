@@ -6,7 +6,7 @@
 // values (dollar numbers, percentages) — never on-chain bigints. The live
 // adapter (B7) converts E8/bps/E4 -> these same shapes, so pages never change.
 //
-// Switch: NEXT_PUBLIC_USE_MOCK !== "false" => mock (default). No .env required.
+// Switch: useIsMock() (mode.tsx) — env default, overridable by the in-app toggle.
 
 import {
   createContext,
@@ -20,6 +20,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "./useAuth";
+import { useIsMock } from "./mode";
 import {
   publicClient,
   getCycle as scGetCycle,
@@ -92,12 +93,6 @@ export const UNIVERSE = [
 ] as const;
 
 export type Ticker = (typeof UNIVERSE)[number];
-
-// ---------------------------------------------------------------------------
-// Env switch
-// ---------------------------------------------------------------------------
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== "false";
 
 // ===========================================================================
 // Mock adapter — seeded state in a client provider mounted in layout.tsx.
@@ -269,9 +264,10 @@ const ZERO_POSITION: Position = { shares: 0, navUsd: 0, costUsd: 0, returnPct: 0
 
 /** Poll `fetcher` on an interval (live mode only); re-poll when `key` changes. */
 function useLivePoll<T>(initial: T, key: string, fetcher: () => Promise<T>): T {
+  const isMock = useIsMock();
   const [val, setVal] = useState<T>(initial);
   useEffect(() => {
-    if (USE_MOCK) return;
+    if (isMock) return;
     let alive = true;
     const run = () => {
       fetcher()
@@ -284,9 +280,9 @@ function useLivePoll<T>(initial: T, key: string, fetcher: () => Promise<T>): T {
       alive = false;
       clearInterval(id);
     };
-    // `fetcher` is recreated each render; only re-subscribe when `key` changes.
+    // `fetcher` is recreated each render; re-subscribe only when `key`/mode changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, isMock]);
   return val;
 }
 
@@ -302,6 +298,7 @@ const livePub = () => publicClient() as unknown as Parameters<typeof scGetCycle>
 // ===========================================================================
 
 export function useCycle(): Cycle {
+  const USE_MOCK = useIsMock();
   const mock = useContext(MockDataContext);
   const live = useLivePoll<Cycle>({ id: BigInt(0), state: "IDLE", secondsLeft: 0 }, "cycle", async () => {
     const c = await scGetCycle(livePub());
@@ -316,6 +313,7 @@ export function useCycle(): Cycle {
 }
 
 export function usePrices(): Record<string, number> {
+  const USE_MOCK = useIsMock();
   const mock = useContext(MockDataContext);
   const live = useLivePoll<Record<string, number>>({}, "prices", async () => {
     const e8 = await scGetPrices(livePub(), UNIVERSE);
@@ -328,6 +326,7 @@ export function usePrices(): Record<string, number> {
 }
 
 export function usePosition(): Position {
+  const USE_MOCK = useIsMock();
   const mock = useContext(MockDataContext);
   const { address } = useAuth();
   const live = useLivePoll<Position>(ZERO_POSITION, address ?? "", async () => {
@@ -342,6 +341,7 @@ export function usePosition(): Position {
 }
 
 export function useVotingPower(): number {
+  const USE_MOCK = useIsMock();
   const mock = useContext(MockDataContext);
   const { address } = useAuth();
   const live = useLivePoll<number>(0, address ?? "", async () => {
@@ -354,6 +354,7 @@ export function useVotingPower(): number {
 
 /** null until the member has been scored (cyclesParticipated > 0); a percent after. */
 export function useAccuracy(): number | null {
+  const USE_MOCK = useIsMock();
   const mock = useContext(MockDataContext);
   const { address } = useAuth();
   const live = useLivePoll<number | null>(null, address ?? "", async () => {
@@ -367,6 +368,7 @@ export function useAccuracy(): number | null {
 }
 
 export function useLeaderboard(): LeaderboardRow[] {
+  const USE_MOCK = useIsMock();
   const mock = useContext(MockDataContext);
   const live = useLivePoll<LeaderboardRow[]>([], "leaderboard", async () => {
     const rows = await scGetLeaderboard(livePub());
@@ -398,6 +400,7 @@ export interface FundActions {
 
 export function useFundActions(): FundActions {
   // Always call hooks (rules of hooks); the unused branch's values are ignored.
+  const USE_MOCK = useIsMock();
   const ctx = useContext(MockDataContext);
   const { address, getWalletClient } = useAuth();
   const [claimedLive, setClaimedLive] = useState(false);
@@ -417,7 +420,7 @@ export function useFundActions(): FundActions {
   const getDemoUSDC = useCallback(async () => {
     if (USE_MOCK) return; // mock: deposit() supplies the funds directly
     await scGetDemoUSDC(await requireWallet(), BigInt(10_000_000_000)); // 10,000 demo USDC
-  }, [requireWallet]);
+  }, [USE_MOCK, requireWallet]);
 
   const deposit = useCallback(
     async (amount: number) => {
@@ -427,7 +430,7 @@ export function useFundActions(): FundActions {
       }
       await scDeposit(await requireWallet(), BigInt(Math.round(amount * 1e6)));
     },
-    [ctx, requireWallet],
+    [USE_MOCK, ctx, requireWallet],
   );
 
   const castVote = useCallback(
@@ -439,7 +442,7 @@ export function useFundActions(): FundActions {
       await scCastVote(await requireWallet(), scBuildAllocs(allocs));
       setLastVoteLive(allocs);
     },
-    [ctx, requireWallet],
+    [USE_MOCK, ctx, requireWallet],
   );
 
   const claim = useCallback(async () => {
@@ -449,7 +452,7 @@ export function useFundActions(): FundActions {
     }
     await scClaim(await requireWallet());
     setClaimedLive(true);
-  }, [ctx, requireWallet]);
+  }, [USE_MOCK, ctx, requireWallet]);
 
   const resolveCycle = useCallback(async () => {
     if (USE_MOCK) {
@@ -458,7 +461,7 @@ export function useFundActions(): FundActions {
     }
     // Live: the keeper advances cycles. Ask the backend to step it (see /api/advance).
     await fetch("/api/advance", { method: "POST" }).catch(() => {});
-  }, [ctx]);
+  }, [USE_MOCK, ctx]);
 
   return {
     getDemoUSDC,

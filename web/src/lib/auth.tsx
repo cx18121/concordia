@@ -146,3 +146,9 @@ export function useAuth(): AuthState {
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
   return ctx;
 }
+
+/** Non-throwing read — null outside AuthProvider. The mode-aware seam (useAuth.ts)
+ *  calls this unconditionally so it can pick mock vs live without breaking hook rules. */
+export function useAuthRaw(): AuthState | null {
+  return useContext(AuthContext);
+}
