@@ -58,8 +58,6 @@ A new member joins in two minutes, then the fund runs on a weekly loop:
 3. **Resolve.** The fund buys what the community voted for on real Uniswap v4 pools, then Chainlink scores every vote against the S&P. You get credit for what you backed even if it lost the vote.
 4. **Climb.** If the fund beat the market, you claim your cut of the gains, and your accuracy updates your voting power for next week.
 
-For the product mechanics and the engineering details, see the **Description** and **How it's made** in [`docs/submission.md`](docs/submission.md).
-
 ---
 
 ## Architecture
