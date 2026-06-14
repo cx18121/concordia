@@ -18,7 +18,13 @@ import type { WalletClient } from "viem";
 import type { AuthState } from "./auth-types";
 import WorldIDVerify from "@/components/WorldIDVerify";
 
-const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
+// Verification bypass is a local-dev convenience only. Demo/mock mode bypasses
+// via MockAuthProvider; deployed live mode (production or preview) must always run
+// real World ID, so this is gated to non-production builds and can never take
+// effect on a Vercel deploy even if the env var is set.
+const DEV_BYPASS =
+  process.env.NODE_ENV !== "production" &&
+  process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
 const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
 if (!environmentId || environmentId === "REPLACE_ME") {

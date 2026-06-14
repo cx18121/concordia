@@ -8,7 +8,10 @@ import {
   type RpContext,
 } from "@worldcoin/idkit";
 
-const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
+// Local-dev only — never lets a deployed build skip real verification (see auth.tsx).
+const DEV_BYPASS =
+  process.env.NODE_ENV !== "production" &&
+  process.env.NEXT_PUBLIC_DEV_BYPASS === "true";
 
 interface Props {
   onVerified?: () => void;
