@@ -80,23 +80,22 @@ export async function POST(request: Request): Promise<Response> {
       const addr = payload.userAddress as string;
       if (post && post.stockVotes[ticker]) {
         const sv = post.stockVotes[ticker];
-        const other = direction === "bullish" ? "bearish" : "bullish";
-        const otherKey = `${other}By` as "bullishBy" | "bearishBy";
-        const thisKey = `${direction}By` as "bullishBy" | "bearishBy";
-        // Remove from opposite side if switching
-        const otherIdx = sv[otherKey].indexOf(addr);
-        if (otherIdx >= 0) {
-          sv[otherKey].splice(otherIdx, 1);
-          sv[other] = Math.max(0, sv[other] - 1);
-        }
-        // Toggle on this side
-        const thisIdx = sv[thisKey].indexOf(addr);
-        if (thisIdx >= 0) {
-          sv[thisKey].splice(thisIdx, 1);
-          sv[direction] = Math.max(0, sv[direction] - 1);
+        if (direction === "bullish") {
+          // Remove from bearish side if switching
+          const i = sv.bearishBy.indexOf(addr);
+          if (i >= 0) { sv.bearishBy.splice(i, 1); sv.bearish = Math.max(0, sv.bearish - 1); }
+          // Toggle bullish
+          const j = sv.bullishBy.indexOf(addr);
+          if (j >= 0) { sv.bullishBy.splice(j, 1); sv.bullish = Math.max(0, sv.bullish - 1); }
+          else { sv.bullishBy.push(addr); sv.bullish++; }
         } else {
-          sv[thisKey].push(addr);
-          sv[direction]++;
+          // Remove from bullish side if switching
+          const i = sv.bullishBy.indexOf(addr);
+          if (i >= 0) { sv.bullishBy.splice(i, 1); sv.bullish = Math.max(0, sv.bullish - 1); }
+          // Toggle bearish
+          const j = sv.bearishBy.indexOf(addr);
+          if (j >= 0) { sv.bearishBy.splice(j, 1); sv.bearish = Math.max(0, sv.bearish - 1); }
+          else { sv.bearishBy.push(addr); sv.bearish++; }
         }
       }
       break;
